@@ -144,9 +144,7 @@ def scenario_validation(db: DB, principal: Reader) -> list[ScenarioCheck]:
             )
         )
         if kind == "fraud":
-            passed = all(a.risk_level in ("high", "critical") for a in members) and any(
-                c in codes for c in expected_signals
-            )
+            passed = all(a.risk_level in ("high", "critical") for a in members) and set(expected_signals) <= codes
             expected = "Every application rated high or critical"
         else:
             passed = all(a.risk_level in ("low", "medium") for a in members)

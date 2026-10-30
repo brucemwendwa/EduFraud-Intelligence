@@ -12,6 +12,7 @@ const ApplicationDetailPage = lazy(() => import('@/features/applications/Applica
 const DisbursementsPage = lazy(() => import('@/features/disbursements/DisbursementsPage'));
 const AlertsPage = lazy(() => import('@/features/alerts/AlertsPage'));
 const EnginePage = lazy(() => import('@/features/engine/EnginePage'));
+const VerificationPage = lazy(() => import('@/features/verification/VerificationPage'));
 
 export function App() {
   return (
@@ -26,6 +27,7 @@ export function App() {
           <Route path="disbursements" element={<DisbursementsPage />} />
           <Route path="alerts" element={<AlertsPage />} />
           <Route path="engine" element={<EnginePage />} />
+          <Route path="verification" element={<VerificationPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Route>

@@ -1341,6 +1341,316 @@
         }
       }
     },
+    "/api/v1/verifications/provider": {
+      "get": {
+        "tags": [
+          "verifications"
+        ],
+        "summary": "Verification provider details (simulation)",
+        "operationId": "provider_info_api_v1_verifications_provider_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderInfo"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verifications": {
+      "get": {
+        "tags": [
+          "verifications"
+        ],
+        "summary": "Verification history",
+        "operationId": "list_verifications_api_v1_verifications_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/VerificationOutcome"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "trigger",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/VerificationTrigger"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Trigger"
+            }
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 32
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Method"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 60
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "IDV-, FA- or STU- reference",
+              "title": "Q"
+            },
+            "description": "IDV-, FA- or STU- reference"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_VerificationOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "verifications"
+        ],
+        "summary": "Run a step-up biometric verification (simulated)",
+        "operationId": "start_biometric_api_v1_verifications_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BiometricVerificationIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verifications/stats": {
+      "get": {
+        "tags": [
+          "verifications"
+        ],
+        "summary": "Verification outcomes for the current scope",
+        "operationId": "stats_api_v1_verifications_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationStats"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verifications/{verification_id}": {
+      "get": {
+        "tags": [
+          "verifications"
+        ],
+        "summary": "Verification detail with stage results",
+        "operationId": "get_verification_api_v1_verifications__verification_id__get",
+        "parameters": [
+          {
+            "name": "verification_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Verification Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verifications/alternative": {
+      "post": {
+        "tags": [
+          "verifications"
+        ],
+        "summary": "Record an officer-led verification",
+        "operationId": "record_alternative_api_v1_verifications_alternative_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlternativeVerificationIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/alerts": {
       "get": {
         "tags": [
@@ -2384,6 +2694,50 @@
         ],
         "title": "AlertTriage"
       },
+      "AlternativeVerificationIn": {
+        "properties": {
+          "application_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Application Id"
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/VerificationTrigger"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "in_person_id_check",
+              "officer_video_call",
+              "mailed_code"
+            ],
+            "title": "Method"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "passed",
+              "failed"
+            ],
+            "title": "Outcome"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 10,
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "application_id",
+          "trigger",
+          "method",
+          "outcome",
+          "notes"
+        ],
+        "title": "AlternativeVerificationIn"
+      },
       "ApplicationDetail": {
         "properties": {
           "id": {
@@ -2963,6 +3317,30 @@
           "failed_logins_last_7_days"
         ],
         "title": "AuditSummary"
+      },
+      "BiometricVerificationIn": {
+        "properties": {
+          "application_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Application Id"
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/VerificationTrigger"
+          },
+          "sample_key": {
+            "type": "string",
+            "maxLength": 48,
+            "title": "Sample Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "application_id",
+          "trigger",
+          "sample_key"
+        ],
+        "title": "BiometricVerificationIn"
       },
       "Body_token_api_v1_auth_token_post": {
         "properties": {
@@ -4462,6 +4840,37 @@
         ],
         "title": "Page[UserOut]"
       },
+      "Page_VerificationOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/VerificationOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "Page[VerificationOut]"
+      },
       "PermissionOut": {
         "properties": {
           "key": {
@@ -4484,6 +4893,69 @@
           "category"
         ],
         "title": "PermissionOut"
+      },
+      "ProviderInfo": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "mode": {
+            "type": "string",
+            "title": "Mode"
+          },
+          "disclaimer": {
+            "type": "string",
+            "title": "Disclaimer"
+          },
+          "data_handling": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Data Handling"
+          },
+          "thresholds": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Thresholds"
+          },
+          "samples": {
+            "items": {
+              "$ref": "#/components/schemas/TestSampleOut"
+            },
+            "type": "array",
+            "title": "Samples"
+          },
+          "triggers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Triggers"
+          },
+          "alternative_methods": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Alternative Methods"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "mode",
+          "disclaimer",
+          "data_handling",
+          "thresholds",
+          "samples",
+          "triggers",
+          "alternative_methods"
+        ],
+        "title": "ProviderInfo"
       },
       "RelatedApplication": {
         "properties": {
@@ -4933,6 +5405,49 @@
         ],
         "title": "SignalCategory"
       },
+      "StageOut": {
+        "properties": {
+          "stage": {
+            "type": "string",
+            "title": "Stage"
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "reason_codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reason Codes"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "stage",
+          "outcome",
+          "score",
+          "reason_codes",
+          "detail"
+        ],
+        "title": "StageOut"
+      },
       "StudentDetail": {
         "properties": {
           "id": {
@@ -5016,6 +5531,34 @@
           "masked_name"
         ],
         "title": "StudentRef"
+      },
+      "TestSampleOut": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "expected": {
+            "type": "string",
+            "title": "Expected"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "description",
+          "expected"
+        ],
+        "title": "TestSampleOut"
       },
       "TokenResponse": {
         "properties": {
@@ -5298,6 +5841,241 @@
         ],
         "title": "ValidationError"
       },
+      "VerificationOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrgRef"
+          },
+          "student": {
+            "$ref": "#/components/schemas/StudentRef"
+          },
+          "application_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Id"
+          },
+          "application_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Ref"
+          },
+          "trigger": {
+            "type": "string",
+            "title": "Trigger"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "provider_mode": {
+            "type": "string",
+            "title": "Provider Mode"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "document_result": {
+            "type": "string",
+            "title": "Document Result"
+          },
+          "face_match_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Face Match Score"
+          },
+          "liveness_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Liveness Score"
+          },
+          "liveness_result": {
+            "type": "string",
+            "title": "Liveness Result"
+          },
+          "pad_result": {
+            "type": "string",
+            "title": "Pad Result"
+          },
+          "pad_attack_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pad Attack Type"
+          },
+          "risk_indicators": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Risk Indicators"
+          },
+          "recommended_action": {
+            "type": "string",
+            "title": "Recommended Action"
+          },
+          "sample_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Key"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/StageOut"
+            },
+            "type": "array",
+            "title": "Stages"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "initiated_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Initiated By"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "resulting_risk_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resulting Risk Score"
+          },
+          "resulting_risk_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resulting Risk Level"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reference",
+          "organization",
+          "student",
+          "application_id",
+          "application_ref",
+          "trigger",
+          "method",
+          "provider",
+          "provider_mode",
+          "status",
+          "document_result",
+          "face_match_score",
+          "liveness_score",
+          "liveness_result",
+          "pad_result",
+          "pad_attack_type",
+          "risk_indicators",
+          "recommended_action",
+          "sample_key",
+          "stages",
+          "notes",
+          "initiated_by",
+          "completed_at",
+          "created_at"
+        ],
+        "title": "VerificationOut"
+      },
+      "VerificationOutcome": {
+        "type": "string",
+        "enum": [
+          "passed",
+          "failed",
+          "review"
+        ],
+        "title": "VerificationOutcome"
+      },
       "VerificationRow": {
         "properties": {
           "id": {
@@ -5395,6 +6173,88 @@
         ],
         "title": "VerificationRow"
       },
+      "VerificationStats": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "passed": {
+            "type": "integer",
+            "title": "Passed"
+          },
+          "failed": {
+            "type": "integer",
+            "title": "Failed"
+          },
+          "review": {
+            "type": "integer",
+            "title": "Review"
+          },
+          "pass_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pass Rate"
+          },
+          "attacks_detected": {
+            "type": "integer",
+            "title": "Attacks Detected"
+          },
+          "biometric_share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Biometric Share"
+          },
+          "by_trigger": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Trigger"
+          },
+          "by_method": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Method"
+          },
+          "daily": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Daily"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "passed",
+          "failed",
+          "review",
+          "pass_rate",
+          "attacks_detected",
+          "biometric_share",
+          "by_trigger",
+          "by_method",
+          "daily"
+        ],
+        "title": "VerificationStats"
+      },
       "VerificationStatus": {
         "type": "string",
         "enum": [
@@ -5405,6 +6265,17 @@
           "manual_review"
         ],
         "title": "VerificationStatus"
+      },
+      "VerificationTrigger": {
+        "type": "string",
+        "enum": [
+          "pre_disbursement",
+          "new_device_login",
+          "account_recovery",
+          "payment_destination_change",
+          "risk_review"
+        ],
+        "title": "VerificationTrigger"
       }
     }
   },

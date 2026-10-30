@@ -397,6 +397,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/verifications/provider": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Verification provider details (simulation) */
+        get: operations["provider_info_api_v1_verifications_provider_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/verifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Verification history */
+        get: operations["list_verifications_api_v1_verifications_get"];
+        put?: never;
+        /** Run a step-up biometric verification (simulated) */
+        post: operations["start_biometric_api_v1_verifications_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/verifications/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Verification outcomes for the current scope */
+        get: operations["stats_api_v1_verifications_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/verifications/{verification_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Verification detail with stage results */
+        get: operations["get_verification_api_v1_verifications__verification_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/verifications/alternative": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record an officer-led verification */
+        post: operations["record_alternative_api_v1_verifications_alternative_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/alerts": {
         parameters: {
             query?: never;
@@ -700,6 +786,27 @@ export interface components {
             /** Note */
             note?: string | null;
         };
+        /** AlternativeVerificationIn */
+        AlternativeVerificationIn: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            trigger: components["schemas"]["VerificationTrigger"];
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "in_person_id_check" | "officer_video_call" | "mailed_code";
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "passed" | "failed";
+            /** Notes */
+            notes: string;
+        };
         /**
          * ApplicationDetail
          * @description Application workspace: the record plus its explainable assessment, history and alerts.
@@ -900,6 +1007,17 @@ export interface components {
             denied_last_7_days: number;
             /** Failed Logins Last 7 Days */
             failed_logins_last_7_days: number;
+        };
+        /** BiometricVerificationIn */
+        BiometricVerificationIn: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            trigger: components["schemas"]["VerificationTrigger"];
+            /** Sample Key */
+            sample_key: string;
         };
         /** Body_token_api_v1_auth_token_post */
         Body_token_api_v1_auth_token_post: {
@@ -1450,6 +1568,17 @@ export interface components {
             /** Page Size */
             page_size: number;
         };
+        /** Page[VerificationOut] */
+        Page_VerificationOut_: {
+            /** Items */
+            items: components["schemas"]["VerificationOut"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
         /** PermissionOut */
         PermissionOut: {
             /** Key */
@@ -1458,6 +1587,27 @@ export interface components {
             description: string;
             /** Category */
             category: string;
+        };
+        /** ProviderInfo */
+        ProviderInfo: {
+            /** Name */
+            name: string;
+            /** Mode */
+            mode: string;
+            /** Disclaimer */
+            disclaimer: string;
+            /** Data Handling */
+            data_handling: string[];
+            /** Thresholds */
+            thresholds: {
+                [key: string]: number;
+            };
+            /** Samples */
+            samples: components["schemas"]["TestSampleOut"][];
+            /** Triggers */
+            triggers: string[];
+            /** Alternative Methods */
+            alternative_methods: string[];
         };
         /** RelatedApplication */
         RelatedApplication: {
@@ -1642,6 +1792,19 @@ export interface components {
          * @enum {string}
          */
         SignalCategory: "identity" | "application" | "enrollment" | "disbursement" | "network" | "biometric" | "anomaly";
+        /** StageOut */
+        StageOut: {
+            /** Stage */
+            stage: string;
+            /** Outcome */
+            outcome: string;
+            /** Score */
+            score: number | null;
+            /** Reason Codes */
+            reason_codes: string[];
+            /** Detail */
+            detail: string;
+        };
         /** StudentDetail */
         StudentDetail: {
             /**
@@ -1675,6 +1838,17 @@ export interface components {
             student_ref: string;
             /** Masked Name */
             masked_name: string;
+        };
+        /** TestSampleOut */
+        TestSampleOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Description */
+            description: string;
+            /** Expected */
+            expected: string;
         };
         /** TokenResponse */
         TokenResponse: {
@@ -1765,6 +1939,72 @@ export interface components {
             /** Context */
             ctx?: Record<string, never>;
         };
+        /** VerificationOut */
+        VerificationOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Reference */
+            reference: string;
+            organization: components["schemas"]["OrgRef"];
+            student: components["schemas"]["StudentRef"];
+            /** Application Id */
+            application_id: string | null;
+            /** Application Ref */
+            application_ref: string | null;
+            /** Trigger */
+            trigger: string;
+            /** Method */
+            method: string;
+            /** Provider */
+            provider: string;
+            /** Provider Mode */
+            provider_mode: string;
+            /** Status */
+            status: string;
+            /** Document Result */
+            document_result: string;
+            /** Face Match Score */
+            face_match_score: number | null;
+            /** Liveness Score */
+            liveness_score: number | null;
+            /** Liveness Result */
+            liveness_result: string;
+            /** Pad Result */
+            pad_result: string;
+            /** Pad Attack Type */
+            pad_attack_type: string | null;
+            /** Risk Indicators */
+            risk_indicators: string[];
+            /** Recommended Action */
+            recommended_action: string;
+            /** Sample Key */
+            sample_key: string | null;
+            /** Stages */
+            stages: components["schemas"]["StageOut"][];
+            /** Notes */
+            notes: string | null;
+            /** Initiated By */
+            initiated_by: string | null;
+            /** Completed At */
+            completed_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Resulting Risk Score */
+            resulting_risk_score?: number | null;
+            /** Resulting Risk Level */
+            resulting_risk_level?: string | null;
+        };
+        /**
+         * VerificationOutcome
+         * @enum {string}
+         */
+        VerificationOutcome: "passed" | "failed" | "review";
         /** VerificationRow */
         VerificationRow: {
             /**
@@ -1800,11 +2040,45 @@ export interface components {
              */
             created_at: string;
         };
+        /** VerificationStats */
+        VerificationStats: {
+            /** Total */
+            total: number;
+            /** Passed */
+            passed: number;
+            /** Failed */
+            failed: number;
+            /** Review */
+            review: number;
+            /** Pass Rate */
+            pass_rate: number | null;
+            /** Attacks Detected */
+            attacks_detected: number;
+            /** Biometric Share */
+            biometric_share: number | null;
+            /** By Trigger */
+            by_trigger: {
+                [key: string]: number;
+            };
+            /** By Method */
+            by_method: {
+                [key: string]: number;
+            };
+            /** Daily */
+            daily: {
+                [key: string]: unknown;
+            }[];
+        };
         /**
          * VerificationStatus
          * @enum {string}
          */
         VerificationStatus: "not_required" | "pending" | "passed" | "failed" | "manual_review";
+        /**
+         * VerificationTrigger
+         * @enum {string}
+         */
+        VerificationTrigger: "pre_disbursement" | "new_device_login" | "account_recovery" | "payment_destination_change" | "risk_review";
     };
     responses: never;
     parameters: never;
@@ -2582,6 +2856,198 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DisbursementDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    provider_info_api_v1_verifications_provider_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderInfo"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_verifications_api_v1_verifications_get: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["VerificationOutcome"] | null;
+                trigger?: components["schemas"]["VerificationTrigger"] | null;
+                method?: string | null;
+                /** @description IDV-, FA- or STU- reference */
+                q?: string | null;
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_VerificationOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_biometric_api_v1_verifications_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BiometricVerificationIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stats_api_v1_verifications_stats_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationStats"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_verification_api_v1_verifications__verification_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                verification_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_alternative_api_v1_verifications_alternative_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlternativeVerificationIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationOut"];
                 };
             };
             /** @description Validation Error */

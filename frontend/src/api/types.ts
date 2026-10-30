@@ -50,3 +50,9 @@ export type AlertTriage = S['AlertTriage'];
 export type DetectionRun = S['DetectionRunOut'];
 export type DetectionStatus = S['DetectionStatus'];
 export type ScenarioCheck = S['ScenarioCheck'];
+
+export type Verification = S['VerificationOut'];
+export type VerificationStats = S['VerificationStats'];
+export type ProviderInfo = S['ProviderInfo'];
+export type BiometricVerificationIn = S['BiometricVerificationIn'];
+export type AlternativeVerificationIn = S['AlternativeVerificationIn'];

@@ -1,4 +1,4 @@
-import { ArrowUpRight, Building2, ClipboardCheck, FlaskConical, Link2, Network } from 'lucide-react';
+import { ArrowUpRight, Building2, ClipboardCheck, Fingerprint, FlaskConical, Link2, Network } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
 import type { ApplicationDetail } from '@/api/types';
@@ -22,6 +22,7 @@ import {
   scenarioLabels,
   verificationStatusTone,
 } from '@/lib/status';
+import { VerificationWizard } from '@/features/verification/VerificationWizard';
 import { useApplication } from './api';
 import { ReviewDialog } from './ReviewDialog';
 import { RiskPanel } from './RiskPanel';
@@ -49,6 +50,7 @@ export default function ApplicationDetailPage() {
 function ApplicationView({ app }: { app: ApplicationDetail }) {
   const { can } = useAuth();
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [verifyOpen, setVerifyOpen] = useState(false);
   const relatedCount = app.related.reduce((n, g) => n + g.matches.length + g.other_institution_matches, 0);
 
   return (
@@ -70,11 +72,18 @@ function ApplicationView({ app }: { app: ApplicationDetail }) {
           </>
         }
         actions={
-          can(P.applicationsReview) && (
-            <Button variant="secondary" icon={<ClipboardCheck className="size-4" />} onClick={() => setReviewOpen(true)}>
-              Record review
-            </Button>
-          )
+          <>
+            {can(P.verificationsInitiate) && (
+              <Button variant="secondary" icon={<Fingerprint className="size-4" />} onClick={() => setVerifyOpen(true)}>
+                Verify identity
+              </Button>
+            )}
+            {can(P.applicationsReview) && (
+              <Button variant="secondary" icon={<ClipboardCheck className="size-4" />} onClick={() => setReviewOpen(true)}>
+                Record review
+              </Button>
+            )}
+          </>
         }
       />
 
@@ -120,6 +129,7 @@ function ApplicationView({ app }: { app: ApplicationDetail }) {
         </div>
       </div>
       <ReviewDialog applicationId={app.id} reference={app.reference} open={reviewOpen} onOpenChange={setReviewOpen} />
+      <VerificationWizard open={verifyOpen} onOpenChange={setVerifyOpen} applicationId={app.id} />
     </>
   );
 }

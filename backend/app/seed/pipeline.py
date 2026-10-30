@@ -22,9 +22,57 @@ from app.seed.generator import GenerationSummary, SyntheticGenerator
 def seed_synthetic(db: Session, orgs: dict[str, Organization]) -> tuple[GenerationSummary, RunStats]:
     summary = SyntheticGenerator(db, orgs).run()
     db.flush()
+    seed_verification_events(db)
     stats = run_seed_detection(db)
     backdate_alerts(db)
     return summary, stats
+
+
+def seed_verification_events(db: Session) -> None:
+    """Runs the planted verification attempts through the real verification service."""
+    from app.services.verification import run_biometric
+
+    target = db.scalar(
+        select(FinancialAidApplication).where(FinancialAidApplication.scenario_key == "identity_impersonation")
+    )
+    if target is not None:
+        refund = db.scalar(
+            select(Disbursement).where(
+                Disbursement.application_id == target.id, Disbursement.destination_changed_at.is_not(None)
+            )
+        )
+        attempt_at = (refund.destination_changed_at if refund else utcnow()) + timedelta(minutes=4)  # type: ignore[operator]
+        # Someone else requested the refund-destination change and failed step-up verification.
+        run_biometric(
+            db,
+            app=target,
+            trigger="payment_destination_change",
+            sample_key="impostor_screen_replay",
+            user=None,
+            at=attempt_at,
+        )
+
+    # Everyday outcomes: a few glare retries and one printed-photo attempt later resolved in person.
+    consented = db.scalars(
+        select(FinancialAidApplication)
+        .join(FinancialAidApplication.student)
+        .where(FinancialAidApplication.scenario_key.is_(None), FinancialAidApplication.status == "approved")
+        .order_by(FinancialAidApplication.reference)
+    ).all()
+    candidates = [a for a in consented if a.student.biometric_consent][:6]
+    now = utcnow()
+    for i, app in enumerate(candidates[:4]):
+        when = now - timedelta(days=5 + i * 9, hours=i)
+        run_biometric(db, app=app, trigger="new_device_login", sample_key="unreadable_document", user=None, at=when)
+        run_biometric(
+            db,
+            app=app,
+            trigger="new_device_login",
+            sample_key="enrolled_student",
+            user=None,
+            at=when + timedelta(minutes=7),
+        )
+    db.flush()
 
 
 def run_seed_detection(db: Session) -> RunStats:
