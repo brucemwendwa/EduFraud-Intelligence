@@ -19,6 +19,10 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 export const meKey = ['auth', 'me'] as const;
 
+/** Drops every cached query except the session itself (observers of `meKey` must stay attached). */
+const dropDataQueries = (qc: ReturnType<typeof useQueryClient>) =>
+  qc.removeQueries({ predicate: (q) => q.queryKey[0] !== 'auth' });
+
 async function fetchMe(): Promise<Me | null> {
   try {
     return (await api.get<Me>('/auth/me')).data;
@@ -44,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const me = (await api.post<Me>('/auth/login', { email, password })).data;
       orgScope.set(null);
       setActiveOrg(null);
-      qc.clear();
+      dropDataQueries(qc);
       qc.setQueryData(meKey, me);
       return me;
     },
@@ -57,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       orgScope.set(null);
       setActiveOrg(null);
-      qc.clear();
+      dropDataQueries(qc);
       qc.setQueryData(meKey, null);
     }
   }, [qc]);
@@ -67,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       orgScope.set(id);
       setActiveOrg(id);
       // Every tenant-scoped query must refetch under the new institution scope.
-      qc.removeQueries({ predicate: (q) => q.queryKey[0] !== 'auth' });
+      dropDataQueries(qc);
     },
     [qc],
   );

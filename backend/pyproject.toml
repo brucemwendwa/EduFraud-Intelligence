@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "edushield-backend"
 version = "0.1.0"
 description = "EduShield AI — financial aid fraud intelligence API"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
   "fastapi>=0.115,<1",
   "uvicorn[standard]>=0.30,<1",
@@ -14,6 +14,7 @@ dependencies = [
   "alembic>=1.13,<2",
   "pydantic>=2.7,<3",
   "pydantic-settings>=2.3,<3",
+  "python-multipart>=0.0.9",
   "email-validator>=2.1,<3",
   "psycopg[binary]>=3.2,<4",
   "argon2-cffi>=23.1",
@@ -42,7 +43,7 @@ filterwarnings = ["ignore:Using `httpx` with `starlette.testclient`"]
 
 [tool.ruff]
 line-length = 120
-target-version = "py311"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "S", "SIM"]

@@ -47,7 +47,14 @@ def template_db() -> Path:
 
 
 def _prepare_template() -> None:
-    """Hook for reference data shared by every test (extended as modules are added)."""
+    """Reference data shared by every test: RBAC catalogue, three institutions, demo accounts."""
+    from app.seed.base import bootstrap
+
+    engine = build_engine(f"sqlite:///{_TEMPLATE}")
+    with Session(engine) as db:
+        bootstrap(db)
+        db.commit()
+    engine.dispose()
 
 
 @pytest.fixture
@@ -72,6 +79,44 @@ def client(engine: Engine) -> Iterator[TestClient]:
 
     with TestClient(app) as c:
         yield c
+
+
+@pytest.fixture(autouse=True)
+def _reset_rate_limits() -> None:
+    from app.core.ratelimit import login_limiter
+
+    login_limiter.reset()
+
+
+@pytest.fixture
+def as_user(engine: Engine) -> Iterator:
+    """Factory returning a TestClient signed in as the given demo (or custom) account."""
+    from app.main import app
+    from app.seed.base import DEMO_PASSWORD
+
+    clients: list[TestClient] = []
+
+    def _login(email: str, password: str = DEMO_PASSWORD, org: str | None = None) -> TestClient:
+        c = TestClient(app)
+        c.headers["X-EduShield-Client"] = "test"
+        res = c.post("/api/v1/auth/login", json={"email": email, "password": password})
+        assert res.status_code == 200, res.text
+        if org:
+            c.headers["X-Organization-Id"] = org
+        clients.append(c)
+        return c
+
+    yield _login
+    for c in clients:
+        c.close()
+
+
+ADMIN = "admin@edushield.demo"
+NB_ADMIN = "inst.admin@northbridge.demo"
+NB_INVESTIGATOR = "investigator@northbridge.demo"
+NB_OFFICER = "officer@northbridge.demo"
+NB_AUDITOR = "auditor@northbridge.demo"
+LS_INVESTIGATOR = "investigator@lakeshore.demo"
 
 
 def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:  # noqa: ARG001

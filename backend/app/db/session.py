@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from collections.abc import Iterator
 from pathlib import Path
 
 from sqlalchemy import Engine, create_engine, event
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 
 from app.core.config import get_settings
 
@@ -29,11 +28,3 @@ def build_engine(url: str) -> Engine:
 
 engine = build_engine(get_settings().database_url)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
-
-
-def get_db() -> Iterator[Session]:
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()

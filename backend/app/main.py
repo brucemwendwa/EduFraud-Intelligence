@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
@@ -12,6 +16,7 @@ from app.core.errors import register_error_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import CSRFMiddleware, RequestContextMiddleware, SecurityHeadersMiddleware
 from app.db.session import SessionLocal
+from app.services.rbac import sync_rbac
 
 DESCRIPTION = """
 Financial aid fraud detection, identity protection and investigation API.
@@ -46,6 +51,18 @@ TAGS = [
 ]
 
 
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    # Keep DB roles/permissions in step with the code-defined catalogue (idempotent).
+    try:
+        with SessionLocal() as db:
+            sync_rbac(db)
+            db.commit()
+    except Exception:  # noqa: BLE001 - the API still serves health checks if migrations are pending
+        logging.getLogger("edushield.startup").exception("rbac_sync_failed_run_migrations_first")
+    yield
+
+
 def create_app() -> FastAPI:
     settings = get_settings()
     configure_logging("INFO" if settings.env != "test" else "WARNING")
@@ -58,6 +75,7 @@ def create_app() -> FastAPI:
         docs_url="/api/docs",
         redoc_url=None,
         openapi_url="/api/openapi.json",
+        lifespan=lifespan,
     )
 
     # Starlette runs middleware in reverse order of registration: CORS is outermost.

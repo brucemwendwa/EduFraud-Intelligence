@@ -1,28 +1,27 @@
 /**
- * Frontend view of the API contract. Hand-written until the OpenAPI export exists;
- * from Phase 4 on these alias the generated `schema.d.ts` types.
+ * Frontend view of the API contract. Every type aliases the OpenAPI-generated
+ * `schema.d.ts` (regenerate with `make openapi`), so a backend schema change
+ * surfaces here as a type error instead of a runtime bug.
  */
-export interface OrganizationRef {
-  id: string;
-  name: string;
-  slug: string;
+import type { components } from './schema';
+
+type S = components['schemas'];
+
+export interface Page<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
 }
 
-export interface Me {
-  id: string;
-  email: string;
-  full_name: string;
-  role: { key: string; name: string };
-  organization: OrganizationRef | null;
-  is_platform_admin: boolean;
-  permissions: string[];
-  accessible_organizations: OrganizationRef[];
-}
-
-export interface DemoAccount {
-  email: string;
-  full_name: string;
-  role_key: string;
-  role_name: string;
-  organization_name: string | null;
-}
+export type OrganizationRef = S['OrgRef'];
+export type Me = S['Me'];
+export type DemoAccount = S['DemoAccount'];
+export type Organization = S['OrganizationStats'];
+export type UserRow = S['UserOut'];
+export type UserCreate = S['UserCreate'];
+export type UserUpdate = S['UserUpdate'];
+export type Role = S['RoleOut'];
+export type AuditEvent = S['AuditEventOut'];
+export type AuditSummary = S['AuditSummary'];
+export type ChainVerification = S['ChainVerificationOut'];
