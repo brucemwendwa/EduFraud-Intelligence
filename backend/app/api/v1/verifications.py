@@ -15,7 +15,7 @@ from app.core.errors import ConflictError, ValidationFailedError
 from app.core.permissions import P
 from app.db.types import utcnow
 from app.models import FinancialAidApplication, IdentityVerification, Student, User
-from app.models.enums import VerificationOutcome, VerificationTrigger
+from app.models.enums import AuditCategory, AuditOutcome, VerificationOutcome, VerificationTrigger
 from app.schemas.common import OrgRef, Page, Pagination
 from app.schemas.verification import (
     AlternativeVerificationIn,
@@ -26,7 +26,7 @@ from app.schemas.verification import (
     VerificationOut,
     VerificationStats,
 )
-from app.services import records
+from app.services import audit, records
 from app.services import verification as service
 
 router = APIRouter(prefix="/verifications", tags=["verifications"])
@@ -204,6 +204,21 @@ def start_biometric(body: BiometricVerificationIn, request: Request, db: DB, pri
             db, app=app, trigger=body.trigger.value, sample_key=body.sample_key, user=principal.user, request=request
         )
     except ConsentRequiredError as exc:
+        db.rollback()
+        audit.record(
+            db,
+            category=AuditCategory.VERIFICATION,
+            action="verification.biometric",
+            outcome=AuditOutcome.DENIED,
+            actor=principal.user,
+            organization_id=app.organization_id,
+            target_type="application",
+            target_id=app.id,
+            target_ref=app.reference,
+            details={"reason": "biometric_consent_required", "trigger": body.trigger.value},
+            request=request,
+        )
+        db.commit()
         raise ConflictError(
             "This student has not consented to biometric verification. Use an alternative verification method.",
             code="biometric_consent_required",

@@ -116,6 +116,11 @@ class TestVerificationApi:
             json={"application_id": str(app.id), "trigger": "risk_review", "sample_key": "enrolled_student"},
         )
         assert res.status_code == 409 and res.json()["error"]["code"] == "biometric_consent_required"
+        refused = db.scalar(
+            select(AuditEvent).where(AuditEvent.action == "verification.biometric", AuditEvent.outcome == "denied")
+        )
+        assert refused is not None and refused.target_ref == app.reference
+        assert refused.details["reason"] == "biometric_consent_required"
 
     def test_alternative_verification_is_recorded_with_notes(self, as_user, db: Session) -> None:  # type: ignore[no-untyped-def]
         app = _no_consent(db)
