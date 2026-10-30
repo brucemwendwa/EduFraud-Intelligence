@@ -46,8 +46,9 @@ yet do. For the technical breakdown of rules, models and simulations, see [AI_DI
 - Roles separate duties. Financial aid officers handle day-to-day review. Fraud investigators can also re-run
   assessments and detection. Auditors can see the work and the audit trail but cannot change anything or see
   unmasked names.
-- *Not yet built:* a full investigation case workspace (evidence, notes, timeline, assignment, resolution). Today,
-  investigation happens through alerts, application reviews and disbursement holds.
+- The investigation-case API supports evidence, notes, assignment and resolution, with tenant scoping, permissions
+  and audit records. The full investigator workspace UI and a visual timeline are not yet built; today, staff use
+  the alert, application and disbursement screens alongside the API workflow.
 
 ## 4. False positives and potential bias
 

@@ -81,7 +81,8 @@ The full reasoning is in [docs/HUMAN_IMPACT_AND_TRUST.md](docs/HUMAN_IMPACT_AND_
 | Authentication, 5 roles, tenant isolation, PII masking | **Operational** | Enforced by the API and covered by automated tests |
 | Tamper-evident audit trail (hash chain + DB triggers) | **Operational (API)** | Integrity check at `GET /api/v1/audit/verify`; audit center UI planned |
 | Student, application and payment data | **Synthetic** | Generated; no real students, FSA or FAFSA data |
-| Dashboard analytics, investigation cases, audit center, institution and user admin screens, settings | **Planned** | Shown as "Planned" in the app; not built |
+| Investigation-case workflow | **Operational (API)** | Open from an alert/application; assign, add evidence/notes, resolve; every action is permission-checked and audited. Investigator UI planned. |
+| Dashboard analytics, audit center, institution and user admin screens, settings | **Planned** | Shown as "Planned" in the app; not built |
 | Commercial identity-verification vendor, SIS / aid-system integrations, trained ML models | **Planned** | See [Roadmap](#roadmap) |
 
 ## Architecture and technology
@@ -421,7 +422,7 @@ Backend tests run against real Alembic migrations on throwaway SQLite files, so 
   has run on SQLite.
 - **No container setup.** There are no Dockerfiles or compose files yet.
 - **Screens not built yet:** dashboard analytics (the dashboard currently links to the working modules),
-  investigation case management, the audit center, institution and user
+  investigation case management UI (the API is operational), the audit center, institution and user
   administration, settings, global search and notifications. Their sidebar entries are marked "Planned". The
   institution, user and audit **APIs** exist.
 - **Test coverage gaps.** There is no automated end-to-end browser test (the `make e2e` target has no tests yet), and
@@ -433,8 +434,8 @@ Backend tests run against real Alembic migrations on throwaway SQLite files, so 
 
 ## Roadmap
 
-1. **Finish the investigator experience:** investigation cases (evidence, notes, timeline, assignment, resolution),
-   dashboard analytics, the audit center and institution, user and settings screens.
+1. **Finish the investigator experience:** investigation-case UI (the API supports evidence, notes, assignment and
+   resolution), dashboard analytics, the audit center and institution, user and settings screens.
 2. **Production readiness:** verified PostgreSQL deployment, container images, an end-to-end test suite, and
    Redis-backed rate limiting and job queues.
 3. **Real identity verification:** integrate an authorized commercial identity-verification vendor through the

@@ -7,6 +7,7 @@ from app.api.v1 import (
     applications,
     audit,
     auth,
+    cases,
     detection,
     disbursements,
     network,
@@ -26,5 +27,6 @@ api_router.include_router(disbursements.router)
 api_router.include_router(verifications.router)
 api_router.include_router(network.router)
 api_router.include_router(alerts.router)
+api_router.include_router(cases.router)
 api_router.include_router(detection.router)
 api_router.include_router(audit.router)
