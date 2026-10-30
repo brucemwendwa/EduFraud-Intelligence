@@ -16,17 +16,6 @@ export default defineConfig({
     // Same-origin proxy keeps the auth cookie first-party (SameSite=Strict) in development.
     proxy: { '/api': { target: apiTarget, changeOrigin: false } },
   },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('node_modules/recharts') || id.includes('node_modules/d3-')) return 'charts';
-          if (id.includes('node_modules/@xyflow')) return 'graph';
-          return undefined;
-        },
-      },
-    },
-  },
   test: {
     environment: 'jsdom',
     globals: true,
