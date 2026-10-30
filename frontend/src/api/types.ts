@@ -25,3 +25,17 @@ export type Role = S['RoleOut'];
 export type AuditEvent = S['AuditEventOut'];
 export type AuditSummary = S['AuditSummary'];
 export type ChainVerification = S['ChainVerificationOut'];
+
+export type StudentRef = S['StudentRef'];
+export type IdentityToken = S['IdentityTokenOut'];
+export type ApplicationRow = S['ApplicationRow'];
+export type ApplicationDetail = S['ApplicationDetail'];
+export type RelatedGroup = S['RelatedGroup'];
+export type ReviewUpdate = S['ReviewUpdate'];
+export type RevealResponse = S['RevealResponse'];
+export type Enrollment = S['EnrollmentOut'];
+export type DisbursementRow = S['DisbursementRow'];
+export type DisbursementDetail = S['DisbursementDetail'];
+export type DisbursementSummary = S['DisbursementSummary'];
+export type VerificationRow = S['VerificationRow'];
+export type StudentDetail = S['StudentDetail'];

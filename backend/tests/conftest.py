@@ -15,6 +15,7 @@ from pathlib import Path
 
 _TMP = Path(tempfile.mkdtemp(prefix="edushield-tests-"))
 _TEMPLATE = _TMP / "template.db"
+_SEEDED = _TMP / "seeded.db"
 os.environ["ENV"] = "test"
 os.environ["DEMO_MODE"] = "true"
 os.environ["CELERY_BROKER_URL"] = ""
@@ -57,10 +58,30 @@ def _prepare_template() -> None:
     engine.dispose()
 
 
+@pytest.fixture(scope="session")
+def seeded_db(template_db: Path) -> Path:
+    """Template plus the full synthetic dataset (all demo scenarios), generated once per session."""
+    from app.seed.base import ensure_institutions
+    from app.seed.generator import SyntheticGenerator
+
+    shutil.copy(template_db, _SEEDED)
+    engine = build_engine(f"sqlite:///{_SEEDED}")
+    with Session(engine) as db:
+        SyntheticGenerator(db, ensure_institutions(db)).run()
+        db.commit()
+    engine.dispose()
+    return _SEEDED
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    config.addinivalue_line("markers", "seeded: run against a copy of the fully seeded synthetic database")
+
+
 @pytest.fixture
-def engine(template_db: Path, tmp_path: Path) -> Iterator[Engine]:
+def engine(request: pytest.FixtureRequest, template_db: Path, tmp_path: Path) -> Iterator[Engine]:
+    source = request.getfixturevalue("seeded_db") if request.node.get_closest_marker("seeded") else template_db
     db_file = tmp_path / "test.db"
-    shutil.copy(template_db, db_file)
+    shutil.copy(source, db_file)
     eng = build_engine(f"sqlite:///{db_file}")
     SessionLocal.configure(bind=eng)
     yield eng

@@ -5,7 +5,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import ForeignKey, MetaData, Numeric, Uuid
+from sqlalchemy import ForeignKey, MetaData, Numeric, Uuid, event
 from sqlalchemy.orm import DeclarativeBase, Mapped, declared_attr, mapped_column
 
 from app.db.types import JSONType, UTCDateTime, utcnow
@@ -32,6 +32,13 @@ class Base(DeclarativeBase):
 
 class UUIDPrimaryKey:
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+
+
+@event.listens_for(Base, "init", propagate=True)
+def _assign_id_on_construction(target: object, args: tuple, kwargs: dict) -> None:
+    """Give every new entity its UUID immediately, so related rows can be linked before a flush."""
+    if isinstance(target, UUIDPrimaryKey) and kwargs.get("id") is None:
+        kwargs["id"] = uuid.uuid4()
 
 
 class Timestamps:

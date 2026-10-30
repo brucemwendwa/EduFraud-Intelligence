@@ -7,6 +7,9 @@ import { LandingPage } from '@/features/landing/LandingPage';
 import { RequireAuth } from '@/lib/auth';
 
 const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'));
+const ApplicationsPage = lazy(() => import('@/features/applications/ApplicationsPage'));
+const ApplicationDetailPage = lazy(() => import('@/features/applications/ApplicationDetailPage'));
+const DisbursementsPage = lazy(() => import('@/features/disbursements/DisbursementsPage'));
 
 export function App() {
   return (
@@ -16,6 +19,9 @@ export function App() {
       <Route element={<RequireAuth />}>
         <Route path="/app" element={<AppShell />}>
           <Route index element={<DashboardPage />} />
+          <Route path="applications" element={<ApplicationsPage />} />
+          <Route path="applications/:id" element={<ApplicationDetailPage />} />
+          <Route path="disbursements" element={<DisbursementsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Route>

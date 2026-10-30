@@ -570,6 +570,734 @@
         }
       }
     },
+    "/api/v1/applications": {
+      "get": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "Search, filter and sort applications",
+        "operationId": "list_applications_api_v1_applications_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 60
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Application or student reference",
+              "title": "Q"
+            },
+            "description": "Application or student reference"
+          },
+          {
+            "name": "risk_level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RiskLevel"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Risk Level"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ApplicationStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "review_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ReviewStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Review Status"
+            }
+          },
+          {
+            "name": "verification_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/VerificationStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Verification Status"
+            }
+          },
+          {
+            "name": "scenario",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 40
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Scenario key, 'any' or 'none'",
+              "title": "Scenario"
+            },
+            "description": "Scenario key, 'any' or 'none'"
+          },
+          {
+            "name": "institution_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Institution Id"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "submitted_at",
+                "risk_score",
+                "reference",
+                "requested_amount"
+              ],
+              "type": "string",
+              "default": "risk_score",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string",
+              "default": "desc",
+              "title": "Direction"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_ApplicationRow_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/applications/{application_id}": {
+      "get": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "Application detail with related records",
+        "operationId": "get_application_api_v1_applications__application_id__get",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Application Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/applications/{application_id}/review": {
+      "patch": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "Record a human review decision",
+        "operationId": "review_application_api_v1_applications__application_id__review_patch",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Application Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationRow"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/students/{student_id}/reveal": {
+      "post": {
+        "tags": [
+          "students"
+        ],
+        "summary": "Reveal a masked student name (justification required; recorded as a data-access event)",
+        "operationId": "reveal_student_api_v1_students__student_id__reveal_post",
+        "parameters": [
+          {
+            "name": "student_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Student Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevealRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevealResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/disbursements": {
+      "get": {
+        "tags": [
+          "disbursements"
+        ],
+        "summary": "Monitor disbursements",
+        "operationId": "list_disbursements_api_v1_disbursements_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 60
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Disbursement or student reference",
+              "title": "Q"
+            },
+            "description": "Disbursement or student reference"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/DisbursementStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "fund_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/FundType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fund Type"
+            }
+          },
+          {
+            "name": "flagged",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Flagged"
+            }
+          },
+          {
+            "name": "min_amount",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0.0
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Amount"
+            }
+          },
+          {
+            "name": "institution_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Institution Id"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "disbursed_at",
+                "amount",
+                "risk_score"
+              ],
+              "type": "string",
+              "default": "disbursed_at",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string",
+              "default": "desc",
+              "title": "Direction"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_DisbursementRow_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/disbursements/summary": {
+      "get": {
+        "tags": [
+          "disbursements"
+        ],
+        "summary": "Disbursement totals for the current scope",
+        "operationId": "summary_api_v1_disbursements_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisbursementSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/disbursements/{disbursement_id}": {
+      "get": {
+        "tags": [
+          "disbursements"
+        ],
+        "summary": "Disbursement detail",
+        "operationId": "get_disbursement_api_v1_disbursements__disbursement_id__get",
+        "parameters": [
+          {
+            "name": "disbursement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Disbursement Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisbursementDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/disbursements/{disbursement_id}/hold": {
+      "post": {
+        "tags": [
+          "disbursements"
+        ],
+        "summary": "Hold a scheduled disbursement",
+        "operationId": "hold_api_v1_disbursements__disbursement_id__hold_post",
+        "parameters": [
+          {
+            "name": "disbursement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Disbursement Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HoldRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisbursementDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/disbursements/{disbursement_id}/release": {
+      "post": {
+        "tags": [
+          "disbursements"
+        ],
+        "summary": "Release a held disbursement",
+        "operationId": "release_api_v1_disbursements__disbursement_id__release_post",
+        "parameters": [
+          {
+            "name": "disbursement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Disbursement Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HoldRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DisbursementDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/audit/events": {
       "get": {
         "tags": [
@@ -777,6 +1505,326 @@
   },
   "components": {
     "schemas": {
+      "ApplicationDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrgRef"
+          },
+          "student": {
+            "$ref": "#/components/schemas/StudentRef"
+          },
+          "submitted_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Submitted At"
+          },
+          "award_year": {
+            "type": "string",
+            "title": "Award Year"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "requested_amount": {
+            "type": "string",
+            "title": "Requested Amount"
+          },
+          "verification_status": {
+            "type": "string",
+            "title": "Verification Status"
+          },
+          "review_status": {
+            "type": "string",
+            "title": "Review Status"
+          },
+          "risk_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Score"
+          },
+          "risk_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Level"
+          },
+          "last_assessed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Assessed At"
+          },
+          "scenario_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Key"
+          },
+          "open_alerts": {
+            "type": "integer",
+            "title": "Open Alerts",
+            "default": 0
+          },
+          "dependency_status": {
+            "type": "string",
+            "title": "Dependency Status"
+          },
+          "enrollment_intensity": {
+            "type": "string",
+            "title": "Enrollment Intensity"
+          },
+          "program": {
+            "type": "string",
+            "title": "Program"
+          },
+          "student_aid_index": {
+            "type": "integer",
+            "title": "Student Aid Index"
+          },
+          "submission_channel": {
+            "type": "string",
+            "title": "Submission Channel"
+          },
+          "device_handle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device Handle"
+          },
+          "ip_handle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip Handle"
+          },
+          "student_detail": {
+            "$ref": "#/components/schemas/StudentDetail"
+          },
+          "enrollments": {
+            "items": {
+              "$ref": "#/components/schemas/EnrollmentOut"
+            },
+            "type": "array",
+            "title": "Enrollments"
+          },
+          "disbursements": {
+            "items": {
+              "$ref": "#/components/schemas/DisbursementRow"
+            },
+            "type": "array",
+            "title": "Disbursements"
+          },
+          "verifications": {
+            "items": {
+              "$ref": "#/components/schemas/VerificationRow"
+            },
+            "type": "array",
+            "title": "Verifications"
+          },
+          "related": {
+            "items": {
+              "$ref": "#/components/schemas/RelatedGroup"
+            },
+            "type": "array",
+            "title": "Related"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reference",
+          "organization",
+          "student",
+          "submitted_at",
+          "award_year",
+          "status",
+          "requested_amount",
+          "verification_status",
+          "review_status",
+          "risk_score",
+          "risk_level",
+          "last_assessed_at",
+          "scenario_key",
+          "dependency_status",
+          "enrollment_intensity",
+          "program",
+          "student_aid_index",
+          "submission_channel",
+          "device_handle",
+          "ip_handle",
+          "student_detail",
+          "enrollments",
+          "disbursements",
+          "verifications",
+          "related"
+        ],
+        "title": "ApplicationDetail"
+      },
+      "ApplicationRow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrgRef"
+          },
+          "student": {
+            "$ref": "#/components/schemas/StudentRef"
+          },
+          "submitted_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Submitted At"
+          },
+          "award_year": {
+            "type": "string",
+            "title": "Award Year"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "requested_amount": {
+            "type": "string",
+            "title": "Requested Amount"
+          },
+          "verification_status": {
+            "type": "string",
+            "title": "Verification Status"
+          },
+          "review_status": {
+            "type": "string",
+            "title": "Review Status"
+          },
+          "risk_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Score"
+          },
+          "risk_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Level"
+          },
+          "last_assessed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Assessed At"
+          },
+          "scenario_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Key"
+          },
+          "open_alerts": {
+            "type": "integer",
+            "title": "Open Alerts",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reference",
+          "organization",
+          "student",
+          "submitted_at",
+          "award_year",
+          "status",
+          "requested_amount",
+          "verification_status",
+          "review_status",
+          "risk_score",
+          "risk_level",
+          "last_assessed_at",
+          "scenario_key"
+        ],
+        "title": "ApplicationRow"
+      },
+      "ApplicationStatus": {
+        "type": "string",
+        "enum": [
+          "received",
+          "in_review",
+          "approved",
+          "on_hold",
+          "withdrawn"
+        ],
+        "title": "ApplicationStatus"
+      },
       "AuditCategory": {
         "type": "string",
         "enum": [
@@ -1131,6 +2179,477 @@
         ],
         "title": "DemoAccount"
       },
+      "DestinationOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "handle": {
+            "type": "string",
+            "title": "Handle"
+          },
+          "destination_type": {
+            "type": "string",
+            "title": "Destination Type"
+          },
+          "display_suffix": {
+            "type": "string",
+            "title": "Display Suffix"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "handle",
+          "destination_type",
+          "display_suffix"
+        ],
+        "title": "DestinationOut"
+      },
+      "DestinationUsage": {
+        "properties": {
+          "students_in_scope": {
+            "type": "integer",
+            "title": "Students In Scope"
+          },
+          "students_other_institutions": {
+            "type": "integer",
+            "title": "Students Other Institutions"
+          },
+          "first_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "First Seen At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "students_in_scope",
+          "students_other_institutions",
+          "first_seen_at"
+        ],
+        "title": "DestinationUsage"
+      },
+      "DisbursementDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrgRef"
+          },
+          "student": {
+            "$ref": "#/components/schemas/StudentRef"
+          },
+          "application_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Id"
+          },
+          "application_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Ref"
+          },
+          "fund_type": {
+            "type": "string",
+            "title": "Fund Type"
+          },
+          "amount": {
+            "type": "string",
+            "title": "Amount"
+          },
+          "disbursed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Disbursed At"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "destination": {
+            "$ref": "#/components/schemas/DestinationOut"
+          },
+          "destination_changed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination Changed At"
+          },
+          "risk_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Score"
+          },
+          "risk_flags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Risk Flags"
+          },
+          "hold_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hold Reason"
+          },
+          "held_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Held At"
+          },
+          "destination_usage": {
+            "$ref": "#/components/schemas/DestinationUsage"
+          },
+          "same_destination": {
+            "items": {
+              "$ref": "#/components/schemas/DisbursementRow"
+            },
+            "type": "array",
+            "title": "Same Destination"
+          },
+          "student_disbursements": {
+            "items": {
+              "$ref": "#/components/schemas/DisbursementRow"
+            },
+            "type": "array",
+            "title": "Student Disbursements"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reference",
+          "organization",
+          "student",
+          "application_id",
+          "application_ref",
+          "fund_type",
+          "amount",
+          "disbursed_at",
+          "status",
+          "destination",
+          "destination_changed_at",
+          "risk_score",
+          "risk_flags",
+          "hold_reason",
+          "held_at",
+          "destination_usage",
+          "same_destination",
+          "student_disbursements"
+        ],
+        "title": "DisbursementDetail"
+      },
+      "DisbursementRow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrgRef"
+          },
+          "student": {
+            "$ref": "#/components/schemas/StudentRef"
+          },
+          "application_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Id"
+          },
+          "application_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Ref"
+          },
+          "fund_type": {
+            "type": "string",
+            "title": "Fund Type"
+          },
+          "amount": {
+            "type": "string",
+            "title": "Amount"
+          },
+          "disbursed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Disbursed At"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "destination": {
+            "$ref": "#/components/schemas/DestinationOut"
+          },
+          "destination_changed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination Changed At"
+          },
+          "risk_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Score"
+          },
+          "risk_flags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Risk Flags"
+          },
+          "hold_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hold Reason"
+          },
+          "held_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Held At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reference",
+          "organization",
+          "student",
+          "application_id",
+          "application_ref",
+          "fund_type",
+          "amount",
+          "disbursed_at",
+          "status",
+          "destination",
+          "destination_changed_at",
+          "risk_score",
+          "risk_flags",
+          "hold_reason",
+          "held_at"
+        ],
+        "title": "DisbursementRow"
+      },
+      "DisbursementStatus": {
+        "type": "string",
+        "enum": [
+          "scheduled",
+          "released",
+          "held",
+          "reversed"
+        ],
+        "title": "DisbursementStatus"
+      },
+      "DisbursementSummary": {
+        "properties": {
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count"
+          },
+          "total_amount": {
+            "type": "string",
+            "title": "Total Amount"
+          },
+          "flagged_count": {
+            "type": "integer",
+            "title": "Flagged Count"
+          },
+          "flagged_amount": {
+            "type": "string",
+            "title": "Flagged Amount"
+          },
+          "held_count": {
+            "type": "integer",
+            "title": "Held Count"
+          },
+          "held_amount": {
+            "type": "string",
+            "title": "Held Amount"
+          },
+          "scheduled_count": {
+            "type": "integer",
+            "title": "Scheduled Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_count",
+          "total_amount",
+          "flagged_count",
+          "flagged_amount",
+          "held_count",
+          "held_amount",
+          "scheduled_count"
+        ],
+        "title": "DisbursementSummary"
+      },
+      "EnrollmentOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Organization Id"
+          },
+          "term": {
+            "type": "string",
+            "title": "Term"
+          },
+          "term_start": {
+            "type": "string",
+            "format": "date",
+            "title": "Term Start"
+          },
+          "program": {
+            "type": "string",
+            "title": "Program"
+          },
+          "credit_hours": {
+            "type": "integer",
+            "title": "Credit Hours"
+          },
+          "modality": {
+            "type": "string",
+            "title": "Modality"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "last_attendance_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Attendance At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "organization_id",
+          "term",
+          "term_start",
+          "program",
+          "credit_hours",
+          "modality",
+          "status",
+          "last_attendance_at"
+        ],
+        "title": "EnrollmentOut"
+      },
+      "FundType": {
+        "type": "string",
+        "enum": [
+          "pell_grant",
+          "direct_subsidized",
+          "direct_unsubsidized",
+          "institutional_grant",
+          "credit_balance_refund"
+        ],
+        "title": "FundType"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1143,6 +2662,51 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "HoldRequest": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 5,
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "HoldRequest"
+      },
+      "IdentityTokenOut": {
+        "properties": {
+          "token_type": {
+            "type": "string",
+            "title": "Token Type"
+          },
+          "handle": {
+            "type": "string",
+            "title": "Handle"
+          },
+          "shared_in_scope": {
+            "type": "integer",
+            "title": "Shared In Scope",
+            "description": "Other student records in your scope with the same token"
+          },
+          "shared_other_institutions": {
+            "type": "integer",
+            "title": "Shared Other Institutions",
+            "description": "Matches at other institutions (count only; details hidden)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token_type",
+          "handle",
+          "shared_in_scope",
+          "shared_other_institutions"
+        ],
+        "title": "IdentityTokenOut"
       },
       "LoginRequest": {
         "properties": {
@@ -1488,6 +3052,37 @@
         "type": "object",
         "title": "OrganizationUpdate"
       },
+      "Page_ApplicationRow_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicationRow"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "Page[ApplicationRow]"
+      },
       "Page_AuditEventOut_": {
         "properties": {
           "items": {
@@ -1518,6 +3113,37 @@
           "page_size"
         ],
         "title": "Page[AuditEventOut]"
+      },
+      "Page_DisbursementRow_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DisbursementRow"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "Page[DisbursementRow]"
       },
       "Page_UserOut_": {
         "properties": {
@@ -1572,6 +3198,207 @@
           "category"
         ],
         "title": "PermissionOut"
+      },
+      "RelatedApplication": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "student_ref": {
+            "type": "string",
+            "title": "Student Ref"
+          },
+          "organization_name": {
+            "type": "string",
+            "title": "Organization Name"
+          },
+          "risk_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Level"
+          },
+          "risk_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reference",
+          "student_ref",
+          "organization_name",
+          "risk_level",
+          "risk_score"
+        ],
+        "title": "RelatedApplication"
+      },
+      "RelatedGroup": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "handle": {
+            "type": "string",
+            "title": "Handle"
+          },
+          "matches": {
+            "items": {
+              "$ref": "#/components/schemas/RelatedApplication"
+            },
+            "type": "array",
+            "title": "Matches"
+          },
+          "other_institution_matches": {
+            "type": "integer",
+            "title": "Other Institution Matches"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "label",
+          "handle",
+          "matches",
+          "other_institution_matches"
+        ],
+        "title": "RelatedGroup"
+      },
+      "RevealRequest": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 5,
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "RevealRequest"
+      },
+      "RevealResponse": {
+        "properties": {
+          "student_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Student Id"
+          },
+          "first_name": {
+            "type": "string",
+            "title": "First Name"
+          },
+          "last_name": {
+            "type": "string",
+            "title": "Last Name"
+          },
+          "revealed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Revealed At"
+          },
+          "notice": {
+            "type": "string",
+            "title": "Notice",
+            "default": "This access has been recorded in the audit trail."
+          }
+        },
+        "type": "object",
+        "required": [
+          "student_id",
+          "first_name",
+          "last_name",
+          "revealed_at"
+        ],
+        "title": "RevealResponse"
+      },
+      "ReviewStatus": {
+        "type": "string",
+        "enum": [
+          "unreviewed",
+          "in_review",
+          "cleared",
+          "escalated"
+        ],
+        "title": "ReviewStatus"
+      },
+      "ReviewUpdate": {
+        "properties": {
+          "review_status": {
+            "type": "string",
+            "enum": [
+              "in_review",
+              "cleared",
+              "escalated"
+            ],
+            "title": "Review Status"
+          },
+          "application_status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "in_review",
+                  "on_hold",
+                  "approved"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Status"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 5,
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "review_status",
+          "note"
+        ],
+        "title": "ReviewUpdate",
+        "description": "A human review decision. The platform never changes status on its own."
+      },
+      "RiskLevel": {
+        "type": "string",
+        "enum": [
+          "low",
+          "medium",
+          "high",
+          "critical"
+        ],
+        "title": "RiskLevel"
       },
       "RoleOut": {
         "properties": {
@@ -1632,6 +3459,90 @@
           "name"
         ],
         "title": "RoleRef"
+      },
+      "StudentDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "student_ref": {
+            "type": "string",
+            "title": "Student Ref"
+          },
+          "masked_name": {
+            "type": "string",
+            "title": "Masked Name"
+          },
+          "birth_year": {
+            "type": "integer",
+            "title": "Birth Year"
+          },
+          "state_of_residence": {
+            "type": "string",
+            "title": "State Of Residence"
+          },
+          "biometric_consent": {
+            "type": "boolean",
+            "title": "Biometric Consent"
+          },
+          "biometric_consent_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Biometric Consent At"
+          },
+          "identity_tokens": {
+            "items": {
+              "$ref": "#/components/schemas/IdentityTokenOut"
+            },
+            "type": "array",
+            "title": "Identity Tokens"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "student_ref",
+          "masked_name",
+          "birth_year",
+          "state_of_residence",
+          "biometric_consent",
+          "biometric_consent_at",
+          "identity_tokens"
+        ],
+        "title": "StudentDetail"
+      },
+      "StudentRef": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "student_ref": {
+            "type": "string",
+            "title": "Student Ref"
+          },
+          "masked_name": {
+            "type": "string",
+            "title": "Masked Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "student_ref",
+          "masked_name"
+        ],
+        "title": "StudentRef"
       },
       "TokenResponse": {
         "properties": {
@@ -1913,6 +3824,114 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VerificationRow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "trigger": {
+            "type": "string",
+            "title": "Trigger"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "provider_mode": {
+            "type": "string",
+            "title": "Provider Mode"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "face_match_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Face Match Score"
+          },
+          "liveness_result": {
+            "type": "string",
+            "title": "Liveness Result"
+          },
+          "pad_result": {
+            "type": "string",
+            "title": "Pad Result"
+          },
+          "pad_attack_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pad Attack Type"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reference",
+          "trigger",
+          "method",
+          "provider",
+          "provider_mode",
+          "status",
+          "face_match_score",
+          "liveness_result",
+          "pad_result",
+          "pad_attack_type",
+          "completed_at",
+          "created_at"
+        ],
+        "title": "VerificationRow"
+      },
+      "VerificationStatus": {
+        "type": "string",
+        "enum": [
+          "not_required",
+          "pending",
+          "passed",
+          "failed",
+          "manual_review"
+        ],
+        "title": "VerificationStatus"
       }
     }
   },
