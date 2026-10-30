@@ -69,3 +69,34 @@ export const scenarioLabels: Record<string, string> = {
 };
 
 export const isControlScenario = (key: string | null | undefined) => Boolean(key?.startsWith('control_'));
+
+export const priorityTone: Record<string, Tone> = {
+  low: 'neutral',
+  medium: 'blue',
+  high: 'high',
+  urgent: 'critical',
+};
+
+/** What people have established about a case. Distinct from the AI's risk level, and only changed by a decision. */
+export const findingMeta: Record<string, { label: string; tone: Tone; help: string }> = {
+  suspicious_activity: {
+    label: 'Suspicious activity',
+    tone: 'warning',
+    help: 'Raised by detection signals. Nothing has been established yet.',
+  },
+  suspected_fraud: {
+    label: 'Suspected fraud',
+    tone: 'high',
+    help: 'An investigator judged the evidence serious enough to escalate or refer. Not a finding.',
+  },
+  confirmed_fraud: {
+    label: 'Confirmed finding',
+    tone: 'critical',
+    help: 'An investigator recorded a confirmed finding with supporting evidence and justification.',
+  },
+  not_substantiated: {
+    label: 'Not substantiated',
+    tone: 'success',
+    help: 'The investigation did not establish fraud. No adverse finding about the student.',
+  },
+};

@@ -46,9 +46,16 @@ yet do. For the technical breakdown of rules, models and simulations, see [AI_DI
 - Roles separate duties. Financial aid officers handle day-to-day review. Fraud investigators can also re-run
   assessments and detection. Auditors can see the work and the audit trail but cannot change anything or see
   unmasked names.
-- The investigation-case API supports evidence, notes, assignment and resolution, with tenant scoping, permissions
-  and audit records. The full investigator workspace UI and a visual timeline are not yet built; today, staff use
-  the alert, application and disbursement screens alongside the API workflow.
+- **Investigation cases are where people decide.** An alert or application becomes a case with its supporting
+  records (alerts, the risk assessment, failed verifications, flagged disbursements) attached as server-side
+  snapshots. Investigators assign the case, add notes and evidence, and see a timeline built from the audit trail.
+- **Suspicion and findings stay distinct.** A case starts as *suspicious activity*. Only a recorded human decision
+  can move it to *suspected fraud* (escalation or external referral), to a *confirmed finding*, or to *not
+  substantiated*. Cases can be resolved as "no fraud found" or "insufficient evidence" without any adverse finding.
+- **Every decision is justified and attributable.** Each decision stores the investigator, the timestamp and a written
+  justification, and the investigator must confirm it is their own decision, not the AI's. A confirmed finding
+  additionally requires attached evidence and a fuller justification. Resolving a case closes its alerts and records
+  the review outcome, but never changes a student's aid status: that stays with the institution's due process.
 
 ## 4. False positives and potential bias
 

@@ -20,6 +20,7 @@ export function useApplication(id: string) {
   return useQuery({
     queryKey: applicationKeys.detail(id),
     queryFn: async () => (await api.get<ApplicationDetail>(`/applications/${id}`)).data,
+    enabled: Boolean(id),
   });
 }
 

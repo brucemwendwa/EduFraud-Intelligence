@@ -19,7 +19,13 @@ interface Props {
   id: string | null;
   onClose: () => void;
   /** Extra actions (e.g. "Open investigation") supplied by the caller. */
-  extraActions?: (alertId: string, applicationId: string | null, status: string) => ReactNode;
+  extraActions?: (
+    alertId: string,
+    applicationId: string | null,
+    status: string,
+    caseId: string | null,
+    caseRef: string | null,
+  ) => ReactNode;
 }
 
 export function AlertDrawer({ id, onClose, extraActions }: Props) {
@@ -55,7 +61,7 @@ export function AlertDrawer({ id, onClose, extraActions }: Props) {
       {canTriage && a.status === 'dismissed' && (
         <Button variant="secondary" icon={<RotateCcw className="size-4" />} loading={triage.isPending} onClick={() => act('reopen')}>Reopen</Button>
       )}
-      {extraActions?.(a.id, a.application_id ?? null, a.status)}
+      {extraActions?.(a.id, a.application_id ?? null, a.status, a.case_id ?? null, a.case_ref ?? null)}
     </>
   );
 

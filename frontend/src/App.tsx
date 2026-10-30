@@ -14,6 +14,8 @@ const AlertsPage = lazy(() => import('@/features/alerts/AlertsPage'));
 const EnginePage = lazy(() => import('@/features/engine/EnginePage'));
 const VerificationPage = lazy(() => import('@/features/verification/VerificationPage'));
 const NetworkPage = lazy(() => import('@/features/network/NetworkPage'));
+const CasesPage = lazy(() => import('@/features/cases/CasesPage'));
+const CaseWorkspacePage = lazy(() => import('@/features/cases/CaseWorkspacePage'));
 
 export function App() {
   return (
@@ -30,6 +32,8 @@ export function App() {
           <Route path="engine" element={<EnginePage />} />
           <Route path="verification" element={<VerificationPage />} />
           <Route path="network" element={<NetworkPage />} />
+          <Route path="cases" element={<CasesPage />} />
+          <Route path="cases/:id" element={<CaseWorkspacePage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Route>

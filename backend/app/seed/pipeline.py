@@ -25,6 +25,7 @@ def seed_synthetic(db: Session, orgs: dict[str, Organization]) -> tuple[Generati
     seed_verification_events(db)
     stats = run_seed_detection(db)
     backdate_alerts(db)
+    seed_cases(db)
     return summary, stats
 
 
@@ -125,4 +126,133 @@ def backdate_alerts(db: Session, seed: int = 7) -> None:
             for signal in assessment.signals:
                 signal.created_at = when
             app.last_assessed_at = when
+    db.flush()
+
+
+def seed_cases(db: Session) -> None:
+    """A realistic caseload created through the real case service (so the audit trail is genuine).
+
+    The impersonation and unusual-disbursement alerts are deliberately left without cases for the live demo.
+    """
+    from app.models import User
+    from app.models.enums import CaseDecisionType, CaseResolution
+    from app.services import cases
+
+    users = {u.email: u for u in db.scalars(select(User))}
+    marcus = users.get("investigator@northbridge.demo")
+    dana = users.get("analyst@northbridge.demo")
+    elena = users.get("officer@northbridge.demo")
+    hannah = users.get("investigator@lakeshore.demo")
+    if not all((marcus, dana, elena, hannah)):
+        return
+
+    def first(scenario: str | None, org_slug: str, **filters: object) -> FinancialAidApplication | None:
+        stmt = (
+            select(FinancialAidApplication)
+            .join(Organization, Organization.id == FinancialAidApplication.organization_id)
+            .where(Organization.slug == org_slug)
+            .order_by(FinancialAidApplication.reference)
+        )
+        stmt = (
+            stmt.where(FinancialAidApplication.scenario_key == scenario)
+            if scenario
+            else stmt.where(FinancialAidApplication.scenario_key.is_(None))
+        )
+        for column, value in filters.items():
+            stmt = stmt.where(getattr(FinancialAidApplication, column) == value)
+        return db.scalar(stmt)
+
+    def open_for(app: FinancialAidApplication | None, opener: User, assignee: User | None) -> object | None:
+        if app is None:
+            return None
+        return cases.open_case(
+            db,
+            opener,
+            app=app,
+            alert=None,
+            title=None,
+            fraud_category=None,
+            priority=None,
+            assignee_id=assignee.id if assignee else None,
+            due_at=None,
+        )
+
+    dup = open_for(first("duplicate_identity", "northbridge"), marcus, marcus)  # type: ignore[arg-type]
+    if dup is not None:
+        cases.start_review(db, dup, marcus, None)  # type: ignore[arg-type]
+        cases.add_note(
+            db,
+            dup,
+            marcus,
+            "Three Northbridge applications and one at another institution share one "  # type: ignore[arg-type]
+            "SSN token with different names and birth dates, all submitted from one device within 40 minutes.",
+            None,
+        )
+        cases.decide(
+            db,
+            dup,
+            marcus,
+            decision=CaseDecisionType.ESCALATE,
+            outcome=None,
+            request=None,  # type: ignore[arg-type]
+            justification="Identity conflict plus a single-device burst points to a synthetic-identity "
+            "scheme. Escalating as suspected fraud; holding any disbursement pending contact with each "
+            "applicant through verified channels.",
+        )
+
+    shared = open_for(first("shared_destination", "northbridge"), dana, dana)  # type: ignore[arg-type]
+    if shared is not None:
+        cases.add_note(
+            db,
+            shared,
+            dana,
+            "Refunds for four Northbridge students and two elsewhere go to one prepaid "  # type: ignore[arg-type]
+            "card. Students reached so far say they did not change their refund preference.",
+            None,
+        )
+        cases.decide(
+            db,
+            shared,
+            dana,
+            decision=CaseDecisionType.RESOLVE,  # type: ignore[arg-type]
+            outcome=CaseResolution.REFERRED_EXTERNALLY,
+            request=None,
+            justification="Pattern spans institutions and points to a third party redirecting refunds. "
+            "Referred to the compliance office for external review; no finding is made about the students.",
+        )
+
+    medium = first(None, "northbridge", risk_level="medium")
+    referral = open_for(medium, elena, marcus)  # type: ignore[arg-type]
+    if referral is not None:
+        cases.add_note(
+            db,
+            referral,
+            marcus,
+            "Student confirmed by phone (number on file since enrollment) that they "  # type: ignore[arg-type]
+            "changed banks after their old account closed.",
+            None,
+        )
+        cases.decide(
+            db,
+            referral,
+            marcus,
+            decision=CaseDecisionType.RESOLVE,  # type: ignore[arg-type]
+            outcome=CaseResolution.NO_FRAUD_FOUND,
+            request=None,
+            justification="Bank change explained and confirmed through a known-good channel. No fraud "
+            "found; the medium score reflected an unverified change, which is now verified.",
+        )
+        cases.decide(
+            db,
+            referral,
+            marcus,
+            decision=CaseDecisionType.CLOSE,
+            outcome=None,
+            request=None,  # type: ignore[arg-type]
+            justification="Resolution communicated to the financial aid office; nothing further required.",
+        )
+
+    ring = open_for(first("coordinated_network", "lakeshore"), hannah, hannah)  # type: ignore[arg-type]
+    if ring is not None:
+        cases.start_review(db, ring, hannah, None)  # type: ignore[arg-type]
     db.flush()

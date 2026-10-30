@@ -41,6 +41,7 @@ TAGS = [
     {"name": "alerts", "description": "Fraud alert triage"},
     {"name": "network", "description": "Fraud relationship graph"},
     {"name": "cases", "description": "Investigation case management"},
+    {"name": "cases", "description": "Investigation cases: evidence, notes, assignment, justified human decisions"},
     {"name": "detection", "description": "Detection engine status and runs"},
     {"name": "audit", "description": "Tamper-evident audit trail"},
     {"name": "organizations", "description": "Institutions"},

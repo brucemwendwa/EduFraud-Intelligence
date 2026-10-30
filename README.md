@@ -81,7 +81,7 @@ The full reasoning is in [docs/HUMAN_IMPACT_AND_TRUST.md](docs/HUMAN_IMPACT_AND_
 | Authentication, 5 roles, tenant isolation, PII masking | **Operational** | Enforced by the API and covered by automated tests |
 | Tamper-evident audit trail (hash chain + DB triggers) | **Operational (API)** | Integrity check at `GET /api/v1/audit/verify`; audit center UI planned |
 | Student, application and payment data | **Synthetic** | Generated; no real students, FSA or FAFSA data |
-| Investigation-case workflow | **Operational (API)** | Open from an alert/application; assign, add evidence/notes, resolve; every action is permission-checked and audited. Investigator UI planned. |
+| Investigation cases | **Operational** | Open from an alert or application with its supporting records attached; assign, add evidence and notes, and record justified decisions (escalate, resolve, reopen, close) that keep suspicion, suspected fraud and confirmed findings distinct. Timeline built from the audit trail. |
 | Dashboard analytics, audit center, institution and user admin screens, settings | **Planned** | Shown as "Planned" in the app; not built |
 | Commercial identity-verification vendor, SIS / aid-system integrations, trained ML models | **Planned** | See [Roadmap](#roadmap) |
 
@@ -135,7 +135,7 @@ The full reasoning is in [docs/HUMAN_IMPACT_AND_TRUST.md](docs/HUMAN_IMPACT_AND_
 │   ├── alembic/             # migrations (including audit-immutability triggers)
 │   ├── app/
 │   │   ├── api/v1/          # routers: auth, organizations, users, applications, students,
-│   │   │                    #          disbursements, verifications, alerts, detection, network, audit
+│   │   │                    #          disbursements, verifications, alerts, detection, network, cases, audit
 │   │   ├── biometrics/      # provider interface + simulated provider
 │   │   ├── core/            # config, security, tokenization, crypto, logging, middleware, rate limit
 │   │   ├── db/              # engine, session, portable column types
@@ -143,16 +143,17 @@ The full reasoning is in [docs/HUMAN_IMPACT_AND_TRUST.md](docs/HUMAN_IMPACT_AND_
 │   │   ├── models/          # SQLAlchemy models
 │   │   ├── schemas/         # Pydantic request/response models
 │   │   ├── seed/            # deterministic synthetic data generator
-│   │   ├── services/        # business logic (alerts, audit, verification, records, …)
+│   │   ├── services/        # business logic (alerts, audit, cases, verification, records, …)
 │   │   └── workers/         # Celery app and inline job fallback
 │   └── tests/
 └── frontend/
     ├── package.json
+    ├── e2e/                 # Playwright browser test of the investigation workflow
     └── src/
         ├── api/             # generated OpenAPI types
         ├── components/      # layout shell and shared UI
         ├── features/        # landing, auth, dashboard, alerts, applications,
-        │                    # disbursements, engine, verification, network
+        │                    # disbursements, engine, verification, network, cases
         └── lib/             # API client, auth context, permissions, formatting
 ```
 
@@ -273,15 +274,20 @@ used by the Swagger UI "Authorize" button). Five failed sign-ins lock an account
 4. Choose **Verify identity**, pick a trigger and a synthetic test sample such as *Printed photo of the student*, and
    run it. The simulated provider reports each stage, the application is re-scored, and the recommended next step
    is shown.
-5. Open **Fraud network** and select the critical cluster. As a Northbridge investigator you see the impersonated
+5. Choose **Open investigation**. The case opens with the alert, the risk assessment, the failed verification and the
+   flagged disbursement already attached as evidence. Assign it, add a note, then **Record decision**: escalate as
+   suspected fraud, or resolve as no fraud found, insufficient evidence, an external referral or, only with attached
+   evidence and a fuller justification, a confirmed finding. Each decision records who made it, when and why, and the
+   **Timeline** tab shows the audit history.
+6. Open **Fraud network** and select the critical cluster. As a Northbridge investigator you see the impersonated
    student's application linked to a payment destination that other institutions' records also use; those records
    appear only as anonymised placeholders. Sign in as **`admin@edushield.demo`** to see the whole ring.
-6. Open **Detection engine**. It lists every rule and its weight, the anomaly model card, and a live
+7. Open **Detection engine**. It lists every rule and its weight, the anomaly model card, and a live
    **scenario coverage** check confirming that each planted scenario fires its expected signals and that legitimate
    controls stay below high.
-7. Sign in as **`auditor@northbridge.demo`**: the same records are visible, names stay masked, and actions that change
+8. Sign in as **`auditor@northbridge.demo`**: the same records are visible, names stay masked, and actions that change
    data are refused.
-8. Sign in as **`investigator@lakeshore.demo`**: Northbridge's records are invisible. Each institution sees only its own
+9. Sign in as **`investigator@lakeshore.demo`**: Northbridge's records are invisible. Each institution sees only its own
    data.
 
 ## How fraud detection works
@@ -368,6 +374,7 @@ defence); the web client does this automatically.
 | Alerts | `GET /alerts`, `GET /alerts/summary`, `GET /alerts/{id}`, `PATCH /alerts/{id}` |
 | Detection | `GET /detection/status`, `POST /detection/runs`, `GET /detection/runs/{id}`, `GET /detection/scenario-validation` |
 | Fraud network | `GET /network/clusters`, `GET /network/graph?cluster=CL-…` or `?focus={application_id}` (viewing is audited) |
+| Investigation cases | `GET /cases` (filter by status, assignee, finding), `GET /cases/summary`, `GET /cases/assignees`, `POST /cases`, `GET /cases/{id}`, `PATCH /cases/{id}`, `POST /cases/{id}/assign`, `POST /cases/{id}/notes`, `POST /cases/{id}/evidence`, `POST /cases/{id}/decision` |
 | Audit | `GET /audit/events`, `GET /audit/summary`, `GET /audit/verify` |
 
 Example with a bearer token:
@@ -387,6 +394,7 @@ make frontend-test    # Vitest component tests
 make lint             # ruff + ESLint
 cd frontend && npm run typecheck   # TypeScript
 make build            # production build of the web client (frontend/dist)
+make e2e              # Playwright: investigation workflow in Chrome (needs `make seed` and `make dev` running)
 ```
 
 Backend tests run against real Alembic migrations on throwaway SQLite files, so they need no running services.
@@ -422,11 +430,11 @@ Backend tests run against real Alembic migrations on throwaway SQLite files, so 
   has run on SQLite.
 - **No container setup.** There are no Dockerfiles or compose files yet.
 - **Screens not built yet:** dashboard analytics (the dashboard currently links to the working modules),
-  investigation case management UI (the API is operational), the audit center, institution and user
+  the audit center, institution and user
   administration, settings, global search and notifications. Their sidebar entries are marked "Planned". The
   institution, user and audit **APIs** exist.
-- **Test coverage gaps.** There is no automated end-to-end browser test (the `make e2e` target has no tests yet), and
-  the verification wizard has no component test; it has been exercised manually.
+- **Test coverage gaps.** The only browser end-to-end test (`make e2e`) covers the investigation-case workflow; other
+  journeys are tested at the API and component level only, and the verification wizard has no component test.
 - **Single-process rate limiting.** The login limiter is in-process; a multi-instance deployment would need a shared
   store such as Redis.
 - **Development secrets.** `.env.example` and the defaults contain development placeholders, and the demo password is
@@ -434,9 +442,9 @@ Backend tests run against real Alembic migrations on throwaway SQLite files, so 
 
 ## Roadmap
 
-1. **Finish the investigator experience:** investigation-case UI (the API supports evidence, notes, assignment and
-   resolution), dashboard analytics, the audit center and institution, user and settings screens.
-2. **Production readiness:** verified PostgreSQL deployment, container images, an end-to-end test suite, and
+1. **Finish the investigator experience:** dashboard analytics, the audit center and institution, user and settings
+   screens.
+2. **Production readiness:** verified PostgreSQL deployment, container images, a broader end-to-end test suite, and
    Redis-backed rate limiting and job queues.
 3. **Real identity verification:** integrate an authorized commercial identity-verification vendor through the
    existing provider interface, with an institutional contract, a privacy review and student-facing consent flows.

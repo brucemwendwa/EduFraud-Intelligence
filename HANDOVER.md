@@ -1,6 +1,7 @@
 # EduShield AI Handover
 
-Status snapshot: 2026-10-30. This document reflects the repository at commit `d1cc3b4` on `main`.
+Status snapshot: 2026-10-30. This document reflects the repository after the Phase 9 investigation-workspace commit
+(branch `phase9-cases`, based on `59b36db`).
 
 ## Repository and Git status
 
@@ -20,6 +21,12 @@ The following has implementation and automated coverage unless stated otherwise:
 - Fraud alerts, application reviews, disbursement hold/release controls, fraud-network graph explorer, and detection-run/scenario-validation APIs.
 - Consent-gated identity-verification workflow with a clearly labelled deterministic simulated biometric provider and officer-led alternatives.
 - Frontend pages for sign-in, applications/details, alerts, disbursements, verification, network exploration, and detection-engine transparency.
+- Investigation cases end to end: open from an alert or application (supporting records snapshotted as evidence),
+  assignment with notifications, append-only notes, evidence attachment scoped to the institution, a case timeline
+  from the audit trail, and justified human decisions (escalate, resolve with outcome, reopen, close) recorded with
+  investigator and timestamp. Findings stay distinct (suspicious activity, suspected fraud, confirmed fraud, not
+  substantiated); confirmed fraud requires evidence and a fuller justification. Workspace UI and alert/application
+  handoff buttons are built, with backend tests and a Playwright browser test of the full workflow.
 
 Verified in this checkout:
 
@@ -29,7 +36,6 @@ Verified in this checkout:
 
 ## Partially implemented
 
-- Investigation cases: the tenant-scoped backend now supports opening a case from an alert/application, assignment, updates, append-only notes/evidence, resolution, alerts linked to a case, audit events, and permission checks. The investigator frontend route/UI is still pending.
 - Audit centre: audit APIs exist and are permission-checked, but there is no frontend audit-centre page.
 - Dashboard: current page is a working role-aware launcher for operational modules, not portfolio analytics.
 - Institutions/users: APIs exist; administration screens are not built.
@@ -38,9 +44,8 @@ Verified in this checkout:
 
 ## Not implemented
 
-- Investigation workspace frontend and alert-to-case handoff UI.
 - Dashboard analytics, audit-centre UI, institution/user admin UI, settings, notifications, and global search.
-- Browser end-to-end tests (the Makefile target exists but no Playwright tests are present).
+- Browser end-to-end tests beyond the investigation workflow (`frontend/e2e/case-workflow.spec.ts`).
 - Container image/Compose or other deployable infrastructure.
 - SIS, financial-aid-system, Federal Student Aid, and commercial identity-verification integrations.
 - Real biometric processing, trained fraud models, real-data validation, fairness monitoring, and student portal/appeal workflow.
@@ -55,7 +60,9 @@ Verified in this checkout:
 
 ## Database and migration status
 
-- Alembic revision `0001_initial_schema` is the only migration and creates all current tables, including cases, notifications, alerts, verification, and audit-chain protections.
+- Alembic revision `0001_initial_schema` creates the core tables and audit-chain protections; revision `0003`
+  (`0003_case_decisions.py`, down-revision `0001`) adds `case_decisions` and `investigation_cases.finding`. Other
+  in-flight branches add their own revisions off `0001`; whichever merges second must re-point its down-revision.
 - Apply migrations locally with `make migrate`.
 - Load/reset only synthetic demo data with `make seed`. This command drops and recreates demonstration tables, including audit records; never use it against real data.
 - A production PostgreSQL migration/app startup test remains required before deployment.
@@ -104,9 +111,7 @@ There is no deployment configuration yet. Before public deployment:
 
 ## Exact next steps
 
-1. Add the investigator case UI and alert-to-case handoff; keep the existing backend tenant isolation, permission checks, and audit events intact.
-2. Add frontend tests for the case workflow and expand backend coverage for assignment/update edge cases.
-3. Build the audit centre from the existing audit APIs, then replace the dashboard launcher with scoped operational analytics.
-4. Add institution/user administration UI only after the investigative path is complete.
-5. Add browser E2E coverage for login, alert triage, case workflow, verification consent/alternative flow, and disbursement hold/release.
-6. Add production deployment infrastructure and validate it end to end on PostgreSQL before submission.
+1. Build the audit centre from the existing audit APIs, then replace the dashboard launcher with scoped operational analytics.
+2. Add institution/user administration UI.
+3. Extend browser E2E coverage to alert triage, the verification consent/alternative flow and disbursement hold/release.
+4. Add production deployment infrastructure and validate it end to end on PostgreSQL before submission.

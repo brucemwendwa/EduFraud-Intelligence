@@ -22,6 +22,7 @@ import {
   scenarioLabels,
   verificationStatusTone,
 } from '@/lib/status';
+import { OpenCaseButton } from '@/features/cases/OpenCaseButton';
 import { VerificationWizard } from '@/features/verification/VerificationWizard';
 import { useApplication } from './api';
 import { ReviewDialog } from './ReviewDialog';
@@ -51,6 +52,8 @@ function ApplicationView({ app }: { app: ApplicationDetail }) {
   const { can } = useAuth();
   const [reviewOpen, setReviewOpen] = useState(false);
   const [verifyOpen, setVerifyOpen] = useState(false);
+  // An alert that is in investigation points at the application's open case.
+  const openCase = app.alerts.find((a) => a.case_id && a.status === 'in_investigation');
   const relatedCount = app.related.reduce((n, g) => n + g.matches.length + g.other_institution_matches, 0);
 
   return (
@@ -83,6 +86,7 @@ function ApplicationView({ app }: { app: ApplicationDetail }) {
                 Record review
               </Button>
             )}
+            <OpenCaseButton applicationId={app.id} caseId={openCase?.case_id} caseRef={openCase?.case_ref} />
           </>
         }
       />

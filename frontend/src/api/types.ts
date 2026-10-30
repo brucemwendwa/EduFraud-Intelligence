@@ -61,3 +61,12 @@ export type NetworkCluster = S['NetworkCluster'];
 export type NetworkGraph = S['NetworkGraph'];
 export type NetworkNode = S['NetworkNode'];
 export type NetworkEdge = S['NetworkEdge'];
+
+export type CaseRow = S['CaseRow'];
+export type CaseDetail = S['CaseDetail'];
+export type CaseSummary = S['CaseSummary'];
+export type CaseEvidence = S['CaseEvidenceOut'];
+export type CaseDecision = S['CaseDecisionOut'];
+export type CaseDecisionIn = S['CaseDecisionIn'];
+export type CaseEvidenceCreate = S['CaseEvidenceCreate'];
+export type Assignee = S['AssigneeOut'];

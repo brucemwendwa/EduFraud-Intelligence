@@ -13,6 +13,7 @@ import { cn } from '@/lib/cn';
 import { label, timeAgo } from '@/lib/format';
 import { alertStatusTone } from '@/lib/status';
 import { toParams, useSearchState } from '@/lib/useSearchState';
+import { OpenCaseButton } from '@/features/cases/OpenCaseButton';
 import { AlertDrawer } from './AlertDrawer';
 import { useAlertSummary, useAlerts } from './api';
 
@@ -125,7 +126,13 @@ export default function AlertsPage() {
           </div>
         )}
       </Card>
-      <AlertDrawer id={selected || null} onClose={() => setFilters({ selected: '', page: filters.page })} />
+      <AlertDrawer
+        id={selected || null}
+        onClose={() => setFilters({ selected: '', page: filters.page })}
+        extraActions={(alertId, applicationId, _status, caseId, caseRef) => (
+          <OpenCaseButton alertId={alertId} applicationId={applicationId} caseId={caseId} caseRef={caseRef} />
+        )}
+      />
     </>
   );
 }

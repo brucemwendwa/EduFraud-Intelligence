@@ -66,7 +66,7 @@ const features: { icon: LucideIcon; title: string; body: string; status?: string
   { icon: BrainCircuit, title: 'Explainable AI engine', body: 'Rule signals combine with an Isolation Forest, with attributions you can inspect.' },
   { icon: Network, title: 'Fraud network intelligence', body: 'An interactive graph links identities, devices and payment destinations; cluster membership raises risk scores.' },
   { icon: Banknote, title: 'Disbursement monitoring', body: 'Catches repeated destinations, unusual amounts and bursts of payments before funds move.' },
-  { icon: FolderKanban, title: 'Investigation workspace', body: 'Cases hold evidence, timelines, notes and resolutions, with role-based assignment.', status: 'Planned' },
+  { icon: FolderKanban, title: 'Investigation workspace', body: 'Cases hold evidence, timelines, notes and justified human decisions, with role-based assignment.' },
   { icon: ScrollText, title: 'Audit & security center', body: 'Tamper-evident, hash-chained audit trail covering every sensitive action.', status: 'UI planned' },
 ];
 
@@ -90,7 +90,8 @@ const capabilities: { name: string; status: Status; note: string }[] = [
   { name: 'Biometric document, face, liveness & PAD checks', status: 'Simulated', note: 'Deterministic mock provider, labelled throughout' },
   { name: 'Student records & financial data', status: 'Simulated', note: 'Synthetic generator. No real students or FSA data' },
   { name: 'Commercial identity-verification vendor', status: 'Planned', note: 'Provider interface ready; requires institutional contract' },
-  { name: 'Investigation cases, dashboard analytics, audit center UI', status: 'Planned', note: 'Data model and permissions exist; screens not built yet' },
+  { name: 'Investigation cases & justified decisions', status: 'Operational', note: 'Evidence, notes, timeline; suspicion and findings kept distinct' },
+  { name: 'Dashboard analytics, audit center UI', status: 'Planned', note: 'APIs exist; screens not built yet' },
   { name: 'SIS / aid-system integrations', status: 'Planned', note: 'Requires institutional authorization and legal approval' },
 ];
 

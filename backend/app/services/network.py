@@ -321,7 +321,14 @@ class NetworkService:
         evidence_types = {"destination", "device", "network", "ssn", "phone"}
         evidence = [n for n, node in nodes.items() if node.type in evidence_types]
         evidence.sort(key=lambda n: mean_angle([m for m in adjacency[n] if m in angle_of] or apps))
-        r_inner = 0.0 if len(evidence) == 1 else max(110.0, r_app * 0.42)
+        r_inner = 0.0 if len(evidence) == 1 else max(150.0, r_app * 0.55, len(evidence) * 150 / math.tau)
+        # Keep a clear band between the evidence ring and the application ring for placeholders and edges.
+        gap = 230.0
+        if evidence and r_app < r_inner + gap:
+            factor = (r_inner + gap) / r_app
+            r_app *= factor
+            pos = {a: (x * factor, y * factor) for a, (x, y) in pos.items()}
+        evidence_set = set(evidence)
         start = mean_angle([m for m in adjacency[evidence[0]] if m in angle_of] or apps) if evidence else 0.0
         for i, n in enumerate(evidence):
             angle = start + math.tau * i / max(len(evidence), 1)
@@ -347,10 +354,14 @@ class NetworkService:
             if node.type == "institution":
                 members = [m for m in adjacency[n] if m in angle_of]
                 pos[n] = radial(mean_angle(members), r_app + 270)
-            elif node.type == "external":
-                linked = [m for m in adjacency[n] if m in pos]
-                base = mean_angle([a for m in linked for a in adjacency[m] if a in angle_of] or apps)
-                pos[n] = radial(base + math.pi / max(len(apps), 2), r_app * 0.75)
+        # Anonymised placeholders: each sits on the ray of the evidence node it hangs off, between the rings,
+        # so every label stays readable and the shared attribute visibly links to "records elsewhere".
+        for n, node in nodes.items():
+            if node.type == "external":
+                anchor = next((m for m in adjacency[n] if m in evidence_set), None)
+                ax, ay = pos[anchor] if anchor else (0.0, 0.0)
+                angle = math.atan2(ay, ax) if (ax or ay) else -math.pi / 2
+                pos[n] = radial(angle, r_inner + gap / 2)
         for n in nodes:
             pos.setdefault(n, (0.0, 0.0))
         return {n: (round(x, 1), round(y, 1)) for n, (x, y) in pos.items()}

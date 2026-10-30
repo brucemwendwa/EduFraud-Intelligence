@@ -43,7 +43,7 @@ export const navSections: { title: string; items: NavItem[] }[] = [
   },
   {
     title: 'Response',
-    items: [{ label: 'Investigations', to: '/app/cases', icon: FolderKanban, permission: P.casesRead, planned: true }],
+    items: [{ label: 'Investigations', to: '/app/cases', icon: FolderKanban, permission: P.casesRead }],
   },
   {
     title: 'Governance',

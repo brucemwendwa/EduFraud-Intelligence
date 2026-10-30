@@ -123,6 +123,22 @@ class CasePriority(StrEnum):
     URGENT = "urgent"
 
 
+class CaseFinding(StrEnum):
+    """What the people investigating have established (never set by the AI)."""
+
+    SUSPICIOUS_ACTIVITY = "suspicious_activity"
+    SUSPECTED_FRAUD = "suspected_fraud"
+    CONFIRMED_FRAUD = "confirmed_fraud"
+    NOT_SUBSTANTIATED = "not_substantiated"
+
+
+class CaseDecisionType(StrEnum):
+    ESCALATE = "escalate"
+    RESOLVE = "resolve"
+    REOPEN = "reopen"
+    CLOSE = "close"
+
+
 class CaseResolution(StrEnum):
     CONFIRMED_FRAUD = "confirmed_fraud"
     NO_FRAUD_FOUND = "no_fraud_found"
