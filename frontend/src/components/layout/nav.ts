@@ -19,6 +19,8 @@ export interface NavItem {
   to: string;
   icon: LucideIcon;
   permission?: Permission;
+  // Shown but not clickable until the page exists (keeps the roadmap visible without dead links).
+  planned?: boolean;
 }
 
 export const navSections: { title: string; items: NavItem[] }[] = [
@@ -34,21 +36,21 @@ export const navSections: { title: string; items: NavItem[] }[] = [
     items: [
       { label: 'Applications', to: '/app/applications', icon: FileSearch, permission: P.applicationsRead },
       { label: 'Identity verification', to: '/app/verification', icon: ScanFace, permission: P.verificationsRead },
-      { label: 'Fraud network', to: '/app/network', icon: Network, permission: P.networkRead },
+      { label: 'Fraud network', to: '/app/network', icon: Network, permission: P.networkRead, planned: true },
       { label: 'Disbursements', to: '/app/disbursements', icon: Banknote, permission: P.disbursementsRead },
       { label: 'Detection engine', to: '/app/engine', icon: Cpu, permission: P.dashboardRead },
     ],
   },
   {
     title: 'Response',
-    items: [{ label: 'Investigations', to: '/app/cases', icon: FolderKanban, permission: P.casesRead }],
+    items: [{ label: 'Investigations', to: '/app/cases', icon: FolderKanban, permission: P.casesRead, planned: true }],
   },
   {
     title: 'Governance',
     items: [
-      { label: 'Audit center', to: '/app/audit', icon: ScrollText, permission: P.auditRead },
-      { label: 'Institutions & users', to: '/app/institutions', icon: Building2, permission: P.usersRead },
-      { label: 'Settings', to: '/app/settings', icon: Settings },
+      { label: 'Audit center', to: '/app/audit', icon: ScrollText, permission: P.auditRead, planned: true },
+      { label: 'Institutions & users', to: '/app/institutions', icon: Building2, permission: P.usersRead, planned: true },
+      { label: 'Settings', to: '/app/settings', icon: Settings, planned: true },
     ],
   },
 ];

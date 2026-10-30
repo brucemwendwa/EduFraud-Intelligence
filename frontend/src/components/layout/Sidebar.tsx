@@ -31,34 +31,48 @@ export function Sidebar({ can, onNavigate, badges = {} }: SidebarProps) {
               <ul className="space-y-0.5">
                 {items.map((item) => (
                   <li key={item.to}>
-                    <NavLink
-                      to={item.to}
-                      end={item.to === '/app'}
-                      onClick={onNavigate}
-                      className={({ isActive }) =>
-                        cn(
-                          'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                          isActive
-                            ? 'bg-white/10 text-white'
-                            : 'text-navy-200/80 hover:bg-white/5 hover:text-white',
-                        )
-                      }
-                    >
-                      {({ isActive }) => (
-                        <>
-                          {isActive && (
-                            <span aria-hidden className="absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-blue-400" />
-                          )}
-                          <item.icon className="size-4 shrink-0" aria-hidden />
-                          <span className="flex-1 truncate">{item.label}</span>
-                          {badges[item.to] ? (
-                            <span className="tabular rounded-full bg-flag-red px-1.5 py-px text-[11px] font-semibold text-white">
-                              {badges[item.to]}
-                            </span>
-                          ) : null}
-                        </>
-                      )}
-                    </NavLink>
+                    {item.planned ? (
+                      <span
+                        aria-disabled="true"
+                        title="Planned: not available in this prototype yet"
+                        className="flex cursor-default items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-navy-200/40"
+                      >
+                        <item.icon className="size-4 shrink-0" aria-hidden />
+                        <span className="flex-1 truncate">{item.label}</span>
+                        <span className="rounded-full bg-white/5 px-1.5 py-px text-[10px] font-semibold tracking-wide text-navy-200/60 uppercase">
+                          Planned
+                        </span>
+                      </span>
+                    ) : (
+                      <NavLink
+                        to={item.to}
+                        end={item.to === '/app'}
+                        onClick={onNavigate}
+                        className={({ isActive }) =>
+                          cn(
+                            'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                            isActive
+                              ? 'bg-white/10 text-white'
+                              : 'text-navy-200/80 hover:bg-white/5 hover:text-white',
+                          )
+                        }
+                      >
+                        {({ isActive }) => (
+                          <>
+                            {isActive && (
+                              <span aria-hidden className="absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-blue-400" />
+                            )}
+                            <item.icon className="size-4 shrink-0" aria-hidden />
+                            <span className="flex-1 truncate">{item.label}</span>
+                            {badges[item.to] ? (
+                              <span className="tabular rounded-full bg-flag-red px-1.5 py-px text-[11px] font-semibold text-white">
+                                {badges[item.to]}
+                              </span>
+                            ) : null}
+                          </>
+                        )}
+                      </NavLink>
+                    )}
                   </li>
                 ))}
               </ul>

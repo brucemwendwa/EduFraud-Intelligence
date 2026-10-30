@@ -58,15 +58,16 @@ const steps: { icon: LucideIcon; title: string; body: string }[] = [
   { icon: FolderKanban, title: 'Investigate', body: 'People review the evidence, record a decision, and every action is logged.' },
 ];
 
-const features: { icon: LucideIcon; title: string; body: string }[] = [
-  { icon: LayoutDashboard, title: 'Fraud intelligence dashboard', body: 'Alerts, risk distribution, verification outcomes and case progress in one view.' },
+// `status` marks capabilities whose screens are not built yet, so the page never overstates the prototype.
+const features: { icon: LucideIcon; title: string; body: string; status?: string }[] = [
+  { icon: LayoutDashboard, title: 'Fraud intelligence dashboard', body: 'Alerts, risk distribution, verification outcomes and case progress in one view.', status: 'Planned' },
   { icon: Fingerprint, title: 'Biometric identity protection', body: 'Step-up verification with liveness and anti-spoofing behind a vendor-neutral provider interface.' },
   { icon: FileSearch, title: 'Application fraud detection', body: 'Search, filter and triage applications with risk explanations attached.' },
   { icon: BrainCircuit, title: 'Explainable AI engine', body: 'Rule signals combine with an Isolation Forest, with attributions you can inspect.' },
-  { icon: Network, title: 'Fraud network intelligence', body: 'An interactive graph shows identities, devices and payment destinations that link up.' },
+  { icon: Network, title: 'Fraud network intelligence', body: 'Graph analysis links identities, devices and payment destinations, and cluster membership raises risk scores.', status: 'Explorer planned' },
   { icon: Banknote, title: 'Disbursement monitoring', body: 'Catches repeated destinations, unusual amounts and bursts of payments before funds move.' },
-  { icon: FolderKanban, title: 'Investigation workspace', body: 'Cases hold evidence, timelines, notes and resolutions, with role-based assignment.' },
-  { icon: ScrollText, title: 'Audit & security center', body: 'Tamper-evident, hash-chained audit trail covering every sensitive action.' },
+  { icon: FolderKanban, title: 'Investigation workspace', body: 'Cases hold evidence, timelines, notes and resolutions, with role-based assignment.', status: 'Planned' },
+  { icon: ScrollText, title: 'Audit & security center', body: 'Tamper-evident, hash-chained audit trail covering every sensitive action.', status: 'UI planned' },
 ];
 
 const safeguards: { icon: LucideIcon; title: string; body: string }[] = [
@@ -84,11 +85,12 @@ type Status = 'Operational' | 'Simulated' | 'Planned';
 const capabilities: { name: string; status: Status; note: string }[] = [
   { name: 'Rule-based detection & explainable risk scoring', status: 'Operational', note: 'Versioned rules with per-signal contributions' },
   { name: 'Anomaly detection (Isolation Forest)', status: 'Operational', note: 'Trained on synthetic data only, so accuracy is not claimed' },
-  { name: 'Fraud network graph analysis', status: 'Operational', note: 'NetworkX clustering over shared attributes' },
-  { name: 'Cases, audit trail, RBAC, tenant isolation', status: 'Operational', note: 'Enforced by the API and covered by automated tests' },
+  { name: 'Fraud network graph analysis', status: 'Operational', note: 'NetworkX clustering feeds risk scores; graph explorer UI planned' },
+  { name: 'Audit trail, RBAC, tenant isolation', status: 'Operational', note: 'Enforced by the API and covered by automated tests' },
   { name: 'Biometric document, face, liveness & PAD checks', status: 'Simulated', note: 'Deterministic mock provider, labelled throughout' },
   { name: 'Student records & financial data', status: 'Simulated', note: 'Synthetic generator. No real students or FSA data' },
   { name: 'Commercial identity-verification vendor', status: 'Planned', note: 'Provider interface ready; requires institutional contract' },
+  { name: 'Investigation cases, dashboard analytics, audit center UI', status: 'Planned', note: 'Data model and permissions exist; screens not built yet' },
   { name: 'SIS / aid-system integrations', status: 'Planned', note: 'Requires institutional authorization and legal approval' },
 ];
 
@@ -147,7 +149,7 @@ export function LandingPage() {
       <Spotlight
         eyebrow="Biometric identity protection"
         title="Stop account takeover at the moment it matters"
-        body="When someone tries to change a refund destination, recover an account or sign in from a new device, EduShield AI asks for step-up verification. It checks the ID document, compares the face to the enrolled student, tests liveness and detects presentation attacks. The result is scored and explained, and it raises an alert. The face image itself is never stored."
+        body="When someone tries to change a refund destination, recover an account or sign in from a new device, EduShield AI asks for step-up verification. It checks the ID document, compares the face to the enrolled student, tests liveness and detects presentation attacks. The result is scored and explained, and it raises an alert. The face image itself is never stored. In this prototype those checks are simulated with synthetic test samples: no camera and no real biometrics."
         points={[
           'Vendor-neutral provider interface, with a clearly labelled simulation in this prototype',
           'Detects printed-photo and screen-replay attacks',
@@ -159,11 +161,11 @@ export function LandingPage() {
         reverse
         eyebrow="Fraud network intelligence"
         title="See the ring, not just the record"
-        body="Graph analysis links applications that share identity tokens, devices or payment destinations. Investigators can click any node to inspect the connected records and pull the whole cluster into one case."
+        body="Graph analysis links applications that share identity tokens, devices or payment destinations. Membership in a linked cluster raises every member's risk score and is explained like any other signal. An interactive explorer for investigators is planned."
         points={[
-          'Clusters ranked by size and risk',
+          'Clusters of four or more linked applications are flagged',
           'Cross-institution matches without exposing another school’s data',
-          'One click from a graph node to its evidence',
+          'Planned: click a graph node to see its evidence and open a case',
         ]}
         visual={<NetworkVisual />}
         className="bg-canvas"
@@ -353,12 +355,19 @@ function Section({
   );
 }
 
-function IconCard({ icon: Icon, title, body }: { icon: LucideIcon; title: string; body: string }) {
+function IconCard({ icon: Icon, title, body, status }: { icon: LucideIcon; title: string; body: string; status?: string }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-card">
-      <span className="flex size-10 items-center justify-center rounded-lg bg-navy-50 text-navy-700">
-        <Icon className="size-5" aria-hidden />
-      </span>
+      <div className="flex items-start justify-between gap-3">
+        <span className="flex size-10 items-center justify-center rounded-lg bg-navy-50 text-navy-700">
+          <Icon className="size-5" aria-hidden />
+        </span>
+        {status && (
+          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-slate-200 ring-inset">
+            {status}
+          </span>
+        )}
+      </div>
       <h3 className="mt-5 font-semibold">{title}</h3>
       <p className="mt-2 text-sm leading-relaxed text-slate-600">{body}</p>
     </div>
