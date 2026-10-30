@@ -33,6 +33,15 @@ class P(StrEnum):
     USERS_MANAGE = "users:manage"
     ORGS_MANAGE = "organizations:manage"
     DETECTION_RUN = "detection:run"
+    ACCOUNTS_READ = "accounts:read"
+    ACCOUNTS_RESTRICT = "accounts:restrict"
+    CARDS_MANAGE = "cards:manage"
+    TRANSACTIONS_READ = "transactions:read"
+    TRANSACTIONS_REVIEW = "transactions:review"
+    SECURITY_READ = "security:read"
+    LOCATION_READ = "location:read"
+    VERIFICATIONS_DECIDE = "verifications:decide"
+    SIMULATIONS_RUN = "simulations:run"
 
 
 PERMISSION_DESCRIPTIONS: dict[P, tuple[str, str]] = {
@@ -59,6 +68,15 @@ PERMISSION_DESCRIPTIONS: dict[P, tuple[str, str]] = {
     P.USERS_MANAGE: ("governance", "Create users and change roles"),
     P.ORGS_MANAGE: ("governance", "Create and edit institutions (platform level)"),
     P.DETECTION_RUN: ("detection", "Trigger detection engine runs"),
+    P.ACCOUNTS_READ: ("accounts", "View student ID-linked financial aid accounts, cards and allocations"),
+    P.ACCOUNTS_RESTRICT: ("accounts", "Restrict sensitive account actions or request a provider suspension"),
+    P.CARDS_MANAGE: ("accounts", "Record lost cards, request provider blocks and process replacements"),
+    P.TRANSACTIONS_READ: ("transactions", "View monitored card transactions and their risk indicators"),
+    P.TRANSACTIONS_REVIEW: ("transactions", "Record a review decision on a flagged transaction"),
+    P.SECURITY_READ: ("security", "View device, login and account-recovery security events"),
+    P.LOCATION_READ: ("privacy", "View coarse transaction and sign-in locations (city/country only)"),
+    P.VERIFICATIONS_DECIDE: ("verification", "Conduct verification requests and record their outcome"),
+    P.SIMULATIONS_RUN: ("detection", "Play synthetic demonstration scenarios (demo mode only)"),
 }
 
 
@@ -80,6 +98,9 @@ _READ_ONLY = frozenset(
         P.ALERTS_READ,
         P.NETWORK_READ,
         P.CASES_READ,
+        P.ACCOUNTS_READ,
+        P.TRANSACTIONS_READ,
+        P.SECURITY_READ,
     }
 )
 
@@ -132,6 +153,10 @@ ROLES: tuple[RoleDef, ...] = (
             P.CASES_ASSIGN,
             P.CASES_RESOLVE,
             P.DETECTION_RUN,
+            P.ACCOUNTS_RESTRICT,
+            P.TRANSACTIONS_REVIEW,
+            P.LOCATION_READ,
+            P.SIMULATIONS_RUN,
         },
     ),
     RoleDef(
@@ -146,6 +171,10 @@ ROLES: tuple[RoleDef, ...] = (
             P.VERIFICATIONS_INITIATE,
             P.ALERTS_TRIAGE,
             P.CASES_CREATE,
+            P.ACCOUNTS_RESTRICT,
+            P.CARDS_MANAGE,
+            P.LOCATION_READ,
+            P.VERIFICATIONS_DECIDE,
         },
     ),
     RoleDef(

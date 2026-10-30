@@ -4,6 +4,10 @@ Built on the same risk-bearing link graph the detection engine scores (app.detec
 enriched with the records an investigator needs to see: students, institutions, enrollments,
 payment destinations, devices, networks, identity tokens and alerts.
 
+Each visible student also brings their ID-linked financial aid account, its card, merchants of
+high-risk transactions and elevated security events, so links that run through accounts (one
+laptop recovering several accounts, aid redirected to one destination) are visible in context.
+
 Tenant privacy: applications outside the viewer's scope are never shown individually. They
 collapse into one anonymous "other institution" node per linked attribute set, so a Northbridge
 investigator learns that a payment destination is also used elsewhere, but not by whom.
@@ -24,7 +28,15 @@ from app.api.deps import Principal
 from app.core.tokenization import display_token
 from app.detection import graph as risk_graph
 from app.detection.context import DetectionContext, build_context
-from app.models import Alert, Organization, PaymentDestinationToken
+from app.models import (
+    Alert,
+    Organization,
+    PaymentDestinationToken,
+    SecurityEvent,
+    StudentFinancialAccount,
+    StudentIDCard,
+    Transaction,
+)
 from app.services.records import mask_name
 
 LEVEL_RANK = {"low": 0, "medium": 1, "high": 2, "critical": 3}
@@ -131,6 +143,7 @@ class NetworkService:
             edges.append(GraphEdge(a, b, relation, suspicious))
 
         alerts = {a.application_id: a for a in self.db.scalars(select(Alert).where(Alert.application_id.in_(visible)))}
+        account_nodes = self._account_nodes({self.apps[a].student_id for a in visible})
         for app_id in visible:
             app = self.apps[app_id]
             stu = app.student
@@ -206,6 +219,9 @@ class NetworkService:
                     )
                 )
                 edge(a, n, "raised")
+            for node, parent, relation, suspicious in account_nodes.get(stu.id, []):
+                add(node)
+                edge(s if parent == "student" else parent, node.id, relation, suspicious)
 
         # Risk-bearing shared attributes between members (the edges that formed the cluster).
         attr_members: dict[str, set[uuid.UUID]] = defaultdict(set)
@@ -253,7 +269,128 @@ class NetworkService:
             "edges": [{"id": f"e{i}", **e.__dict__} for i, e in enumerate(edges)],
         }
 
+    def _account_nodes(self, student_ids: set[uuid.UUID]) -> dict[uuid.UUID, list[tuple[GraphNode, str, str, bool]]]:
+        """Account, card, flagged-transaction merchants and elevated security events per student."""
+        out: dict[uuid.UUID, list[tuple[GraphNode, str, str, bool]]] = defaultdict(list)
+        if not student_ids:
+            return out
+        accounts = {
+            a.student_id: a
+            for a in self.db.scalars(
+                select(StudentFinancialAccount).where(StudentFinancialAccount.student_id.in_(student_ids))
+            )
+        }
+        cards = {
+            c.account_id: c
+            for c in self.db.scalars(
+                select(StudentIDCard)
+                .where(StudentIDCard.account_id.in_([a.id for a in accounts.values()]))
+                .order_by(StudentIDCard.issued_at)
+            )
+        }
+        events: dict[uuid.UUID, list[SecurityEvent]] = defaultdict(list)
+        for e in self.db.scalars(
+            select(SecurityEvent)
+            .where(
+                SecurityEvent.student_id.in_(student_ids), SecurityEvent.risk_level.in_(["medium", "high", "critical"])
+            )
+            .order_by(SecurityEvent.risk_score.desc(), SecurityEvent.occurred_at.desc())
+        ):
+            events[e.student_id].append(e)
+        flagged: dict[uuid.UUID, list[Transaction]] = defaultdict(list)
+        for t in self.db.scalars(
+            select(Transaction)
+            .where(Transaction.student_id.in_(student_ids), Transaction.risk_level.in_(["high", "critical"]))
+            .order_by(Transaction.risk_score.desc())
+        ):
+            flagged[t.student_id].append(t)
+        for student_id, acct in accounts.items():
+            acct_id = f"acct:{acct.id}"
+            node = GraphNode(
+                id=acct_id,
+                type="account",
+                label=acct.reference,
+                sublabel=f"{acct.status.replace('_', ' ')} · score {acct.risk_score or 0:.0f}",
+                risk_level=acct.risk_level,
+                link=f"/app/accounts/{acct.id}",
+                details={
+                    "Status": acct.status,
+                    "Sensitive actions": "on hold" if acct.sensitive_actions_restricted else "allowed",
+                    "Provider": f"{acct.provider_mode} provider",
+                },
+            )
+            out[student_id].append((node, "student", "holds account", acct.risk_level in ("high", "critical")))
+            if (card := cards.get(acct.id)) is not None:
+                out[student_id].append(
+                    (
+                        GraphNode(
+                            id=f"card:{card.id}",
+                            type="card",
+                            label=card.reference,
+                            sublabel=f"•••• {card.display_suffix} · {card.status.replace('_', ' ')}",
+                            link=f"/app/cards?selected={card.id}",
+                            details={"Status": card.status},
+                        ),
+                        acct_id,
+                        "ID card",
+                        card.status != "active",
+                    )
+                )
+            for e in events.get(student_id, [])[:2]:
+                out[student_id].append(
+                    (
+                        GraphNode(
+                            id=f"sev:{e.id}",
+                            type="security_event",
+                            label=e.reference,
+                            sublabel=e.event_type.replace("_", " "),
+                            risk_level=e.risk_level,
+                            link=f"/app/access?selected={e.id}",
+                            details={"Outcome": e.outcome, "Occurred": e.occurred_at.date().isoformat()},
+                        ),
+                        acct_id,
+                        "security event",
+                        True,
+                    )
+                )
+            for t in flagged.get(student_id, [])[:2]:
+                out[student_id].append(
+                    (
+                        GraphNode(
+                            id=f"merchant:{t.merchant_token or t.merchant_name}",
+                            type="merchant",
+                            label=t.merchant_name,
+                            sublabel=t.merchant_category.replace("_", " "),
+                            details={"Flagged transaction": t.reference, "Status": t.status},
+                        ),
+                        acct_id,
+                        "flagged payment",
+                        True,
+                    )
+                )
+        return out
+
     def _attribute_node(self, kind: str, value: str, members: int) -> GraphNode:
+        if kind == "acctdevice":
+            return GraphNode(
+                id=f"acctdevice:{value}",
+                type="device",
+                label=display_token(value, "DEV"),
+                sublabel="Signed in to several student accounts",
+                details={"Linked applications": members, "relation": "account accessed from"},
+            )
+        if kind == "redirect":
+            dest = self.db.get(PaymentDestinationToken, uuid.UUID(value))
+            return GraphNode(
+                id=f"redirect:{value}",
+                type="destination",
+                label=display_token(dest.token_value, "DST") if dest else "Destination",
+                sublabel="Aid redirection / transfer target",
+                details={
+                    "Students linked": len(self.ctx.redirect_destination_students.get(uuid.UUID(value), set())),
+                    "relation": "aid redirected to",
+                },
+            )
         if kind == "destination":
             dest = self.db.get(PaymentDestinationToken, uuid.UUID(value))
             students = self.ctx.destination_students.get(uuid.UUID(value), set())
@@ -351,9 +488,33 @@ class NetworkService:
                     pos[n] = radial(angle, r_app + 95, spread)
 
         for n, node in nodes.items():
+            if node.type != "account":
+                continue
+            student = next((m for m in adjacency[n] if nodes[m].type == "student"), None)
+            app = next((a for a in adjacency.get(student, []) if a in angle_of), None) if student else None
+            if app is None:
+                continue
+            angle = angle_of[app]
+            pos[n] = radial(angle, r_app + 185, spread)
+            leaves = [m for m in adjacency[n] if nodes[m].type in ("card", "security_event")]
+            for i, leaf in enumerate(leaves):
+                pos[leaf] = radial(angle, r_app + 275 + 55 * (i // 2), spread + (i % 2 - 0.5) * spread)
+        for n, node in nodes.items():
+            if node.type == "merchant":
+                owners = [m for m in adjacency[n] if m in pos and nodes[m].type == "account"]
+                base = [
+                    a
+                    for o in owners
+                    for s in adjacency[o]
+                    if nodes[s].type == "student"
+                    for a in adjacency[s]
+                    if a in angle_of
+                ]
+                pos[n] = radial(mean_angle(base or apps), r_app + 360)
+        for n, node in nodes.items():
             if node.type == "institution":
                 members = [m for m in adjacency[n] if m in angle_of]
-                pos[n] = radial(mean_angle(members), r_app + 270)
+                pos[n] = radial(mean_angle(members), r_app + 430)
         # Anonymised placeholders: each sits on the ray of the evidence node it hangs off, between the rings,
         # so every label stays readable and the shared attribute visibly links to "records elsewhere".
         for n, node in nodes.items():

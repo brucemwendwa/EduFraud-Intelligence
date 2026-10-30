@@ -3,18 +3,27 @@
 from fastapi import APIRouter
 
 from app.api.v1 import (
+    accounts,
     alerts,
     applications,
     audit,
     auth,
+    cards,
     cases,
+    dashboard,
     detection,
     disbursements,
     network,
     organizations,
     student_portal,
+    provider_events,
+    security,
+    simulations,
     students,
+    system,
+    transactions,
     users,
+    verification_requests,
     verifications,
 )
 
@@ -32,3 +41,13 @@ api_router.include_router(alerts.router)
 api_router.include_router(cases.router)
 api_router.include_router(detection.router)
 api_router.include_router(audit.router)
+api_router.include_router(dashboard.router)
+api_router.include_router(accounts.router)
+api_router.include_router(accounts.case_router)
+api_router.include_router(cards.router)
+api_router.include_router(transactions.router)
+api_router.include_router(security.router)
+api_router.include_router(verification_requests.router)
+api_router.include_router(provider_events.router)
+api_router.include_router(simulations.router)
+api_router.include_router(system.router)

@@ -10,6 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.detection import anomaly
+from app.detection.account_rules import rule_catalogue
 from app.detection.catalog import RULES
 from app.detection.engine import DetectionEngine
 from app.detection.signals import Signal, combine, level_for
@@ -109,7 +110,7 @@ class TestScenarioOutcomes:
 
     def test_every_emitted_code_is_documented(self, db: Session) -> None:
         emitted = set(db.scalars(select(FraudSignal.code).distinct()))
-        assert emitted <= {r.code for r in RULES}
+        assert emitted <= {r.code for r in RULES} | set(rule_catalogue())
 
     def test_assessments_are_explainable_and_versioned(self, db: Session) -> None:
         app = db.scalar(
@@ -128,8 +129,16 @@ class TestScenarioOutcomes:
         assert db.scalar(select(func.count()).select_from(Alert)) == alerts_before
 
     def test_one_live_alert_per_application(self, db: Session) -> None:
-        rows = db.execute(select(Alert.application_id, func.count()).group_by(Alert.application_id)).all()
+        rows = db.execute(
+            select(Alert.application_id, func.count())
+            .where(Alert.application_id.is_not(None))
+            .group_by(Alert.application_id)
+        ).all()
         assert rows and all(n == 1 for _, n in rows)
+        per_account = db.execute(
+            select(Alert.account_id, func.count()).where(Alert.account_id.is_not(None)).group_by(Alert.account_id)
+        ).all()
+        assert per_account and all(n == 1 for _, n in per_account)
 
 
 @pytest.mark.seeded

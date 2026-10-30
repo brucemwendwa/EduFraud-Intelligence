@@ -33,7 +33,14 @@ API clients may instead send `Authorization: Bearer <access_token>`.
 
 TAGS = [
     {"name": "auth", "description": "Sessions and the current user"},
-    {"name": "dashboard", "description": "Fraud intelligence metrics"},
+    {"name": "dashboard", "description": "Portfolio metrics, trends and recent security activity"},
+    {"name": "student accounts", "description": "Provider-held financial aid accounts accessed with the ID card"},
+    {"name": "student id cards", "description": "Card lifecycle: lost reports, provider blocks, replacements"},
+    {"name": "transaction intelligence", "description": "Provider transaction events with explainable risk"},
+    {"name": "device & access intelligence", "description": "Devices, sign-ins, credential and recovery events"},
+    {"name": "identity verification", "description": "Re-verification requests: on-campus and remote pathways"},
+    {"name": "provider events (sandbox)", "description": "HMAC-signed webhooks from the sandbox providers"},
+    {"name": "scenario simulator (demo)", "description": "Replay synthetic scenarios (demo mode only)"},
     {"name": "applications", "description": "Financial aid application monitoring"},
     {"name": "students", "description": "Masked student identity and audited reveal"},
     {"name": "disbursements", "description": "Disbursement monitoring and holds"},
@@ -48,7 +55,7 @@ TAGS = [
     {"name": "users", "description": "Users, roles and permissions"},
     {"name": "notifications", "description": "In-app notifications"},
     {"name": "search", "description": "Global search"},
-    {"name": "system", "description": "Health and readiness"},
+    {"name": "system", "description": "Health, readiness and read-only system settings"},
 ]
 
 

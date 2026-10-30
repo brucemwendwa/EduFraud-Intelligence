@@ -602,8 +602,59 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Acknowledge, dismiss or reopen an alert */
+        /** Review, escalate, resolve, mark false positive, dismiss or reopen an alert */
         patch: operations["triage_alert_api_v1_alerts__alert_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/alerts/{alert_id}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Assign the alert to an officer (or unassign) */
+        post: operations["assign_api_v1_alerts__alert_id__assign_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alerts/{alert_id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add an investigation note (append-only) */
+        post: operations["add_note_api_v1_alerts__alert_id__notes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alerts/{alert_id}/request-verification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Request identity re-verification for the alert's student */
+        post: operations["request_verification_api_v1_alerts__alert_id__request_verification_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/cases": {
@@ -883,10 +934,937 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/dashboard/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Scoped portfolio metrics and trends */
+        get: operations["overview_api_v1_dashboard_overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Student ID-linked financial aid accounts */
+        get: operations["list_accounts_api_v1_accounts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Account, card and verification counts in scope */
+        get: operations["summary_api_v1_accounts_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts/{account_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Account workspace (access is audited) */
+        get: operations["get_account_api_v1_accounts__account_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts/{account_id}/assess": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Re-run the account risk assessment */
+        post: operations["assess_api_v1_accounts__account_id__assess_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts/{account_id}/restrict": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask the provider to hold sensitive changes (spending continues) */
+        post: operations["restrict_api_v1_accounts__account_id__restrict_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts/{account_id}/lift-restriction": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Lift a hold (security holds require a verified identity first) */
+        post: operations["lift_restriction_api_v1_accounts__account_id__lift_restriction_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts/{account_id}/suspend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask the provider to suspend the account */
+        post: operations["suspend_api_v1_accounts__account_id__suspend_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounts/{account_id}/reactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask the provider to reactivate a suspended account (verified identity required) */
+        post: operations["reactivate_api_v1_accounts__account_id__reactivate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cases/{case_id}/context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Account, card, transaction and device context for a case */
+        get: operations["case_context_api_v1_cases__case_id__context_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Registered student ID cards */
+        get: operations["list_cards_api_v1_cards_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cards/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Summary */
+        get: operations["summary_api_v1_cards_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cards/{card_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Card detail, usage history and card security events */
+        get: operations["get_card_api_v1_cards__card_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cards/{card_id}/report-lost": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record a lost/stolen report, block via the provider and open identity verification */
+        post: operations["report_lost_api_v1_cards__card_id__report_lost_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cards/{card_id}/block": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask the provider to block the card */
+        post: operations["block_api_v1_cards__card_id__block_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cards/{card_id}/suspicious-activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record suspicious card activity */
+        post: operations["suspicious_api_v1_cards__card_id__suspicious_activity_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cards/{card_id}/request-replacement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Request a replacement (identity verification is required before issue) */
+        post: operations["request_replacement_api_v1_cards__card_id__request_replacement_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cards/{card_id}/issue-replacement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Provider issues the replacement card (only after verified identity) */
+        post: operations["issue_replacement_api_v1_cards__card_id__issue_replacement_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/cards/{card_id}/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Link the card to an eligible aid account */
+        post: operations["link_api_v1_cards__card_id__link_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Monitored transactions from the payment provider */
+        get: operations["list_transactions_api_v1_transactions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/transactions/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Transaction monitoring summary (last 30 days) */
+        get: operations["summary_api_v1_transactions_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/transactions/{transaction_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Transaction with indicators and context */
+        get: operations["get_transaction_api_v1_transactions__transaction_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/transactions/{transaction_id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record a human review decision (cleared or suspicious) */
+        post: operations["review_api_v1_transactions__transaction_id__review_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Account security events */
+        get: operations["list_events_api_v1_security_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Access-security summary (last 30 days) */
+        get: operations["summary_api_v1_security_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Devices seen on student accounts */
+        get: operations["list_devices_api_v1_security_devices_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/devices/{device_id}/trust": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark a device trusted or suspicious (audited; re-scores the account) */
+        post: operations["set_trust_api_v1_security_devices__device_id__trust_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/verification-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Verification requests */
+        get: operations["list_requests_api_v1_verification_requests_get"];
+        put?: never;
+        /** Request identity re-verification for a student */
+        post: operations["create_api_v1_verification_requests_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/verification-requests/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Summary */
+        get: operations["summary_api_v1_verification_requests_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/verification-requests/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Methods, office and arrangements in scope */
+        get: operations["options_api_v1_verification_requests_options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/verification-requests/{request_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Request with its timeline */
+        get: operations["get_request_api_v1_verification_requests__request_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/verification-requests/{request_id}/notify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Re-send the student notice */
+        post: operations["notify_api_v1_verification_requests__request_id__notify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/verification-requests/{request_id}/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Book the on-campus verification visit */
+        post: operations["schedule_api_v1_verification_requests__request_id__schedule_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/verification-requests/{request_id}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start a remote method */
+        post: operations["start_api_v1_verification_requests__request_id__start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/verification-requests/{request_id}/checks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record a verification step (document check, procedure, video session …) */
+        post: operations["record_check_api_v1_verification_requests__request_id__checks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/verification-requests/{request_id}/liveness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Run the provider liveness check (SIMULATED in this prototype; consent required) */
+        post: operations["liveness_api_v1_verification_requests__request_id__liveness_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/verification-requests/{request_id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record the outcome with a documented reason (verified can restore access) */
+        post: operations["decision_api_v1_verification_requests__request_id__decision_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/provider-events/transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ingest a card transaction event (signed) */
+        post: operations["transaction_event_api_v1_provider_events_transactions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/provider-events/security": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ingest an account-security event (signed) */
+        post: operations["security_event_api_v1_provider_events_security_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/simulations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Available synthetic scenarios */
+        get: operations["list_scenarios_api_v1_simulations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/simulations/validation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Checks each seeded account scenario against its expected risk level (coverage, not accuracy) */
+        get: operations["validation_api_v1_simulations_validation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/simulations/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Play a scenario on synthetic accounts (DEMO_MODE only) */
+        post: operations["run_api_v1_simulations__key__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/system/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Risk configuration, integrations and privacy controls */
+        get: operations["settings_view_api_v1_system_settings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AccountDetail */
+        AccountDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Reference */
+            reference: string;
+            organization: components["schemas"]["OrgRef"];
+            student: components["schemas"]["StudentRef"];
+            /** Department */
+            department: string | null;
+            /** Status */
+            status: string;
+            /** Sensitive Actions Restricted */
+            sensitive_actions_restricted: boolean;
+            /** Study Mode */
+            study_mode: string;
+            /** Provider Mode */
+            provider_mode: string;
+            card: components["schemas"]["CardSummary"] | null;
+            /** Allocated Total */
+            allocated_total: string;
+            /** Available Balance */
+            available_balance: string | null;
+            /** Balance As Of */
+            balance_as_of: string | null;
+            /** Last Transaction At */
+            last_transaction_at: string | null;
+            /** Verification Status */
+            verification_status: string;
+            /** Risk Score */
+            risk_score: number | null;
+            /** Risk Level */
+            risk_level: string | null;
+            /** Scenario Key */
+            scenario_key: string | null;
+            /** Provider Key */
+            provider_key: string;
+            /** Provider Account Handle */
+            provider_account_handle: string;
+            /** Status Reason */
+            status_reason: string | null;
+            /** Restriction Reason */
+            restriction_reason: string | null;
+            /** Restricted At */
+            restricted_at: string | null;
+            /** Registered Location */
+            registered_location: string | null;
+            /** Location Restricted */
+            location_restricted: boolean;
+            /**
+             * Opened At
+             * Format: date-time
+             */
+            opened_at: string;
+            /** Currency */
+            currency: string;
+            /** Cards */
+            cards: components["schemas"]["CardOut"][];
+            /** Devices */
+            devices: components["schemas"]["DeviceOut"][];
+            /** Allocations */
+            allocations: components["schemas"]["DisbursementRow"][];
+            /** Transactions */
+            transactions: components["schemas"]["TransactionRow"][];
+            /** Security Events */
+            security_events: components["schemas"]["SecurityEventRow"][];
+            assessment: components["schemas"]["RiskAssessmentOut"] | null;
+            /** Assessment History */
+            assessment_history: components["schemas"]["AssessmentHistoryItem"][];
+            /** Verification Requests */
+            verification_requests: components["schemas"]["VerificationRequestRow"][];
+            /** Verification Attempts */
+            verification_attempts: components["schemas"]["VerificationRow"][];
+            /** Alerts */
+            alerts: components["schemas"]["AlertRow"][];
+            /** Cases */
+            cases: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** AccountRow */
+        AccountRow: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Reference */
+            reference: string;
+            organization: components["schemas"]["OrgRef"];
+            student: components["schemas"]["StudentRef"];
+            /** Department */
+            department: string | null;
+            /** Status */
+            status: string;
+            /** Sensitive Actions Restricted */
+            sensitive_actions_restricted: boolean;
+            /** Study Mode */
+            study_mode: string;
+            /** Provider Mode */
+            provider_mode: string;
+            card: components["schemas"]["CardSummary"] | null;
+            /** Allocated Total */
+            allocated_total: string;
+            /** Available Balance */
+            available_balance: string | null;
+            /** Balance As Of */
+            balance_as_of: string | null;
+            /** Last Transaction At */
+            last_transaction_at: string | null;
+            /** Verification Status */
+            verification_status: string;
+            /** Risk Score */
+            risk_score: number | null;
+            /** Risk Level */
+            risk_level: string | null;
+            /** Scenario Key */
+            scenario_key: string | null;
+        };
+        /** AccountScenarioCheck */
+        AccountScenarioCheck: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Kind */
+            kind: string;
+            /** Expected */
+            expected: string;
+            /** Accounts */
+            accounts: number;
+            /** Observed Levels */
+            observed_levels: {
+                [key: string]: number;
+            };
+            /** Passed */
+            passed: boolean;
+        };
+        /**
+         * AccountStatus
+         * @enum {string}
+         */
+        AccountStatus: "active" | "pending_verification" | "restricted" | "suspended" | "closed";
+        /** AccountSummary */
+        AccountSummary: {
+            /** Total */
+            total: number;
+            /** By Status */
+            by_status: {
+                [key: string]: number;
+            };
+            /** Restricted */
+            restricted: number;
+            /** By Risk */
+            by_risk: {
+                [key: string]: number;
+            };
+            /** Allocated Total */
+            allocated_total: string;
+            /** Cards By Status */
+            cards_by_status: {
+                [key: string]: number;
+            };
+            /** Verification Open */
+            verification_open: number;
+        };
+        /** ActivityItem */
+        ActivityItem: {
+            /** Kind */
+            kind: string;
+            /** Reference */
+            reference: string;
+            /** Title */
+            title: string;
+            /** Detail */
+            detail: string;
+            /** Student Ref */
+            student_ref: string;
+            /** Account Id */
+            account_id: string | null;
+            /** Risk Level */
+            risk_level: string | null;
+            /** Occurred At */
+            occurred_at: unknown;
+            /** Link */
+            link: string;
+        };
+        /** AlertAssign */
+        AlertAssign: {
+            /** Assigned To Id */
+            assigned_to_id: string | null;
+        };
         /** AlertDetail */
         AlertDetail: {
             /**
@@ -913,10 +1891,19 @@ export interface components {
             application_id: string | null;
             /** Application Ref */
             application_ref: string | null;
+            /** Account Id */
+            account_id?: string | null;
+            /** Account Ref */
+            account_ref?: string | null;
+            /** Student Ref */
+            student_ref?: string | null;
             /** Case Id */
             case_id: string | null;
             /** Case Ref */
             case_ref: string | null;
+            assigned_to?: components["schemas"]["UserRef"] | null;
+            /** Recommended Action */
+            recommended_action?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -943,6 +1930,43 @@ export interface components {
             triaged_by: string | null;
             /** Triaged At */
             triaged_at: string | null;
+            /**
+             * Related
+             * @default []
+             */
+            related: components["schemas"]["RelatedRecord"][];
+            /**
+             * Notes
+             * @default []
+             */
+            notes: components["schemas"]["AlertNoteOut"][];
+            /**
+             * Timeline
+             * @default []
+             */
+            timeline: components["schemas"]["AlertTimelineItem"][];
+        };
+        /** AlertNoteCreate */
+        AlertNoteCreate: {
+            /** Body */
+            body: string;
+        };
+        /** AlertNoteOut */
+        AlertNoteOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Body */
+            body: string;
+            /** Author */
+            author: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /** AlertRow */
         AlertRow: {
@@ -970,10 +1994,19 @@ export interface components {
             application_id: string | null;
             /** Application Ref */
             application_ref: string | null;
+            /** Account Id */
+            account_id?: string | null;
+            /** Account Ref */
+            account_ref?: string | null;
+            /** Student Ref */
+            student_ref?: string | null;
             /** Case Id */
             case_id: string | null;
             /** Case Ref */
             case_ref: string | null;
+            assigned_to?: components["schemas"]["UserRef"] | null;
+            /** Recommended Action */
+            recommended_action?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -989,7 +2022,7 @@ export interface components {
          * AlertStatus
          * @enum {string}
          */
-        AlertStatus: "open" | "acknowledged" | "in_investigation" | "dismissed" | "resolved";
+        AlertStatus: "open" | "acknowledged" | "verification_requested" | "escalated" | "in_investigation" | "dismissed" | "false_positive" | "resolved";
         /** AlertSummary */
         AlertSummary: {
             /** Open */
@@ -1004,6 +2037,46 @@ export interface components {
             by_category: {
                 [key: string]: number;
             };
+            /**
+             * Verification Requested
+             * @default 0
+             */
+            verification_requested: number;
+            /**
+             * Escalated
+             * @default 0
+             */
+            escalated: number;
+            /**
+             * By Status
+             * @default {}
+             */
+            by_status: {
+                [key: string]: number;
+            };
+            /**
+             * Assigned To Me
+             * @default 0
+             */
+            assigned_to_me: number;
+        };
+        /** AlertTimelineItem */
+        AlertTimelineItem: {
+            /** Action */
+            action: string;
+            /** Actor */
+            actor: string | null;
+            /** Outcome */
+            outcome: string;
+            /** Details */
+            details: {
+                [key: string]: unknown;
+            };
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
         };
         /** AlertTriage */
         AlertTriage: {
@@ -1011,9 +2084,14 @@ export interface components {
              * Action
              * @enum {string}
              */
-            action: "acknowledge" | "dismiss" | "reopen";
+            action: "acknowledge" | "dismiss" | "reopen" | "escalate" | "resolve" | "false_positive";
             /** Note */
             note?: string | null;
+        };
+        /** AlertVerificationRequest */
+        AlertVerificationRequest: {
+            /** Reason */
+            reason: string;
         };
         /** AlternativeVerificationIn */
         AlternativeVerificationIn: {
@@ -1191,7 +2269,7 @@ export interface components {
          * AuditCategory
          * @enum {string}
          */
-        AuditCategory: "authentication" | "verification" | "investigation" | "permission" | "data_access" | "detection" | "disbursement" | "application" | "system";
+        AuditCategory: "account" | "card" | "transaction" | "security" | "authentication" | "verification" | "investigation" | "permission" | "data_access" | "detection" | "disbursement" | "application" | "system";
         /** AuditEventOut */
         AuditEventOut: {
             /**
@@ -1287,6 +2365,150 @@ export interface components {
              * Format: password
              */
             client_secret?: string | null;
+        };
+        /** CardDetail */
+        CardDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Reference */
+            reference: string;
+            /**
+             * Masked Number
+             * @description Last four characters only, e.g. '•••• 0412'
+             */
+            masked_number: string;
+            /** Status */
+            status: string;
+            organization: components["schemas"]["OrgRef"];
+            student: components["schemas"]["StudentRef"];
+            /** Account Id */
+            account_id: string | null;
+            /** Account Ref */
+            account_ref: string | null;
+            /**
+             * Issued At
+             * Format: date-time
+             */
+            issued_at: string;
+            /** Activated At */
+            activated_at: string | null;
+            /** Expires On */
+            expires_on: unknown;
+            /** Reported Lost At */
+            reported_lost_at: string | null;
+            /** Report Channel */
+            report_channel: string | null;
+            /** Blocked At */
+            blocked_at: string | null;
+            /** Block Confirmation */
+            block_confirmation: string | null;
+            /** Replacement Requested At */
+            replacement_requested_at: string | null;
+            /** Replaced By Id */
+            replaced_by_id: string | null;
+            /** Replaced By Ref */
+            replaced_by_ref: string | null;
+            /**
+             * Verified Since Report
+             * @description Identity re-verified after the loss report (replacement allowed)
+             */
+            verified_since_report: boolean;
+            /** Usage */
+            usage: components["schemas"]["TransactionRow"][];
+            /** Security Events */
+            security_events: components["schemas"]["SecurityEventRow"][];
+            /** History */
+            history: components["schemas"]["CardOut"][];
+        };
+        /** CardNoteIn */
+        CardNoteIn: {
+            /** Note */
+            note: string;
+        };
+        /** CardOut */
+        CardOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Reference */
+            reference: string;
+            /**
+             * Masked Number
+             * @description Last four characters only, e.g. '•••• 0412'
+             */
+            masked_number: string;
+            /** Status */
+            status: string;
+            organization: components["schemas"]["OrgRef"];
+            student: components["schemas"]["StudentRef"];
+            /** Account Id */
+            account_id: string | null;
+            /** Account Ref */
+            account_ref: string | null;
+            /**
+             * Issued At
+             * Format: date-time
+             */
+            issued_at: string;
+            /** Activated At */
+            activated_at: string | null;
+            /** Expires On */
+            expires_on: unknown;
+            /** Reported Lost At */
+            reported_lost_at: string | null;
+            /** Report Channel */
+            report_channel: string | null;
+            /** Blocked At */
+            blocked_at: string | null;
+            /** Block Confirmation */
+            block_confirmation: string | null;
+            /** Replacement Requested At */
+            replacement_requested_at: string | null;
+            /** Replaced By Id */
+            replaced_by_id: string | null;
+            /** Replaced By Ref */
+            replaced_by_ref: string | null;
+            /**
+             * Verified Since Report
+             * @description Identity re-verified after the loss report (replacement allowed)
+             */
+            verified_since_report: boolean;
+        };
+        /**
+         * CardStatus
+         * @enum {string}
+         */
+        CardStatus: "active" | "reported_lost" | "blocked" | "replacement_requested" | "replaced";
+        /** CardSummary */
+        CardSummary: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Reference */
+            reference: string;
+            /**
+             * Masked Number
+             * @description Last four characters only, e.g. '•••• 0412'
+             */
+            masked_number: string;
+            /** Status */
+            status: string;
+        };
+        /** CardSummaryOut */
+        CardSummaryOut: {
+            /** By Status */
+            by_status: {
+                [key: string]: number;
+            };
+            /** Blocked Or Reported */
+            blocked_or_reported: number;
         };
         /** CaseAlertRef */
         CaseAlertRef: {
@@ -1586,7 +2808,7 @@ export interface components {
          * CaseStatus
          * @enum {string}
          */
-        CaseStatus: "new" | "under_review" | "escalated" | "resolved" | "closed";
+        CaseStatus: "new" | "under_review" | "awaiting_verification" | "escalated" | "resolved" | "closed";
         /** CaseSummary */
         CaseSummary: {
             /** Open */
@@ -1638,6 +2860,45 @@ export interface components {
             current_password: string;
             /** New Password */
             new_password: string;
+        };
+        /** DashboardOverview */
+        DashboardOverview: {
+            /** Synthetic */
+            synthetic: boolean;
+            /** Generated At */
+            generated_at: unknown;
+            /** Metrics */
+            metrics: components["schemas"]["Metric"][];
+            /** Allocation Trend */
+            allocation_trend: {
+                [key: string]: unknown;
+            }[];
+            /** Transaction Activity */
+            transaction_activity: {
+                [key: string]: unknown;
+            }[];
+            /** Risk Distribution */
+            risk_distribution: {
+                [key: string]: unknown;
+            }[];
+            /** Suspicious Categories */
+            suspicious_categories: {
+                [key: string]: unknown;
+            }[];
+            /** Verification Outcomes */
+            verification_outcomes: {
+                [key: string]: unknown;
+            }[];
+            /** Investigation Status */
+            investigation_status: {
+                [key: string]: unknown;
+            }[];
+            /** Alert Status */
+            alert_status: {
+                [key: string]: unknown;
+            }[];
+            /** Recent Activity */
+            recent_activity: components["schemas"]["ActivityItem"][];
         };
         /** DemoAccount */
         DemoAccount: {
@@ -1739,6 +3000,51 @@ export interface components {
             };
             /** Principles */
             principles: string[];
+        };
+        /** DeviceOut */
+        DeviceOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Handle */
+            handle: string;
+            /** Label */
+            label: string;
+            /** Platform */
+            platform: string;
+            /** Trust Status */
+            trust_status: string;
+            /** Trust Reason */
+            trust_reason: string | null;
+            /**
+             * First Seen At
+             * Format: date-time
+             */
+            first_seen_at: string;
+            /**
+             * Last Seen At
+             * Format: date-time
+             */
+            last_seen_at: string;
+            /** Is Shared Kiosk */
+            is_shared_kiosk: boolean;
+            student: components["schemas"]["StudentRef"];
+            /** Other Accounts In Scope */
+            other_accounts_in_scope: number;
+            /** Other Accounts Other Institutions */
+            other_accounts_other_institutions: number;
+        };
+        /** DeviceTrustIn */
+        DeviceTrustIn: {
+            /**
+             * Trust Status
+             * @enum {string}
+             */
+            trust_status: "trusted" | "suspicious";
+            /** Reason */
+            reason: string;
         };
         /** DisbursementDetail */
         DisbursementDetail: {
@@ -1936,6 +3242,55 @@ export interface components {
              */
             shared_other_institutions: number;
         };
+        /** IndicatorOut */
+        IndicatorOut: {
+            /** Code */
+            code: string;
+            /** Title */
+            title: string;
+            /** Category */
+            category: string;
+            /** Points */
+            points: number;
+            /** Description */
+            description?: string | null;
+        };
+        /** IngestResult */
+        IngestResult: {
+            /** Reference */
+            reference: string;
+            /** Duplicate */
+            duplicate: boolean;
+            /** Decision */
+            decision: string;
+            /** Reason */
+            reason: string;
+            /** Status */
+            status?: string | null;
+            /** Risk Score */
+            risk_score: number | null;
+            /** Risk Level */
+            risk_level: string | null;
+            /** Account Reference */
+            account_reference: string;
+            /** Account Risk Score */
+            account_risk_score: number | null;
+            /** Account Risk Level */
+            account_risk_level: string | null;
+            /**
+             * Provider Mode
+             * @default sandbox
+             */
+            provider_mode: string;
+        };
+        /** LinkCardIn */
+        LinkCardIn: {
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+        };
         /** LoginRequest */
         LoginRequest: {
             /**
@@ -1969,6 +3324,30 @@ export interface components {
             permissions: string[];
             /** Accessible Organizations */
             accessible_organizations: components["schemas"]["OrgRef"][];
+        };
+        /** MethodOption */
+        MethodOption: {
+            /** Method */
+            method: string;
+            /** Label */
+            label: string;
+            /** Pathway */
+            pathway: string;
+            /** Available */
+            available: boolean;
+            /** Reason */
+            reason: string | null;
+        };
+        /** Metric */
+        Metric: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Value */
+            value: number;
+            /** Link */
+            link?: string | null;
         };
         /** ModelCardOut */
         ModelCardOut: {
@@ -2168,6 +3547,17 @@ export interface components {
             /** Is Active */
             is_active?: boolean | null;
         };
+        /** Page[AccountRow] */
+        Page_AccountRow_: {
+            /** Items */
+            items: components["schemas"]["AccountRow"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
         /** Page[AlertRow] */
         Page_AlertRow_: {
             /** Items */
@@ -2201,6 +3591,17 @@ export interface components {
             /** Page Size */
             page_size: number;
         };
+        /** Page[CardOut] */
+        Page_CardOut_: {
+            /** Items */
+            items: components["schemas"]["CardOut"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
         /** Page[CaseRow] */
         Page_CaseRow_: {
             /** Items */
@@ -2212,10 +3613,43 @@ export interface components {
             /** Page Size */
             page_size: number;
         };
+        /** Page[DeviceOut] */
+        Page_DeviceOut_: {
+            /** Items */
+            items: components["schemas"]["DeviceOut"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
         /** Page[DisbursementRow] */
         Page_DisbursementRow_: {
             /** Items */
             items: components["schemas"]["DisbursementRow"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
+        /** Page[SecurityEventRow] */
+        Page_SecurityEventRow_: {
+            /** Items */
+            items: components["schemas"]["SecurityEventRow"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
+        /** Page[TransactionRow] */
+        Page_TransactionRow_: {
+            /** Items */
+            items: components["schemas"]["TransactionRow"][];
             /** Total */
             total: number;
             /** Page */
@@ -2238,6 +3672,17 @@ export interface components {
         Page_VerificationOut_: {
             /** Items */
             items: components["schemas"]["VerificationOut"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+        };
+        /** Page[VerificationRequestRow] */
+        Page_VerificationRequestRow_: {
+            /** Items */
+            items: components["schemas"]["VerificationRequestRow"][];
             /** Total */
             total: number;
             /** Page */
@@ -2275,6 +3720,11 @@ export interface components {
             /** Alternative Methods */
             alternative_methods: string[];
         };
+        /** ReasonIn */
+        ReasonIn: {
+            /** Reason */
+            reason: string;
+        };
         /** RelatedApplication */
         RelatedApplication: {
             /**
@@ -2305,6 +3755,41 @@ export interface components {
             matches: components["schemas"]["RelatedApplication"][];
             /** Other Institution Matches */
             other_institution_matches: number;
+        };
+        /** RelatedRecord */
+        RelatedRecord: {
+            /** Kind */
+            kind: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Reference */
+            reference: string;
+            /** Label */
+            label: string;
+            /** Status */
+            status?: string | null;
+            /** Link */
+            link?: string | null;
+        };
+        /** ReportLostIn */
+        ReportLostIn: {
+            /**
+             * Channel
+             * @default officer
+             * @enum {string}
+             */
+            channel: "student_portal" | "phone" | "in_person" | "officer";
+            /** Note */
+            note?: string | null;
+            /**
+             * Block
+             * @description Ask the provider to block the card immediately
+             * @default true
+             */
+            block: boolean;
         };
         /** RevealRequest */
         RevealRequest: {
@@ -2453,11 +3938,120 @@ export interface components {
             /** Passed */
             passed: boolean;
         };
+        /** ScenarioInfo */
+        ScenarioInfo: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Kind */
+            kind: string;
+            /** Description */
+            description: string;
+            /** Expected */
+            expected: string;
+            /** Accounts Needed */
+            accounts_needed: number;
+            /** Live */
+            live: boolean;
+        };
+        /** SecurityEventRow */
+        SecurityEventRow: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Reference */
+            reference: string;
+            organization: components["schemas"]["OrgRef"];
+            student: components["schemas"]["StudentRef"];
+            /** Account Id */
+            account_id: string | null;
+            /** Account Ref */
+            account_ref: string | null;
+            /** Card Ref */
+            card_ref: string | null;
+            /** Event Type */
+            event_type: string;
+            /** Source */
+            source: string;
+            /** Outcome */
+            outcome: string;
+            /** Decision */
+            decision: string | null;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            device: components["schemas"]["DeviceOut"] | null;
+            /** Location */
+            location: string | null;
+            /** Location Restricted */
+            location_restricted: boolean;
+            destination: components["schemas"]["DestinationOut"] | null;
+            /** Risk Score */
+            risk_score: number | null;
+            /** Risk Level */
+            risk_level: string | null;
+            /** Indicators */
+            indicators: components["schemas"]["IndicatorOut"][];
+            /** Note */
+            note: string | null;
+            /** Scenario Key */
+            scenario_key: string | null;
+        };
         /**
-         * SignalCategory
+         * SecurityEventType
          * @enum {string}
          */
-        SignalCategory: "identity" | "application" | "enrollment" | "disbursement" | "network" | "biometric" | "anomaly";
+        SecurityEventType: "login_success" | "login_failed" | "new_device_login" | "mfa_passed" | "mfa_failed" | "password_reset_requested" | "password_changed" | "account_recovery_requested" | "contact_details_changed" | "aid_redirect_requested" | "card_reported_lost" | "card_blocked" | "card_suspicious_activity" | "card_replacement_requested" | "card_replaced" | "account_restricted" | "account_restriction_lifted";
+        /** SecuritySummary */
+        SecuritySummary: {
+            /** Window Days */
+            window_days: number;
+            /** Events */
+            events: number;
+            /** By Type */
+            by_type: {
+                [key: string]: number;
+            };
+            /** New Devices */
+            new_devices: number;
+            /** Failed Logins */
+            failed_logins: number;
+            /** Password Resets */
+            password_resets: number;
+            /** Shared Devices */
+            shared_devices: number;
+            /** Elevated Events */
+            elevated_events: number;
+        };
+        /** SimulationResult */
+        SimulationResult: {
+            /** Scenario */
+            scenario: string;
+            /** Label */
+            label: string;
+            /** Accounts */
+            accounts: {
+                [key: string]: unknown;
+            }[];
+            /** Events */
+            events: string[];
+            /** Alerts */
+            alerts: {
+                [key: string]: unknown;
+            }[];
+            /** Verification Requests */
+            verification_requests: string[];
+            /**
+             * Synthetic
+             * @default true
+             */
+            synthetic: boolean;
+        };
         /** StageOut */
         StageOut: {
             /** Stage */
@@ -2525,6 +4119,39 @@ export interface components {
             /** Masked Name */
             masked_name: string;
         };
+        /** SystemSettings */
+        SystemSettings: {
+            /** Environment */
+            environment: string;
+            /** Demo Mode */
+            demo_mode: boolean;
+            /** Risk Bands */
+            risk_bands: {
+                [key: string]: unknown;
+            }[];
+            /** Risk Bands Note */
+            risk_bands_note: string;
+            /** Account Rules Version */
+            account_rules_version: string;
+            /** Account Engine Method */
+            account_engine_method: string;
+            /** Account Rules */
+            account_rules: {
+                [key: string]: unknown;
+            }[];
+            /** Weights Overridden */
+            weights_overridden: boolean;
+            /** Integrations */
+            integrations: {
+                [key: string]: unknown;
+            }[];
+            /** Verification */
+            verification: {
+                [key: string]: unknown;
+            }[];
+            /** Privacy Controls */
+            privacy_controls: string[];
+        };
         /** TestSampleOut */
         TestSampleOut: {
             /** Key */
@@ -2567,6 +4194,177 @@ export interface components {
              * Format: date-time
              */
             expires_at: string;
+        };
+        /** TransactionDetail */
+        TransactionDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Reference */
+            reference: string;
+            organization: components["schemas"]["OrgRef"];
+            student: components["schemas"]["StudentRef"];
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Account Ref */
+            account_ref: string;
+            /** Card Ref */
+            card_ref: string | null;
+            /** Transaction Type */
+            transaction_type: string;
+            /** Channel */
+            channel: string;
+            /** Merchant Name */
+            merchant_name: string;
+            /** Merchant Category */
+            merchant_category: string;
+            /** Amount */
+            amount: string;
+            /** Currency */
+            currency: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Location */
+            location: string | null;
+            /** Location Restricted */
+            location_restricted: boolean;
+            destination: components["schemas"]["DestinationOut"] | null;
+            /** Status */
+            status: string;
+            /** Decline Reason */
+            decline_reason: string | null;
+            /** Risk Score */
+            risk_score: number | null;
+            /** Risk Level */
+            risk_level: string | null;
+            /** Indicators */
+            indicators: components["schemas"]["IndicatorOut"][];
+            /** Review Status */
+            review_status: string;
+            /** Scenario Key */
+            scenario_key: string | null;
+            /** Review Note */
+            review_note: string | null;
+            /** Reviewed By */
+            reviewed_by: string | null;
+            /** Reviewed At */
+            reviewed_at: string | null;
+            /** Account Status */
+            account_status: string;
+            /** Account Restricted */
+            account_restricted: boolean;
+            /** Recent Transactions */
+            recent_transactions: components["schemas"]["TransactionRow"][];
+            /** Related Events */
+            related_events: components["schemas"]["SecurityEventRow"][];
+            /** Alerts */
+            alerts: components["schemas"]["AlertRow"][];
+        };
+        /**
+         * TransactionReview
+         * @enum {string}
+         */
+        TransactionReview: "unreviewed" | "cleared" | "suspicious";
+        /** TransactionReviewIn */
+        TransactionReviewIn: {
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "cleared" | "suspicious";
+            /** Note */
+            note: string;
+        };
+        /** TransactionRow */
+        TransactionRow: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Reference */
+            reference: string;
+            organization: components["schemas"]["OrgRef"];
+            student: components["schemas"]["StudentRef"];
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** Account Ref */
+            account_ref: string;
+            /** Card Ref */
+            card_ref: string | null;
+            /** Transaction Type */
+            transaction_type: string;
+            /** Channel */
+            channel: string;
+            /** Merchant Name */
+            merchant_name: string;
+            /** Merchant Category */
+            merchant_category: string;
+            /** Amount */
+            amount: string;
+            /** Currency */
+            currency: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Location */
+            location: string | null;
+            /** Location Restricted */
+            location_restricted: boolean;
+            destination: components["schemas"]["DestinationOut"] | null;
+            /** Status */
+            status: string;
+            /** Decline Reason */
+            decline_reason: string | null;
+            /** Risk Score */
+            risk_score: number | null;
+            /** Risk Level */
+            risk_level: string | null;
+            /** Indicators */
+            indicators: components["schemas"]["IndicatorOut"][];
+            /** Review Status */
+            review_status: string;
+            /** Scenario Key */
+            scenario_key: string | null;
+        };
+        /**
+         * TransactionStatus
+         * @enum {string}
+         */
+        TransactionStatus: "approved" | "declined" | "pending" | "reversed";
+        /** TransactionSummary */
+        TransactionSummary: {
+            /** Total */
+            total: number;
+            /** Flagged */
+            flagged: number;
+            /** Declined */
+            declined: number;
+            /** Unreviewed Flagged */
+            unreviewed_flagged: number;
+            /** By Indicator */
+            by_indicator: {
+                [key: string]: number;
+            };
+            /** By Category */
+            by_category: {
+                [key: string]: number;
+            };
+            /** Amount Total */
+            amount_total: string;
         };
         /** UserCreate */
         UserCreate: {
@@ -2653,6 +4451,82 @@ export interface components {
             /** Context */
             ctx?: Record<string, never>;
         };
+        /** VerificationCheckIn */
+        VerificationCheckIn: {
+            /**
+             * Step
+             * @enum {string}
+             */
+            step: "documents_checked" | "identity_procedure_completed" | "video_session_completed" | "alternative_method_completed" | "embassy_confirmation_received";
+            /**
+             * Result
+             * @enum {string}
+             */
+            result: "pass" | "fail" | "inconclusive";
+            /** Note */
+            note: string;
+        };
+        /** VerificationDecisionIn */
+        VerificationDecisionIn: {
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "verified" | "failed" | "escalated" | "additional_info_required";
+            /** Reason */
+            reason: string;
+            /**
+             * Restore Access
+             * @default true
+             */
+            restore_access: boolean;
+        };
+        /** VerificationEventOut */
+        VerificationEventOut: {
+            /** Step */
+            step: string;
+            /** Status After */
+            status_after: string;
+            /** Actor Label */
+            actor_label: string;
+            /** Note */
+            note: string | null;
+            /** Details */
+            details: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** VerificationLivenessIn */
+        VerificationLivenessIn: {
+            /** Sample Key */
+            sample_key: string;
+        };
+        /** VerificationOptions */
+        VerificationOptions: {
+            /** Statuses */
+            statuses: string[];
+            /** Methods */
+            methods: {
+                [key: string]: {
+                    [key: string]: string;
+                }[];
+            };
+            /** Office */
+            office: string | null;
+            /** Embassy Arrangements */
+            embassy_arrangements: {
+                [key: string]: string;
+            };
+            /** Simulated Samples */
+            simulated_samples: {
+                [key: string]: string;
+            }[];
+        };
         /** VerificationOut */
         VerificationOut: {
             /**
@@ -2719,6 +4593,191 @@ export interface components {
          * @enum {string}
          */
         VerificationOutcome: "passed" | "failed" | "review";
+        /**
+         * VerificationPathway
+         * @enum {string}
+         */
+        VerificationPathway: "on_campus" | "remote";
+        /** VerificationRequestCreate */
+        VerificationRequestCreate: {
+            /**
+             * Account Id
+             * Format: uuid
+             */
+            account_id: string;
+            /** @default officer_request */
+            trigger: components["schemas"]["VerificationRequestTrigger"];
+            /** Reason */
+            reason: string;
+            /** Alert Id */
+            alert_id?: string | null;
+            /** Case Id */
+            case_id?: string | null;
+        };
+        /** VerificationRequestDetail */
+        VerificationRequestDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Reference */
+            reference: string;
+            organization: components["schemas"]["OrgRef"];
+            student: components["schemas"]["StudentRef"];
+            /** Account Id */
+            account_id: string | null;
+            /** Account Ref */
+            account_ref: string | null;
+            /** Card Ref */
+            card_ref: string | null;
+            /** Alert Id */
+            alert_id: string | null;
+            /** Alert Ref */
+            alert_ref: string | null;
+            /** Case Id */
+            case_id: string | null;
+            /** Case Ref */
+            case_ref: string | null;
+            /** Trigger */
+            trigger: string;
+            /** Reason */
+            reason: string;
+            /** Pathway */
+            pathway: string;
+            /** Method */
+            method: string | null;
+            /** Status */
+            status: string;
+            assigned_to: components["schemas"]["UserRef"] | null;
+            /** Notified At */
+            notified_at: string | null;
+            /** Due At */
+            due_at: string | null;
+            /** Appointment At */
+            appointment_at: string | null;
+            /** Location Note */
+            location_note: string | null;
+            /** Decided At */
+            decided_at: string | null;
+            /** Access Restored */
+            access_restored: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Outcome Reason */
+            outcome_reason: string | null;
+            /** Decided By */
+            decided_by: string | null;
+            /** Biometric Consent */
+            biometric_consent: boolean;
+            /** Study Mode */
+            study_mode: string | null;
+            /** Embassy Arrangement */
+            embassy_arrangement: string | null;
+            /** Methods */
+            methods: components["schemas"]["MethodOption"][];
+            /** Identity Verification Ref */
+            identity_verification_ref: string | null;
+            /** Events */
+            events: components["schemas"]["VerificationEventOut"][];
+        };
+        /**
+         * VerificationRequestMethod
+         * @enum {string}
+         */
+        VerificationRequestMethod: "in_person_id_check" | "secure_video" | "government_id_document" | "liveness_provider" | "alternative_method" | "embassy_assisted";
+        /** VerificationRequestRow */
+        VerificationRequestRow: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Reference */
+            reference: string;
+            organization: components["schemas"]["OrgRef"];
+            student: components["schemas"]["StudentRef"];
+            /** Account Id */
+            account_id: string | null;
+            /** Account Ref */
+            account_ref: string | null;
+            /** Card Ref */
+            card_ref: string | null;
+            /** Alert Id */
+            alert_id: string | null;
+            /** Alert Ref */
+            alert_ref: string | null;
+            /** Case Id */
+            case_id: string | null;
+            /** Case Ref */
+            case_ref: string | null;
+            /** Trigger */
+            trigger: string;
+            /** Reason */
+            reason: string;
+            /** Pathway */
+            pathway: string;
+            /** Method */
+            method: string | null;
+            /** Status */
+            status: string;
+            assigned_to: components["schemas"]["UserRef"] | null;
+            /** Notified At */
+            notified_at: string | null;
+            /** Due At */
+            due_at: string | null;
+            /** Appointment At */
+            appointment_at: string | null;
+            /** Location Note */
+            location_note: string | null;
+            /** Decided At */
+            decided_at: string | null;
+            /** Access Restored */
+            access_restored: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * VerificationRequestStatus
+         * @enum {string}
+         */
+        VerificationRequestStatus: "pending" | "in_progress" | "verified" | "failed" | "escalated" | "additional_info_required";
+        /** VerificationRequestSummary */
+        VerificationRequestSummary: {
+            /** By Status */
+            by_status: {
+                [key: string]: number;
+            };
+            /** By Pathway */
+            by_pathway: {
+                [key: string]: number;
+            };
+            /** Open */
+            open: number;
+            /** Overdue */
+            overdue: number;
+        };
+        /**
+         * VerificationRequestTrigger
+         * @enum {string}
+         */
+        VerificationRequestTrigger: "card_reported_lost" | "suspicious_password_recovery" | "aid_redirection_attempt" | "high_risk_device" | "account_takeover_indicators" | "multiple_fraud_signals" | "officer_request";
         /** VerificationRow */
         VerificationRow: {
             /**
@@ -2753,6 +4812,22 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** VerificationScheduleIn */
+        VerificationScheduleIn: {
+            /**
+             * Appointment At
+             * Format: date-time
+             */
+            appointment_at: string;
+            /** Location Note */
+            location_note?: string | null;
+        };
+        /** VerificationStartIn */
+        VerificationStartIn: {
+            method: components["schemas"]["VerificationRequestMethod"];
+            /** Note */
+            note?: string | null;
         };
         /** VerificationStats */
         VerificationStats: {
@@ -3890,8 +5965,11 @@ export interface operations {
             query?: {
                 status?: components["schemas"]["AlertStatus"][] | null;
                 severity?: components["schemas"]["RiskLevel"] | null;
-                category?: components["schemas"]["SignalCategory"] | null;
-                /** @description Alert or application reference */
+                category?: string | null;
+                kind?: ("application" | "account") | null;
+                assigned?: ("me" | "unassigned") | null;
+                account_id?: string | null;
+                /** @description Alert, application or account reference */
                 q?: string | null;
                 sort?: "created_at" | "risk_score";
                 page?: number;
@@ -3995,6 +6073,111 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AlertTriage"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assign_api_v1_alerts__alert_id__assign_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alert_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlertAssign"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_note_api_v1_alerts__alert_id__notes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alert_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlertNoteCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_verification_api_v1_alerts__alert_id__request_verification_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alert_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlertVerificationRequest"];
             };
         };
         responses: {
@@ -4593,6 +6776,1468 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChainVerificationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    overview_api_v1_dashboard_overview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardOverview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_accounts_api_v1_accounts_get: {
+        parameters: {
+            query?: {
+                /** @description SFA-, STU- or CRD- reference */
+                q?: string | null;
+                status?: components["schemas"]["AccountStatus"] | null;
+                risk_level?: components["schemas"]["RiskLevel"] | null;
+                card_status?: components["schemas"]["CardStatus"] | null;
+                verification_status?: ("not_required" | "pending" | "in_progress" | "verified" | "failed" | "escalated" | "additional_info_required") | null;
+                restricted?: boolean | null;
+                sort?: "reference" | "risk_score" | "last_transaction_at" | "allocated_total";
+                direction?: "asc" | "desc";
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_AccountRow_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    summary_api_v1_accounts_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_account_api_v1_accounts__account_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assess_api_v1_accounts__account_id__assess_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restrict_api_v1_accounts__account_id__restrict_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lift_restriction_api_v1_accounts__account_id__lift_restriction_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    suspend_api_v1_accounts__account_id__suspend_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reactivate_api_v1_accounts__account_id__reactivate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    case_context_api_v1_cases__case_id__context_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_cards_api_v1_cards_get: {
+        parameters: {
+            query?: {
+                /** @description CRD-, STU- or SFA- reference */
+                q?: string | null;
+                status?: components["schemas"]["CardStatus"] | null;
+                linked?: boolean | null;
+                sort?: "issued_at" | "reported_lost_at" | "reference";
+                direction?: "asc" | "desc";
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_CardOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    summary_api_v1_cards_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CardSummaryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_card_api_v1_cards__card_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                card_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CardDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    report_lost_api_v1_cards__card_id__report_lost_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                card_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportLostIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CardDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    block_api_v1_cards__card_id__block_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                card_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CardNoteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CardDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    suspicious_api_v1_cards__card_id__suspicious_activity_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                card_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CardNoteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CardDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_replacement_api_v1_cards__card_id__request_replacement_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                card_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CardNoteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CardDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    issue_replacement_api_v1_cards__card_id__issue_replacement_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                card_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CardDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    link_api_v1_cards__card_id__link_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                card_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkCardIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CardDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_transactions_api_v1_transactions_get: {
+        parameters: {
+            query?: {
+                /** @description TXN-, SFA- or STU- reference, or merchant */
+                q?: string | null;
+                risk_level?: components["schemas"]["RiskLevel"] | null;
+                flagged?: boolean | null;
+                category?: string | null;
+                indicator?: string | null;
+                status?: components["schemas"]["TransactionStatus"] | null;
+                review_status?: components["schemas"]["TransactionReview"] | null;
+                account_id?: string | null;
+                since?: string | null;
+                sort?: "occurred_at" | "amount" | "risk_score";
+                direction?: "asc" | "desc";
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_TransactionRow_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    summary_api_v1_transactions_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransactionSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_transaction_api_v1_transactions__transaction_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                transaction_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransactionDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    review_api_v1_transactions__transaction_id__review_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                transaction_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransactionReviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransactionDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_events_api_v1_security_events_get: {
+        parameters: {
+            query?: {
+                /** @description SEV-, SFA- or STU- reference */
+                q?: string | null;
+                event_type?: components["schemas"]["SecurityEventType"][] | null;
+                outcome?: string | null;
+                elevated?: boolean | null;
+                account_id?: string | null;
+                device_id?: string | null;
+                direction?: "asc" | "desc";
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_SecurityEventRow_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    summary_api_v1_security_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecuritySummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_devices_api_v1_security_devices_get: {
+        parameters: {
+            query?: {
+                trust_status?: string | null;
+                shared?: boolean | null;
+                /** @description STU- reference or device label */
+                q?: string | null;
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_DeviceOut_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_trust_api_v1_security_devices__device_id__trust_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                device_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeviceTrustIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_requests_api_v1_verification_requests_get: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["VerificationRequestStatus"][] | null;
+                pathway?: components["schemas"]["VerificationPathway"] | null;
+                /** @description VRQ-, STU- or SFA- reference */
+                q?: string | null;
+                account_id?: string | null;
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_VerificationRequestRow_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_api_v1_verification_requests_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerificationRequestCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationRequestDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    summary_api_v1_verification_requests_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationRequestSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    options_api_v1_verification_requests_options_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationOptions"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_request_api_v1_verification_requests__request_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationRequestDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    notify_api_v1_verification_requests__request_id__notify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationRequestDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    schedule_api_v1_verification_requests__request_id__schedule_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerificationScheduleIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationRequestDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_api_v1_verification_requests__request_id__start_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerificationStartIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationRequestDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_check_api_v1_verification_requests__request_id__checks_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerificationCheckIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationRequestDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    liveness_api_v1_verification_requests__request_id__liveness_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerificationLivenessIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationRequestDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decision_api_v1_verification_requests__request_id__decision_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerificationDecisionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationRequestDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    transaction_event_api_v1_provider_events_transactions_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-provider-signature"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IngestResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    security_event_api_v1_provider_events_security_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-provider-signature"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IngestResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_scenarios_api_v1_simulations_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenarioInfo"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    validation_api_v1_simulations_validation_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountScenarioCheck"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_api_v1_simulations__key__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulationResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    settings_view_api_v1_system_settings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemSettings"];
                 };
             };
             /** @description Validation Error */

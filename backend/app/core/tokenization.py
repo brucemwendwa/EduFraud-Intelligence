@@ -27,6 +27,10 @@ class TokenType(StrEnum):
     IP = "ip"
     BANK_ACCOUNT = "bank_account"
     NAME = "name"
+    CARD = "card"
+    PROVIDER_ACCOUNT = "provider_account"
+    SESSION = "session"
+    MERCHANT = "merchant"
 
 
 _DIGITS_ONLY = {TokenType.SSN, TokenType.PHONE, TokenType.BANK_ACCOUNT}

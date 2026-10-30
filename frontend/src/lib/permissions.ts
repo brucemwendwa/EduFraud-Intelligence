@@ -22,6 +22,15 @@ export const P = {
   usersManage: 'users:manage',
   orgsManage: 'organizations:manage',
   detectionRun: 'detection:run',
+  accountsRead: 'accounts:read',
+  accountsRestrict: 'accounts:restrict',
+  cardsManage: 'cards:manage',
+  transactionsRead: 'transactions:read',
+  transactionsReview: 'transactions:review',
+  securityRead: 'security:read',
+  locationRead: 'location:read',
+  verificationsDecide: 'verifications:decide',
+  simulationsRun: 'simulations:run',
 } as const;
 
 export type Permission = (typeof P)[keyof typeof P];

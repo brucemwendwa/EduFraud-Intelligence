@@ -10,6 +10,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _DEV_JWT_SECRET = "change-me-jwt-secret-for-local-development-only"  # noqa: S105 - rejected in production
 _DEV_TOKENIZATION_KEY = "change-me-tokenization-key-for-local-development"
+_DEV_WEBHOOK_SECRET = "change-me-sandbox-provider-webhook-secret"  # noqa: S105 - rejected in production
 
 
 class Settings(BaseSettings):
@@ -31,11 +32,16 @@ class Settings(BaseSettings):
     tokenization_key: SecretStr = SecretStr(_DEV_TOKENIZATION_KEY)
     data_encryption_key: SecretStr | None = None
 
+    # Shared secret the payment/identity provider uses to sign event webhooks (HMAC-SHA256).
+    provider_webhook_secret: SecretStr = SecretStr(_DEV_WEBHOOK_SECRET)
+    # Optional JSON object overriding account-risk rule weights, e.g. {"NEW_DEVICE": 0.05}.
+    account_risk_weights: str | None = None
+
     cors_origins: str = "http://localhost:5173"
     login_max_attempts: int = 5
     lockout_minutes: int = 15
 
-    @field_validator("celery_broker_url", "data_encryption_key", mode="before")
+    @field_validator("celery_broker_url", "data_encryption_key", "account_risk_weights", mode="before")
     @classmethod
     def _blank_to_none(cls, v: object) -> object:
         return None if isinstance(v, str) and not v.strip() else v
@@ -47,6 +53,8 @@ class Settings(BaseSettings):
                 raise ValueError("JWT_SECRET must be set to a unique value in production")
             if self.tokenization_key.get_secret_value() == _DEV_TOKENIZATION_KEY:
                 raise ValueError("TOKENIZATION_KEY must be set to a unique value in production")
+            if self.provider_webhook_secret.get_secret_value() == _DEV_WEBHOOK_SECRET:
+                raise ValueError("PROVIDER_WEBHOOK_SECRET must be set to a unique value in production")
             if self.data_encryption_key is None:
                 raise ValueError("DATA_ENCRYPTION_KEY is required in production")
             if self.database_url.startswith("sqlite"):

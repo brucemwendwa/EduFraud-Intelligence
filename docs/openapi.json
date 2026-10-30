@@ -1857,13 +1857,72 @@
             "schema": {
               "anyOf": [
                 {
-                  "$ref": "#/components/schemas/SignalCategory"
+                  "type": "string",
+                  "maxLength": 32,
+                  "pattern": "^[a-z_]+$"
                 },
                 {
                   "type": "null"
                 }
               ],
               "title": "Category"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "application",
+                    "account"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "assigned",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "me",
+                    "unassigned"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Assigned"
+            }
+          },
+          {
+            "name": "account_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
             }
           },
           {
@@ -1880,10 +1939,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Alert or application reference",
+              "description": "Alert, application or account reference",
               "title": "Q"
             },
-            "description": "Alert or application reference"
+            "description": "Alert, application or account reference"
           },
           {
             "name": "sort",
@@ -2025,7 +2084,7 @@
         "tags": [
           "alerts"
         ],
-        "summary": "Acknowledge, dismiss or reopen an alert",
+        "summary": "Review, escalate, resolve, mark false positive, dismiss or reopen an alert",
         "operationId": "triage_alert_api_v1_alerts__alert_id__patch",
         "parameters": [
           {
@@ -2045,6 +2104,165 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/AlertTriage"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/{alert_id}/assign": {
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Assign the alert to an officer (or unassign)",
+        "operationId": "assign_api_v1_alerts__alert_id__assign_post",
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Alert Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertAssign"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/{alert_id}/notes": {
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Add an investigation note (append-only)",
+        "operationId": "add_note_api_v1_alerts__alert_id__notes_post",
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Alert Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertNoteCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/{alert_id}/request-verification": {
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Request identity re-verification for the alert's student",
+        "operationId": "request_verification_api_v1_alerts__alert_id__request_verification_post",
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Alert Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertVerificationRequest"
               }
             }
           }
@@ -3068,10 +3286,3357 @@
           }
         }
       }
+    },
+    "/api/v1/dashboard/overview": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Scoped portfolio metrics and trends",
+        "operationId": "overview_api_v1_dashboard_overview_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardOverview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounts": {
+      "get": {
+        "tags": [
+          "student accounts"
+        ],
+        "summary": "Student ID-linked financial aid accounts",
+        "operationId": "list_accounts_api_v1_accounts_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 60
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "SFA-, STU- or CRD- reference",
+              "title": "Q"
+            },
+            "description": "SFA-, STU- or CRD- reference"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/AccountStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "risk_level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/RiskLevel"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Risk Level"
+            }
+          },
+          {
+            "name": "card_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CardStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Card Status"
+            }
+          },
+          {
+            "name": "verification_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "not_required",
+                    "pending",
+                    "in_progress",
+                    "verified",
+                    "failed",
+                    "escalated",
+                    "additional_info_required"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Verification Status"
+            }
+          },
+          {
+            "name": "restricted",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Restricted"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "reference",
+                "risk_score",
+                "last_transaction_at",
+                "allocated_total"
+              ],
+              "type": "string",
+              "default": "risk_score",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string",
+              "default": "desc",
+              "title": "Direction"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_AccountRow_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounts/summary": {
+      "get": {
+        "tags": [
+          "student accounts"
+        ],
+        "summary": "Account, card and verification counts in scope",
+        "operationId": "summary_api_v1_accounts_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounts/{account_id}": {
+      "get": {
+        "tags": [
+          "student accounts"
+        ],
+        "summary": "Account workspace (access is audited)",
+        "operationId": "get_account_api_v1_accounts__account_id__get",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounts/{account_id}/assess": {
+      "post": {
+        "tags": [
+          "student accounts"
+        ],
+        "summary": "Re-run the account risk assessment",
+        "operationId": "assess_api_v1_accounts__account_id__assess_post",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounts/{account_id}/restrict": {
+      "post": {
+        "tags": [
+          "student accounts"
+        ],
+        "summary": "Ask the provider to hold sensitive changes (spending continues)",
+        "operationId": "restrict_api_v1_accounts__account_id__restrict_post",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounts/{account_id}/lift-restriction": {
+      "post": {
+        "tags": [
+          "student accounts"
+        ],
+        "summary": "Lift a hold (security holds require a verified identity first)",
+        "operationId": "lift_restriction_api_v1_accounts__account_id__lift_restriction_post",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounts/{account_id}/suspend": {
+      "post": {
+        "tags": [
+          "student accounts"
+        ],
+        "summary": "Ask the provider to suspend the account",
+        "operationId": "suspend_api_v1_accounts__account_id__suspend_post",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounts/{account_id}/reactivate": {
+      "post": {
+        "tags": [
+          "student accounts"
+        ],
+        "summary": "Ask the provider to reactivate a suspended account (verified identity required)",
+        "operationId": "reactivate_api_v1_accounts__account_id__reactivate_post",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/context": {
+      "get": {
+        "tags": [
+          "investigations"
+        ],
+        "summary": "Account, card, transaction and device context for a case",
+        "operationId": "case_context_api_v1_cases__case_id__context_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Case Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Case Context Api V1 Cases  Case Id  Context Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cards": {
+      "get": {
+        "tags": [
+          "student id cards"
+        ],
+        "summary": "Registered student ID cards",
+        "operationId": "list_cards_api_v1_cards_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 60
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "CRD-, STU- or SFA- reference",
+              "title": "Q"
+            },
+            "description": "CRD-, STU- or SFA- reference"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CardStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "linked",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Linked"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "issued_at",
+                "reported_lost_at",
+                "reference"
+              ],
+              "type": "string",
+              "default": "issued_at",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string",
+              "default": "desc",
+              "title": "Direction"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_CardOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cards/summary": {
+      "get": {
+        "tags": [
+          "student id cards"
+        ],
+        "summary": "Summary",
+        "operationId": "summary_api_v1_cards_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardSummaryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cards/{card_id}": {
+      "get": {
+        "tags": [
+          "student id cards"
+        ],
+        "summary": "Card detail, usage history and card security events",
+        "operationId": "get_card_api_v1_cards__card_id__get",
+        "parameters": [
+          {
+            "name": "card_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Card Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cards/{card_id}/report-lost": {
+      "post": {
+        "tags": [
+          "student id cards"
+        ],
+        "summary": "Record a lost/stolen report, block via the provider and open identity verification",
+        "operationId": "report_lost_api_v1_cards__card_id__report_lost_post",
+        "parameters": [
+          {
+            "name": "card_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Card Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportLostIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cards/{card_id}/block": {
+      "post": {
+        "tags": [
+          "student id cards"
+        ],
+        "summary": "Ask the provider to block the card",
+        "operationId": "block_api_v1_cards__card_id__block_post",
+        "parameters": [
+          {
+            "name": "card_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Card Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardNoteIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cards/{card_id}/suspicious-activity": {
+      "post": {
+        "tags": [
+          "student id cards"
+        ],
+        "summary": "Record suspicious card activity",
+        "operationId": "suspicious_api_v1_cards__card_id__suspicious_activity_post",
+        "parameters": [
+          {
+            "name": "card_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Card Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardNoteIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cards/{card_id}/request-replacement": {
+      "post": {
+        "tags": [
+          "student id cards"
+        ],
+        "summary": "Request a replacement (identity verification is required before issue)",
+        "operationId": "request_replacement_api_v1_cards__card_id__request_replacement_post",
+        "parameters": [
+          {
+            "name": "card_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Card Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardNoteIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cards/{card_id}/issue-replacement": {
+      "post": {
+        "tags": [
+          "student id cards"
+        ],
+        "summary": "Provider issues the replacement card (only after verified identity)",
+        "operationId": "issue_replacement_api_v1_cards__card_id__issue_replacement_post",
+        "parameters": [
+          {
+            "name": "card_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Card Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cards/{card_id}/link": {
+      "post": {
+        "tags": [
+          "student id cards"
+        ],
+        "summary": "Link the card to an eligible aid account",
+        "operationId": "link_api_v1_cards__card_id__link_post",
+        "parameters": [
+          {
+            "name": "card_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Card Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkCardIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/transactions": {
+      "get": {
+        "tags": [
+          "transaction intelligence"
+        ],
+        "summary": "Monitored transactions from the payment provider",
+        "operationId": "list_transactions_api_v1_transactions_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 60
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "TXN-, SFA- or STU- reference, or merchant",
+              "title": "Q"
+            },
+            "description": "TXN-, SFA- or STU- reference, or merchant"
+          },
+          {
+            "name": "risk_level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/RiskLevel"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Risk Level"
+            }
+          },
+          {
+            "name": "flagged",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Flagged"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 32,
+                  "pattern": "^[a-z_]+$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "name": "indicator",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 48,
+                  "pattern": "^[A-Z_]+$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Indicator"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/TransactionStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "review_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/TransactionReview"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Review Status"
+            }
+          },
+          {
+            "name": "account_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Since"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "occurred_at",
+                "amount",
+                "risk_score"
+              ],
+              "type": "string",
+              "default": "occurred_at",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string",
+              "default": "desc",
+              "title": "Direction"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_TransactionRow_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/transactions/summary": {
+      "get": {
+        "tags": [
+          "transaction intelligence"
+        ],
+        "summary": "Transaction monitoring summary (last 30 days)",
+        "operationId": "summary_api_v1_transactions_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/transactions/{transaction_id}": {
+      "get": {
+        "tags": [
+          "transaction intelligence"
+        ],
+        "summary": "Transaction with indicators and context",
+        "operationId": "get_transaction_api_v1_transactions__transaction_id__get",
+        "parameters": [
+          {
+            "name": "transaction_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Transaction Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/transactions/{transaction_id}/review": {
+      "post": {
+        "tags": [
+          "transaction intelligence"
+        ],
+        "summary": "Record a human review decision (cleared or suspicious)",
+        "operationId": "review_api_v1_transactions__transaction_id__review_post",
+        "parameters": [
+          {
+            "name": "transaction_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Transaction Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactionReviewIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/security/events": {
+      "get": {
+        "tags": [
+          "device & access intelligence"
+        ],
+        "summary": "Account security events",
+        "operationId": "list_events_api_v1_security_events_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 60
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "SEV-, SFA- or STU- reference",
+              "title": "Q"
+            },
+            "description": "SEV-, SFA- or STU- reference"
+          },
+          {
+            "name": "event_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SecurityEventType"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Event Type"
+            }
+          },
+          {
+            "name": "outcome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 16,
+                  "pattern": "^[a-z_]+$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Outcome"
+            }
+          },
+          {
+            "name": "elevated",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Elevated"
+            }
+          },
+          {
+            "name": "account_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          },
+          {
+            "name": "device_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Device Id"
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string",
+              "default": "desc",
+              "title": "Direction"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_SecurityEventRow_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/security/summary": {
+      "get": {
+        "tags": [
+          "device & access intelligence"
+        ],
+        "summary": "Access-security summary (last 30 days)",
+        "operationId": "summary_api_v1_security_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecuritySummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/security/devices": {
+      "get": {
+        "tags": [
+          "device & access intelligence"
+        ],
+        "summary": "Devices seen on student accounts",
+        "operationId": "list_devices_api_v1_security_devices_get",
+        "parameters": [
+          {
+            "name": "trust_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(trusted|unfamiliar|suspicious)$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Trust Status"
+            }
+          },
+          {
+            "name": "shared",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Shared"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 60
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "STU- reference or device label",
+              "title": "Q"
+            },
+            "description": "STU- reference or device label"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_DeviceOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/security/devices/{device_id}/trust": {
+      "post": {
+        "tags": [
+          "device & access intelligence"
+        ],
+        "summary": "Mark a device trusted or suspicious (audited; re-scores the account)",
+        "operationId": "set_trust_api_v1_security_devices__device_id__trust_post",
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceTrustIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verification-requests": {
+      "get": {
+        "tags": [
+          "identity verification"
+        ],
+        "summary": "Verification requests",
+        "operationId": "list_requests_api_v1_verification_requests_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VerificationRequestStatus"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "pathway",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/VerificationPathway"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Pathway"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 60
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "VRQ-, STU- or SFA- reference",
+              "title": "Q"
+            },
+            "description": "VRQ-, STU- or SFA- reference"
+          },
+          {
+            "name": "account_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Account Id"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_VerificationRequestRow_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "identity verification"
+        ],
+        "summary": "Request identity re-verification for a student",
+        "operationId": "create_api_v1_verification_requests_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificationRequestCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationRequestDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verification-requests/summary": {
+      "get": {
+        "tags": [
+          "identity verification"
+        ],
+        "summary": "Summary",
+        "operationId": "summary_api_v1_verification_requests_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationRequestSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verification-requests/options": {
+      "get": {
+        "tags": [
+          "identity verification"
+        ],
+        "summary": "Methods, office and arrangements in scope",
+        "operationId": "options_api_v1_verification_requests_options_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationOptions"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verification-requests/{request_id}": {
+      "get": {
+        "tags": [
+          "identity verification"
+        ],
+        "summary": "Request with its timeline",
+        "operationId": "get_request_api_v1_verification_requests__request_id__get",
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Request Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationRequestDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verification-requests/{request_id}/notify": {
+      "post": {
+        "tags": [
+          "identity verification"
+        ],
+        "summary": "Re-send the student notice",
+        "operationId": "notify_api_v1_verification_requests__request_id__notify_post",
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Request Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationRequestDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verification-requests/{request_id}/schedule": {
+      "post": {
+        "tags": [
+          "identity verification"
+        ],
+        "summary": "Book the on-campus verification visit",
+        "operationId": "schedule_api_v1_verification_requests__request_id__schedule_post",
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Request Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificationScheduleIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationRequestDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verification-requests/{request_id}/start": {
+      "post": {
+        "tags": [
+          "identity verification"
+        ],
+        "summary": "Start a remote method",
+        "operationId": "start_api_v1_verification_requests__request_id__start_post",
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Request Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificationStartIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationRequestDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verification-requests/{request_id}/checks": {
+      "post": {
+        "tags": [
+          "identity verification"
+        ],
+        "summary": "Record a verification step (document check, procedure, video session \u2026)",
+        "operationId": "record_check_api_v1_verification_requests__request_id__checks_post",
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Request Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificationCheckIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationRequestDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verification-requests/{request_id}/liveness": {
+      "post": {
+        "tags": [
+          "identity verification"
+        ],
+        "summary": "Run the provider liveness check (SIMULATED in this prototype; consent required)",
+        "operationId": "liveness_api_v1_verification_requests__request_id__liveness_post",
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Request Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificationLivenessIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationRequestDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verification-requests/{request_id}/decision": {
+      "post": {
+        "tags": [
+          "identity verification"
+        ],
+        "summary": "Record the outcome with a documented reason (verified can restore access)",
+        "operationId": "decision_api_v1_verification_requests__request_id__decision_post",
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Request Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerificationDecisionIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationRequestDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/provider-events/transactions": {
+      "post": {
+        "tags": [
+          "provider events (sandbox)"
+        ],
+        "summary": "Ingest a card transaction event (signed)",
+        "operationId": "transaction_event_api_v1_provider_events_transactions_post",
+        "parameters": [
+          {
+            "name": "x-provider-signature",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Provider-Signature"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/provider-events/security": {
+      "post": {
+        "tags": [
+          "provider events (sandbox)"
+        ],
+        "summary": "Ingest an account-security event (signed)",
+        "operationId": "security_event_api_v1_provider_events_security_post",
+        "parameters": [
+          {
+            "name": "x-provider-signature",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Provider-Signature"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/simulations": {
+      "get": {
+        "tags": [
+          "scenario simulator (demo)"
+        ],
+        "summary": "Available synthetic scenarios",
+        "operationId": "list_scenarios_api_v1_simulations_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScenarioInfo"
+                  },
+                  "type": "array",
+                  "title": "Response List Scenarios Api V1 Simulations Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/simulations/validation": {
+      "get": {
+        "tags": [
+          "scenario simulator (demo)"
+        ],
+        "summary": "Checks each seeded account scenario against its expected risk level (coverage, not accuracy)",
+        "operationId": "validation_api_v1_simulations_validation_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AccountScenarioCheck"
+                  },
+                  "type": "array",
+                  "title": "Response Validation Api V1 Simulations Validation Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/simulations/{key}": {
+      "post": {
+        "tags": [
+          "scenario simulator (demo)"
+        ],
+        "summary": "Play a scenario on synthetic accounts (DEMO_MODE only)",
+        "operationId": "run_api_v1_simulations__key__post",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Key"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/system/settings": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Risk configuration, integrations and privacy controls",
+        "operationId": "settings_view_api_v1_system_settings_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemSettings"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "AccountDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrgRef"
+          },
+          "student": {
+            "$ref": "#/components/schemas/StudentRef"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "sensitive_actions_restricted": {
+            "type": "boolean",
+            "title": "Sensitive Actions Restricted"
+          },
+          "study_mode": {
+            "type": "string",
+            "title": "Study Mode"
+          },
+          "provider_mode": {
+            "type": "string",
+            "title": "Provider Mode"
+          },
+          "card": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CardSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "allocated_total": {
+            "type": "string",
+            "title": "Allocated Total"
+          },
+          "available_balance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available Balance"
+          },
+          "balance_as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Balance As Of"
+          },
+          "last_transaction_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Transaction At"
+          },
+          "verification_status": {
+            "type": "string",
+            "title": "Verification Status"
+          },
+          "risk_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Score"
+          },
+          "risk_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Level"
+          },
+          "scenario_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Key"
+          },
+          "provider_key": {
+            "type": "string",
+            "title": "Provider Key"
+          },
+          "provider_account_handle": {
+            "type": "string",
+            "title": "Provider Account Handle"
+          },
+          "status_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Reason"
+          },
+          "restriction_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Restriction Reason"
+          },
+          "restricted_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Restricted At"
+          },
+          "registered_location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Registered Location"
+          },
+          "location_restricted": {
+            "type": "boolean",
+            "title": "Location Restricted"
+          },
+          "opened_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Opened At"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "cards": {
+            "items": {
+              "$ref": "#/components/schemas/CardOut"
+            },
+            "type": "array",
+            "title": "Cards"
+          },
+          "devices": {
+            "items": {
+              "$ref": "#/components/schemas/DeviceOut"
+            },
+            "type": "array",
+            "title": "Devices"
+          },
+          "allocations": {
+            "items": {
+              "$ref": "#/components/schemas/DisbursementRow"
+            },
+            "type": "array",
+            "title": "Allocations"
+          },
+          "transactions": {
+            "items": {
+              "$ref": "#/components/schemas/TransactionRow"
+            },
+            "type": "array",
+            "title": "Transactions"
+          },
+          "security_events": {
+            "items": {
+              "$ref": "#/components/schemas/SecurityEventRow"
+            },
+            "type": "array",
+            "title": "Security Events"
+          },
+          "assessment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RiskAssessmentOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "assessment_history": {
+            "items": {
+              "$ref": "#/components/schemas/AssessmentHistoryItem"
+            },
+            "type": "array",
+            "title": "Assessment History"
+          },
+          "verification_requests": {
+            "items": {
+              "$ref": "#/components/schemas/VerificationRequestRow"
+            },
+            "type": "array",
+            "title": "Verification Requests"
+          },
+          "verification_attempts": {
+            "items": {
+              "$ref": "#/components/schemas/VerificationRow"
+            },
+            "type": "array",
+            "title": "Verification Attempts"
+          },
+          "alerts": {
+            "items": {
+              "$ref": "#/components/schemas/AlertRow"
+            },
+            "type": "array",
+            "title": "Alerts"
+          },
+          "cases": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Cases"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reference",
+          "organization",
+          "student",
+          "department",
+          "status",
+          "sensitive_actions_restricted",
+          "study_mode",
+          "provider_mode",
+          "card",
+          "allocated_total",
+          "available_balance",
+          "balance_as_of",
+          "last_transaction_at",
+          "verification_status",
+          "risk_score",
+          "risk_level",
+          "scenario_key",
+          "provider_key",
+          "provider_account_handle",
+          "status_reason",
+          "restriction_reason",
+          "restricted_at",
+          "registered_location",
+          "location_restricted",
+          "opened_at",
+          "currency",
+          "cards",
+          "devices",
+          "allocations",
+          "transactions",
+          "security_events",
+          "assessment",
+          "assessment_history",
+          "verification_requests",
+          "verification_attempts",
+          "alerts",
+          "cases"
+        ],
+        "title": "AccountDetail"
+      },
+      "AccountRow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrgRef"
+          },
+          "student": {
+            "$ref": "#/components/schemas/StudentRef"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "sensitive_actions_restricted": {
+            "type": "boolean",
+            "title": "Sensitive Actions Restricted"
+          },
+          "study_mode": {
+            "type": "string",
+            "title": "Study Mode"
+          },
+          "provider_mode": {
+            "type": "string",
+            "title": "Provider Mode"
+          },
+          "card": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CardSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "allocated_total": {
+            "type": "string",
+            "title": "Allocated Total"
+          },
+          "available_balance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Available Balance"
+          },
+          "balance_as_of": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Balance As Of"
+          },
+          "last_transaction_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Transaction At"
+          },
+          "verification_status": {
+            "type": "string",
+            "title": "Verification Status"
+          },
+          "risk_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Score"
+          },
+          "risk_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Level"
+          },
+          "scenario_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reference",
+          "organization",
+          "student",
+          "department",
+          "status",
+          "sensitive_actions_restricted",
+          "study_mode",
+          "provider_mode",
+          "card",
+          "allocated_total",
+          "available_balance",
+          "balance_as_of",
+          "last_transaction_at",
+          "verification_status",
+          "risk_score",
+          "risk_level",
+          "scenario_key"
+        ],
+        "title": "AccountRow"
+      },
+      "AccountScenarioCheck": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "expected": {
+            "type": "string",
+            "title": "Expected"
+          },
+          "accounts": {
+            "type": "integer",
+            "title": "Accounts"
+          },
+          "observed_levels": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Observed Levels"
+          },
+          "passed": {
+            "type": "boolean",
+            "title": "Passed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "kind",
+          "expected",
+          "accounts",
+          "observed_levels",
+          "passed"
+        ],
+        "title": "AccountScenarioCheck"
+      },
+      "AccountStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "pending_verification",
+          "restricted",
+          "suspended",
+          "closed"
+        ],
+        "title": "AccountStatus"
+      },
+      "AccountSummary": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "by_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Status"
+          },
+          "restricted": {
+            "type": "integer",
+            "title": "Restricted"
+          },
+          "by_risk": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Risk"
+          },
+          "allocated_total": {
+            "type": "string",
+            "title": "Allocated Total"
+          },
+          "cards_by_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Cards By Status"
+          },
+          "verification_open": {
+            "type": "integer",
+            "title": "Verification Open"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "by_status",
+          "restricted",
+          "by_risk",
+          "allocated_total",
+          "cards_by_status",
+          "verification_open"
+        ],
+        "title": "AccountSummary"
+      },
+      "ActivityItem": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "student_ref": {
+            "type": "string",
+            "title": "Student Ref"
+          },
+          "account_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id"
+          },
+          "risk_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Level"
+          },
+          "occurred_at": {
+            "title": "Occurred At"
+          },
+          "link": {
+            "type": "string",
+            "title": "Link"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "reference",
+          "title",
+          "detail",
+          "student_ref",
+          "account_id",
+          "risk_level",
+          "occurred_at",
+          "link"
+        ],
+        "title": "ActivityItem"
+      },
+      "AlertAssign": {
+        "properties": {
+          "assigned_to_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned To Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "assigned_to_id"
+        ],
+        "title": "AlertAssign"
+      },
       "AlertDetail": {
         "properties": {
           "id": {
@@ -3140,6 +6705,40 @@
             ],
             "title": "Application Ref"
           },
+          "account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id"
+          },
+          "account_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Ref"
+          },
+          "student_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Student Ref"
+          },
           "case_id": {
             "anyOf": [
               {
@@ -3162,6 +6761,27 @@
               }
             ],
             "title": "Case Ref"
+          },
+          "assigned_to": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "recommended_action": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommended Action"
           },
           "created_at": {
             "type": "string",
@@ -3272,6 +6892,30 @@
               }
             ],
             "title": "Triaged At"
+          },
+          "related": {
+            "items": {
+              "$ref": "#/components/schemas/RelatedRecord"
+            },
+            "type": "array",
+            "title": "Related",
+            "default": []
+          },
+          "notes": {
+            "items": {
+              "$ref": "#/components/schemas/AlertNoteOut"
+            },
+            "type": "array",
+            "title": "Notes",
+            "default": []
+          },
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/AlertTimelineItem"
+            },
+            "type": "array",
+            "title": "Timeline",
+            "default": []
           }
         },
         "type": "object",
@@ -3302,6 +6946,58 @@
           "triaged_at"
         ],
         "title": "AlertDetail"
+      },
+      "AlertNoteCreate": {
+        "properties": {
+          "body": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 3,
+            "title": "Body"
+          }
+        },
+        "type": "object",
+        "required": [
+          "body"
+        ],
+        "title": "AlertNoteCreate"
+      },
+      "AlertNoteOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "body": {
+            "type": "string",
+            "title": "Body"
+          },
+          "author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "body",
+          "author",
+          "created_at"
+        ],
+        "title": "AlertNoteOut"
       },
       "AlertRow": {
         "properties": {
@@ -3371,6 +7067,40 @@
             ],
             "title": "Application Ref"
           },
+          "account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id"
+          },
+          "account_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Ref"
+          },
+          "student_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Student Ref"
+          },
           "case_id": {
             "anyOf": [
               {
@@ -3393,6 +7123,27 @@
               }
             ],
             "title": "Case Ref"
+          },
+          "assigned_to": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "recommended_action": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommended Action"
           },
           "created_at": {
             "type": "string",
@@ -3430,8 +7181,11 @@
         "enum": [
           "open",
           "acknowledged",
+          "verification_requested",
+          "escalated",
           "in_investigation",
           "dismissed",
+          "false_positive",
           "resolved"
         ],
         "title": "AlertStatus"
@@ -3460,6 +7214,29 @@
             },
             "type": "object",
             "title": "By Category"
+          },
+          "verification_requested": {
+            "type": "integer",
+            "title": "Verification Requested",
+            "default": 0
+          },
+          "escalated": {
+            "type": "integer",
+            "title": "Escalated",
+            "default": 0
+          },
+          "by_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Status",
+            "default": {}
+          },
+          "assigned_to_me": {
+            "type": "integer",
+            "title": "Assigned To Me",
+            "default": 0
           }
         },
         "type": "object",
@@ -3472,6 +7249,48 @@
         ],
         "title": "AlertSummary"
       },
+      "AlertTimelineItem": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "actor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor"
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome"
+          },
+          "details": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Details"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action",
+          "actor",
+          "outcome",
+          "details",
+          "occurred_at"
+        ],
+        "title": "AlertTimelineItem"
+      },
       "AlertTriage": {
         "properties": {
           "action": {
@@ -3479,7 +7298,10 @@
             "enum": [
               "acknowledge",
               "dismiss",
-              "reopen"
+              "reopen",
+              "escalate",
+              "resolve",
+              "false_positive"
             ],
             "title": "Action"
           },
@@ -3501,6 +7323,21 @@
           "action"
         ],
         "title": "AlertTriage"
+      },
+      "AlertVerificationRequest": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 5,
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "AlertVerificationRequest"
       },
       "AlternativeVerificationIn": {
         "properties": {
@@ -3973,6 +7810,10 @@
       "AuditCategory": {
         "type": "string",
         "enum": [
+          "account",
+          "card",
+          "transaction",
+          "security",
           "authentication",
           "verification",
           "investigation",
@@ -4249,6 +8090,467 @@
           "password"
         ],
         "title": "Body_token_api_v1_auth_token_post"
+      },
+      "CardDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "masked_number": {
+            "type": "string",
+            "title": "Masked Number",
+            "description": "Last four characters only, e.g. '\u2022\u2022\u2022\u2022 0412'"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrgRef"
+          },
+          "student": {
+            "$ref": "#/components/schemas/StudentRef"
+          },
+          "account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id"
+          },
+          "account_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Ref"
+          },
+          "issued_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Issued At"
+          },
+          "activated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activated At"
+          },
+          "expires_on": {
+            "title": "Expires On"
+          },
+          "reported_lost_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reported Lost At"
+          },
+          "report_channel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Channel"
+          },
+          "blocked_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blocked At"
+          },
+          "block_confirmation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Block Confirmation"
+          },
+          "replacement_requested_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replacement Requested At"
+          },
+          "replaced_by_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replaced By Id"
+          },
+          "replaced_by_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replaced By Ref"
+          },
+          "verified_since_report": {
+            "type": "boolean",
+            "title": "Verified Since Report",
+            "description": "Identity re-verified after the loss report (replacement allowed)"
+          },
+          "usage": {
+            "items": {
+              "$ref": "#/components/schemas/TransactionRow"
+            },
+            "type": "array",
+            "title": "Usage"
+          },
+          "security_events": {
+            "items": {
+              "$ref": "#/components/schemas/SecurityEventRow"
+            },
+            "type": "array",
+            "title": "Security Events"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/CardOut"
+            },
+            "type": "array",
+            "title": "History"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reference",
+          "masked_number",
+          "status",
+          "organization",
+          "student",
+          "account_id",
+          "account_ref",
+          "issued_at",
+          "activated_at",
+          "expires_on",
+          "reported_lost_at",
+          "report_channel",
+          "blocked_at",
+          "block_confirmation",
+          "replacement_requested_at",
+          "replaced_by_id",
+          "replaced_by_ref",
+          "verified_since_report",
+          "usage",
+          "security_events",
+          "history"
+        ],
+        "title": "CardDetail"
+      },
+      "CardNoteIn": {
+        "properties": {
+          "note": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 5,
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "note"
+        ],
+        "title": "CardNoteIn"
+      },
+      "CardOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "masked_number": {
+            "type": "string",
+            "title": "Masked Number",
+            "description": "Last four characters only, e.g. '\u2022\u2022\u2022\u2022 0412'"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrgRef"
+          },
+          "student": {
+            "$ref": "#/components/schemas/StudentRef"
+          },
+          "account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id"
+          },
+          "account_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Ref"
+          },
+          "issued_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Issued At"
+          },
+          "activated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activated At"
+          },
+          "expires_on": {
+            "title": "Expires On"
+          },
+          "reported_lost_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reported Lost At"
+          },
+          "report_channel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Channel"
+          },
+          "blocked_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blocked At"
+          },
+          "block_confirmation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Block Confirmation"
+          },
+          "replacement_requested_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replacement Requested At"
+          },
+          "replaced_by_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replaced By Id"
+          },
+          "replaced_by_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Replaced By Ref"
+          },
+          "verified_since_report": {
+            "type": "boolean",
+            "title": "Verified Since Report",
+            "description": "Identity re-verified after the loss report (replacement allowed)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reference",
+          "masked_number",
+          "status",
+          "organization",
+          "student",
+          "account_id",
+          "account_ref",
+          "issued_at",
+          "activated_at",
+          "expires_on",
+          "reported_lost_at",
+          "report_channel",
+          "blocked_at",
+          "block_confirmation",
+          "replacement_requested_at",
+          "replaced_by_id",
+          "replaced_by_ref",
+          "verified_since_report"
+        ],
+        "title": "CardOut"
+      },
+      "CardStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "reported_lost",
+          "blocked",
+          "replacement_requested",
+          "replaced"
+        ],
+        "title": "CardStatus"
+      },
+      "CardSummary": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "masked_number": {
+            "type": "string",
+            "title": "Masked Number",
+            "description": "Last four characters only, e.g. '\u2022\u2022\u2022\u2022 0412'"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reference",
+          "masked_number",
+          "status"
+        ],
+        "title": "CardSummary"
+      },
+      "CardSummaryOut": {
+        "properties": {
+          "by_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Status"
+          },
+          "blocked_or_reported": {
+            "type": "integer",
+            "title": "Blocked Or Reported"
+          }
+        },
+        "type": "object",
+        "required": [
+          "by_status",
+          "blocked_or_reported"
+        ],
+        "title": "CardSummaryOut"
       },
       "CaseAlertRef": {
         "properties": {
@@ -5186,6 +9488,7 @@
         "enum": [
           "new",
           "under_review",
+          "awaiting_verification",
           "escalated",
           "resolved",
           "closed"
@@ -5351,6 +9654,102 @@
           "new_password"
         ],
         "title": "ChangePasswordRequest"
+      },
+      "DashboardOverview": {
+        "properties": {
+          "synthetic": {
+            "type": "boolean",
+            "title": "Synthetic"
+          },
+          "generated_at": {
+            "title": "Generated At"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/Metric"
+            },
+            "type": "array",
+            "title": "Metrics"
+          },
+          "allocation_trend": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Allocation Trend"
+          },
+          "transaction_activity": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Transaction Activity"
+          },
+          "risk_distribution": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Risk Distribution"
+          },
+          "suspicious_categories": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Suspicious Categories"
+          },
+          "verification_outcomes": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Verification Outcomes"
+          },
+          "investigation_status": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Investigation Status"
+          },
+          "alert_status": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Alert Status"
+          },
+          "recent_activity": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityItem"
+            },
+            "type": "array",
+            "title": "Recent Activity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "synthetic",
+          "generated_at",
+          "metrics",
+          "allocation_trend",
+          "transaction_activity",
+          "risk_distribution",
+          "suspicious_categories",
+          "verification_outcomes",
+          "investigation_status",
+          "alert_status",
+          "recent_activity"
+        ],
+        "title": "DashboardOverview"
       },
       "DemoAccount": {
         "properties": {
@@ -5642,6 +10041,107 @@
           "principles"
         ],
         "title": "DetectionStatus"
+      },
+      "DeviceOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "handle": {
+            "type": "string",
+            "title": "Handle"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "platform": {
+            "type": "string",
+            "title": "Platform"
+          },
+          "trust_status": {
+            "type": "string",
+            "title": "Trust Status"
+          },
+          "trust_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trust Reason"
+          },
+          "first_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "First Seen At"
+          },
+          "last_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Seen At"
+          },
+          "is_shared_kiosk": {
+            "type": "boolean",
+            "title": "Is Shared Kiosk"
+          },
+          "student": {
+            "$ref": "#/components/schemas/StudentRef"
+          },
+          "other_accounts_in_scope": {
+            "type": "integer",
+            "title": "Other Accounts In Scope"
+          },
+          "other_accounts_other_institutions": {
+            "type": "integer",
+            "title": "Other Accounts Other Institutions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "handle",
+          "label",
+          "platform",
+          "trust_status",
+          "trust_reason",
+          "first_seen_at",
+          "last_seen_at",
+          "is_shared_kiosk",
+          "student",
+          "other_accounts_in_scope",
+          "other_accounts_other_institutions"
+        ],
+        "title": "DeviceOut"
+      },
+      "DeviceTrustIn": {
+        "properties": {
+          "trust_status": {
+            "type": "string",
+            "enum": [
+              "trusted",
+              "suspicious"
+            ],
+            "title": "Trust Status"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 5,
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "trust_status",
+          "reason"
+        ],
+        "title": "DeviceTrustIn"
       },
       "DisbursementDetail": {
         "properties": {
@@ -6180,6 +10680,156 @@
         ],
         "title": "IdentityTokenOut"
       },
+      "IndicatorOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "points": {
+            "type": "number",
+            "title": "Points"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "title",
+          "category",
+          "points"
+        ],
+        "title": "IndicatorOut"
+      },
+      "IngestResult": {
+        "properties": {
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "duplicate": {
+            "type": "boolean",
+            "title": "Duplicate"
+          },
+          "decision": {
+            "type": "string",
+            "title": "Decision"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "risk_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Score"
+          },
+          "risk_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Level"
+          },
+          "account_reference": {
+            "type": "string",
+            "title": "Account Reference"
+          },
+          "account_risk_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Risk Score"
+          },
+          "account_risk_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Risk Level"
+          },
+          "provider_mode": {
+            "type": "string",
+            "title": "Provider Mode",
+            "default": "sandbox"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reference",
+          "duplicate",
+          "decision",
+          "reason",
+          "risk_score",
+          "risk_level",
+          "account_reference",
+          "account_risk_score",
+          "account_risk_level"
+        ],
+        "title": "IngestResult"
+      },
+      "LinkCardIn": {
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "account_id"
+        ],
+        "title": "LinkCardIn"
+      },
       "LoginRequest": {
         "properties": {
           "email": {
@@ -6277,6 +10927,80 @@
           "accessible_organizations"
         ],
         "title": "Me"
+      },
+      "MethodOption": {
+        "properties": {
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "pathway": {
+            "type": "string",
+            "title": "Pathway"
+          },
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "method",
+          "label",
+          "pathway",
+          "available",
+          "reason"
+        ],
+        "title": "MethodOption"
+      },
+      "Metric": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          },
+          "link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "value"
+        ],
+        "title": "Metric"
       },
       "ModelCardOut": {
         "properties": {
@@ -6812,6 +11536,37 @@
         "type": "object",
         "title": "OrganizationUpdate"
       },
+      "Page_AccountRow_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AccountRow"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "Page[AccountRow]"
+      },
       "Page_AlertRow_": {
         "properties": {
           "items": {
@@ -6905,6 +11660,37 @@
         ],
         "title": "Page[AuditEventOut]"
       },
+      "Page_CardOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CardOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "Page[CardOut]"
+      },
       "Page_CaseRow_": {
         "properties": {
           "items": {
@@ -6936,6 +11722,37 @@
         ],
         "title": "Page[CaseRow]"
       },
+      "Page_DeviceOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DeviceOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "Page[DeviceOut]"
+      },
       "Page_DisbursementRow_": {
         "properties": {
           "items": {
@@ -6966,6 +11783,68 @@
           "page_size"
         ],
         "title": "Page[DisbursementRow]"
+      },
+      "Page_SecurityEventRow_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SecurityEventRow"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "Page[SecurityEventRow]"
+      },
+      "Page_TransactionRow_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TransactionRow"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "Page[TransactionRow]"
       },
       "Page_UserOut_": {
         "properties": {
@@ -7028,6 +11907,37 @@
           "page_size"
         ],
         "title": "Page[VerificationOut]"
+      },
+      "Page_VerificationRequestRow_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/VerificationRequestRow"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "Page[VerificationRequestRow]"
       },
       "PermissionOut": {
         "properties": {
@@ -7114,6 +12024,21 @@
           "alternative_methods"
         ],
         "title": "ProviderInfo"
+      },
+      "ReasonIn": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 5,
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "ReasonIn"
       },
       "RelatedApplication": {
         "properties": {
@@ -7203,6 +12128,92 @@
           "other_institution_matches"
         ],
         "title": "RelatedGroup"
+      },
+      "RelatedRecord": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "id",
+          "reference",
+          "label"
+        ],
+        "title": "RelatedRecord"
+      },
+      "ReportLostIn": {
+        "properties": {
+          "channel": {
+            "type": "string",
+            "enum": [
+              "student_portal",
+              "phone",
+              "in_person",
+              "officer"
+            ],
+            "title": "Channel",
+            "default": "officer"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "block": {
+            "type": "boolean",
+            "title": "Block",
+            "description": "Ask the provider to block the card immediately",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "ReportLostIn"
       },
       "RevealRequest": {
         "properties": {
@@ -7550,18 +12561,371 @@
         ],
         "title": "ScenarioCheck"
       },
-      "SignalCategory": {
+      "ScenarioInfo": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "expected": {
+            "type": "string",
+            "title": "Expected"
+          },
+          "accounts_needed": {
+            "type": "integer",
+            "title": "Accounts Needed"
+          },
+          "live": {
+            "type": "boolean",
+            "title": "Live"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "kind",
+          "description",
+          "expected",
+          "accounts_needed",
+          "live"
+        ],
+        "title": "ScenarioInfo"
+      },
+      "SecurityEventRow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrgRef"
+          },
+          "student": {
+            "$ref": "#/components/schemas/StudentRef"
+          },
+          "account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id"
+          },
+          "account_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Ref"
+          },
+          "card_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Card Ref"
+          },
+          "event_type": {
+            "type": "string",
+            "title": "Event Type"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          },
+          "device": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeviceOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "location_restricted": {
+            "type": "boolean",
+            "title": "Location Restricted"
+          },
+          "destination": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DestinationOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "risk_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Score"
+          },
+          "risk_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Level"
+          },
+          "indicators": {
+            "items": {
+              "$ref": "#/components/schemas/IndicatorOut"
+            },
+            "type": "array",
+            "title": "Indicators"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "scenario_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reference",
+          "organization",
+          "student",
+          "account_id",
+          "account_ref",
+          "card_ref",
+          "event_type",
+          "source",
+          "outcome",
+          "decision",
+          "occurred_at",
+          "device",
+          "location",
+          "location_restricted",
+          "destination",
+          "risk_score",
+          "risk_level",
+          "indicators",
+          "note",
+          "scenario_key"
+        ],
+        "title": "SecurityEventRow"
+      },
+      "SecurityEventType": {
         "type": "string",
         "enum": [
-          "identity",
-          "application",
-          "enrollment",
-          "disbursement",
-          "network",
-          "biometric",
-          "anomaly"
+          "login_success",
+          "login_failed",
+          "new_device_login",
+          "mfa_passed",
+          "mfa_failed",
+          "password_reset_requested",
+          "password_changed",
+          "account_recovery_requested",
+          "contact_details_changed",
+          "aid_redirect_requested",
+          "card_reported_lost",
+          "card_blocked",
+          "card_suspicious_activity",
+          "card_replacement_requested",
+          "card_replaced",
+          "account_restricted",
+          "account_restriction_lifted"
         ],
-        "title": "SignalCategory"
+        "title": "SecurityEventType"
+      },
+      "SecuritySummary": {
+        "properties": {
+          "window_days": {
+            "type": "integer",
+            "title": "Window Days"
+          },
+          "events": {
+            "type": "integer",
+            "title": "Events"
+          },
+          "by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Type"
+          },
+          "new_devices": {
+            "type": "integer",
+            "title": "New Devices"
+          },
+          "failed_logins": {
+            "type": "integer",
+            "title": "Failed Logins"
+          },
+          "password_resets": {
+            "type": "integer",
+            "title": "Password Resets"
+          },
+          "shared_devices": {
+            "type": "integer",
+            "title": "Shared Devices"
+          },
+          "elevated_events": {
+            "type": "integer",
+            "title": "Elevated Events"
+          }
+        },
+        "type": "object",
+        "required": [
+          "window_days",
+          "events",
+          "by_type",
+          "new_devices",
+          "failed_logins",
+          "password_resets",
+          "shared_devices",
+          "elevated_events"
+        ],
+        "title": "SecuritySummary"
+      },
+      "SimulationResult": {
+        "properties": {
+          "scenario": {
+            "type": "string",
+            "title": "Scenario"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "accounts": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Accounts"
+          },
+          "events": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Events"
+          },
+          "alerts": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Alerts"
+          },
+          "verification_requests": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Verification Requests"
+          },
+          "synthetic": {
+            "type": "boolean",
+            "title": "Synthetic",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "scenario",
+          "label",
+          "accounts",
+          "events",
+          "alerts",
+          "verification_requests"
+        ],
+        "title": "SimulationResult"
       },
       "StageOut": {
         "properties": {
@@ -7751,6 +13115,88 @@
         ],
         "title": "StudentRef"
       },
+      "SystemSettings": {
+        "properties": {
+          "environment": {
+            "type": "string",
+            "title": "Environment"
+          },
+          "demo_mode": {
+            "type": "boolean",
+            "title": "Demo Mode"
+          },
+          "risk_bands": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Risk Bands"
+          },
+          "risk_bands_note": {
+            "type": "string",
+            "title": "Risk Bands Note"
+          },
+          "account_rules_version": {
+            "type": "string",
+            "title": "Account Rules Version"
+          },
+          "account_engine_method": {
+            "type": "string",
+            "title": "Account Engine Method"
+          },
+          "account_rules": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Account Rules"
+          },
+          "weights_overridden": {
+            "type": "boolean",
+            "title": "Weights Overridden"
+          },
+          "integrations": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Integrations"
+          },
+          "verification": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Verification"
+          },
+          "privacy_controls": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Privacy Controls"
+          }
+        },
+        "type": "object",
+        "required": [
+          "environment",
+          "demo_mode",
+          "risk_bands",
+          "risk_bands_note",
+          "account_rules_version",
+          "account_engine_method",
+          "account_rules",
+          "weights_overridden",
+          "integrations",
+          "verification",
+          "privacy_controls"
+        ],
+        "title": "SystemSettings"
+      },
       "TestSampleOut": {
         "properties": {
           "key": {
@@ -7851,6 +13297,529 @@
           "expires_at"
         ],
         "title": "TokenResponse"
+      },
+      "TransactionDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrgRef"
+          },
+          "student": {
+            "$ref": "#/components/schemas/StudentRef"
+          },
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "account_ref": {
+            "type": "string",
+            "title": "Account Ref"
+          },
+          "card_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Card Ref"
+          },
+          "transaction_type": {
+            "type": "string",
+            "title": "Transaction Type"
+          },
+          "channel": {
+            "type": "string",
+            "title": "Channel"
+          },
+          "merchant_name": {
+            "type": "string",
+            "title": "Merchant Name"
+          },
+          "merchant_category": {
+            "type": "string",
+            "title": "Merchant Category"
+          },
+          "amount": {
+            "type": "string",
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "location_restricted": {
+            "type": "boolean",
+            "title": "Location Restricted"
+          },
+          "destination": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DestinationOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "decline_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decline Reason"
+          },
+          "risk_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Score"
+          },
+          "risk_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Level"
+          },
+          "indicators": {
+            "items": {
+              "$ref": "#/components/schemas/IndicatorOut"
+            },
+            "type": "array",
+            "title": "Indicators"
+          },
+          "review_status": {
+            "type": "string",
+            "title": "Review Status"
+          },
+          "scenario_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Key"
+          },
+          "review_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Note"
+          },
+          "reviewed_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed By"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed At"
+          },
+          "account_status": {
+            "type": "string",
+            "title": "Account Status"
+          },
+          "account_restricted": {
+            "type": "boolean",
+            "title": "Account Restricted"
+          },
+          "recent_transactions": {
+            "items": {
+              "$ref": "#/components/schemas/TransactionRow"
+            },
+            "type": "array",
+            "title": "Recent Transactions"
+          },
+          "related_events": {
+            "items": {
+              "$ref": "#/components/schemas/SecurityEventRow"
+            },
+            "type": "array",
+            "title": "Related Events"
+          },
+          "alerts": {
+            "items": {
+              "$ref": "#/components/schemas/AlertRow"
+            },
+            "type": "array",
+            "title": "Alerts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reference",
+          "organization",
+          "student",
+          "account_id",
+          "account_ref",
+          "card_ref",
+          "transaction_type",
+          "channel",
+          "merchant_name",
+          "merchant_category",
+          "amount",
+          "currency",
+          "occurred_at",
+          "location",
+          "location_restricted",
+          "destination",
+          "status",
+          "decline_reason",
+          "risk_score",
+          "risk_level",
+          "indicators",
+          "review_status",
+          "scenario_key",
+          "review_note",
+          "reviewed_by",
+          "reviewed_at",
+          "account_status",
+          "account_restricted",
+          "recent_transactions",
+          "related_events",
+          "alerts"
+        ],
+        "title": "TransactionDetail"
+      },
+      "TransactionReview": {
+        "type": "string",
+        "enum": [
+          "unreviewed",
+          "cleared",
+          "suspicious"
+        ],
+        "title": "TransactionReview"
+      },
+      "TransactionReviewIn": {
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "cleared",
+              "suspicious"
+            ],
+            "title": "Decision"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 5,
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "decision",
+          "note"
+        ],
+        "title": "TransactionReviewIn"
+      },
+      "TransactionRow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrgRef"
+          },
+          "student": {
+            "$ref": "#/components/schemas/StudentRef"
+          },
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "account_ref": {
+            "type": "string",
+            "title": "Account Ref"
+          },
+          "card_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Card Ref"
+          },
+          "transaction_type": {
+            "type": "string",
+            "title": "Transaction Type"
+          },
+          "channel": {
+            "type": "string",
+            "title": "Channel"
+          },
+          "merchant_name": {
+            "type": "string",
+            "title": "Merchant Name"
+          },
+          "merchant_category": {
+            "type": "string",
+            "title": "Merchant Category"
+          },
+          "amount": {
+            "type": "string",
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "location_restricted": {
+            "type": "boolean",
+            "title": "Location Restricted"
+          },
+          "destination": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DestinationOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "decline_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decline Reason"
+          },
+          "risk_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Score"
+          },
+          "risk_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Level"
+          },
+          "indicators": {
+            "items": {
+              "$ref": "#/components/schemas/IndicatorOut"
+            },
+            "type": "array",
+            "title": "Indicators"
+          },
+          "review_status": {
+            "type": "string",
+            "title": "Review Status"
+          },
+          "scenario_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reference",
+          "organization",
+          "student",
+          "account_id",
+          "account_ref",
+          "card_ref",
+          "transaction_type",
+          "channel",
+          "merchant_name",
+          "merchant_category",
+          "amount",
+          "currency",
+          "occurred_at",
+          "location",
+          "location_restricted",
+          "destination",
+          "status",
+          "decline_reason",
+          "risk_score",
+          "risk_level",
+          "indicators",
+          "review_status",
+          "scenario_key"
+        ],
+        "title": "TransactionRow"
+      },
+      "TransactionStatus": {
+        "type": "string",
+        "enum": [
+          "approved",
+          "declined",
+          "pending",
+          "reversed"
+        ],
+        "title": "TransactionStatus"
+      },
+      "TransactionSummary": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "flagged": {
+            "type": "integer",
+            "title": "Flagged"
+          },
+          "declined": {
+            "type": "integer",
+            "title": "Declined"
+          },
+          "unreviewed_flagged": {
+            "type": "integer",
+            "title": "Unreviewed Flagged"
+          },
+          "by_indicator": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Indicator"
+          },
+          "by_category": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Category"
+          },
+          "amount_total": {
+            "type": "string",
+            "title": "Amount Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "flagged",
+          "declined",
+          "unreviewed_flagged",
+          "by_indicator",
+          "by_category",
+          "amount_total"
+        ],
+        "title": "TransactionSummary"
       },
       "UserCreate": {
         "properties": {
@@ -8132,6 +14101,197 @@
         ],
         "title": "ValidationError"
       },
+      "VerificationCheckIn": {
+        "properties": {
+          "step": {
+            "type": "string",
+            "enum": [
+              "documents_checked",
+              "identity_procedure_completed",
+              "video_session_completed",
+              "alternative_method_completed",
+              "embassy_confirmation_received"
+            ],
+            "title": "Step"
+          },
+          "result": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "fail",
+              "inconclusive"
+            ],
+            "title": "Result"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 5,
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "step",
+          "result",
+          "note"
+        ],
+        "title": "VerificationCheckIn"
+      },
+      "VerificationDecisionIn": {
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "failed",
+              "escalated",
+              "additional_info_required"
+            ],
+            "title": "Outcome"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 10,
+            "title": "Reason"
+          },
+          "restore_access": {
+            "type": "boolean",
+            "title": "Restore Access",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "outcome",
+          "reason"
+        ],
+        "title": "VerificationDecisionIn"
+      },
+      "VerificationEventOut": {
+        "properties": {
+          "step": {
+            "type": "string",
+            "title": "Step"
+          },
+          "status_after": {
+            "type": "string",
+            "title": "Status After"
+          },
+          "actor_label": {
+            "type": "string",
+            "title": "Actor Label"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "details": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Details"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "step",
+          "status_after",
+          "actor_label",
+          "note",
+          "details",
+          "created_at"
+        ],
+        "title": "VerificationEventOut"
+      },
+      "VerificationLivenessIn": {
+        "properties": {
+          "sample_key": {
+            "type": "string",
+            "maxLength": 48,
+            "minLength": 3,
+            "title": "Sample Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sample_key"
+        ],
+        "title": "VerificationLivenessIn"
+      },
+      "VerificationOptions": {
+        "properties": {
+          "statuses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Statuses"
+          },
+          "methods": {
+            "additionalProperties": {
+              "items": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Methods"
+          },
+          "office": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Office"
+          },
+          "embassy_arrangements": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Embassy Arrangements"
+          },
+          "simulated_samples": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Simulated Samples"
+          }
+        },
+        "type": "object",
+        "required": [
+          "statuses",
+          "methods",
+          "office",
+          "embassy_arrangements",
+          "simulated_samples"
+        ],
+        "title": "VerificationOptions"
+      },
       "VerificationOut": {
         "properties": {
           "id": {
@@ -8367,6 +14527,691 @@
         ],
         "title": "VerificationOutcome"
       },
+      "VerificationPathway": {
+        "type": "string",
+        "enum": [
+          "on_campus",
+          "remote"
+        ],
+        "title": "VerificationPathway"
+      },
+      "VerificationRequestCreate": {
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Account Id"
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/VerificationRequestTrigger",
+            "default": "officer_request"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 5,
+            "title": "Reason"
+          },
+          "alert_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alert Id"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "account_id",
+          "reason"
+        ],
+        "title": "VerificationRequestCreate"
+      },
+      "VerificationRequestDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrgRef"
+          },
+          "student": {
+            "$ref": "#/components/schemas/StudentRef"
+          },
+          "account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id"
+          },
+          "account_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Ref"
+          },
+          "card_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Card Ref"
+          },
+          "alert_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alert Id"
+          },
+          "alert_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alert Ref"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "case_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Ref"
+          },
+          "trigger": {
+            "type": "string",
+            "title": "Trigger"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "pathway": {
+            "type": "string",
+            "title": "Pathway"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "assigned_to": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notified At"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          },
+          "appointment_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appointment At"
+          },
+          "location_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Note"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          },
+          "access_restored": {
+            "type": "boolean",
+            "title": "Access Restored"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "outcome_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome Reason"
+          },
+          "decided_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided By"
+          },
+          "biometric_consent": {
+            "type": "boolean",
+            "title": "Biometric Consent"
+          },
+          "study_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Study Mode"
+          },
+          "embassy_arrangement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Embassy Arrangement"
+          },
+          "methods": {
+            "items": {
+              "$ref": "#/components/schemas/MethodOption"
+            },
+            "type": "array",
+            "title": "Methods"
+          },
+          "identity_verification_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Identity Verification Ref"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/VerificationEventOut"
+            },
+            "type": "array",
+            "title": "Events"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reference",
+          "organization",
+          "student",
+          "account_id",
+          "account_ref",
+          "card_ref",
+          "alert_id",
+          "alert_ref",
+          "case_id",
+          "case_ref",
+          "trigger",
+          "reason",
+          "pathway",
+          "method",
+          "status",
+          "assigned_to",
+          "notified_at",
+          "due_at",
+          "appointment_at",
+          "location_note",
+          "decided_at",
+          "access_restored",
+          "created_at",
+          "updated_at",
+          "outcome_reason",
+          "decided_by",
+          "biometric_consent",
+          "study_mode",
+          "embassy_arrangement",
+          "methods",
+          "identity_verification_ref",
+          "events"
+        ],
+        "title": "VerificationRequestDetail"
+      },
+      "VerificationRequestMethod": {
+        "type": "string",
+        "enum": [
+          "in_person_id_check",
+          "secure_video",
+          "government_id_document",
+          "liveness_provider",
+          "alternative_method",
+          "embassy_assisted"
+        ],
+        "title": "VerificationRequestMethod"
+      },
+      "VerificationRequestRow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrgRef"
+          },
+          "student": {
+            "$ref": "#/components/schemas/StudentRef"
+          },
+          "account_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Id"
+          },
+          "account_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Ref"
+          },
+          "card_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Card Ref"
+          },
+          "alert_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alert Id"
+          },
+          "alert_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alert Ref"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "case_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Ref"
+          },
+          "trigger": {
+            "type": "string",
+            "title": "Trigger"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "pathway": {
+            "type": "string",
+            "title": "Pathway"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "assigned_to": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notified At"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          },
+          "appointment_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Appointment At"
+          },
+          "location_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Note"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          },
+          "access_restored": {
+            "type": "boolean",
+            "title": "Access Restored"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reference",
+          "organization",
+          "student",
+          "account_id",
+          "account_ref",
+          "card_ref",
+          "alert_id",
+          "alert_ref",
+          "case_id",
+          "case_ref",
+          "trigger",
+          "reason",
+          "pathway",
+          "method",
+          "status",
+          "assigned_to",
+          "notified_at",
+          "due_at",
+          "appointment_at",
+          "location_note",
+          "decided_at",
+          "access_restored",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "VerificationRequestRow"
+      },
+      "VerificationRequestStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "in_progress",
+          "verified",
+          "failed",
+          "escalated",
+          "additional_info_required"
+        ],
+        "title": "VerificationRequestStatus"
+      },
+      "VerificationRequestSummary": {
+        "properties": {
+          "by_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Status"
+          },
+          "by_pathway": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Pathway"
+          },
+          "open": {
+            "type": "integer",
+            "title": "Open"
+          },
+          "overdue": {
+            "type": "integer",
+            "title": "Overdue"
+          }
+        },
+        "type": "object",
+        "required": [
+          "by_status",
+          "by_pathway",
+          "open",
+          "overdue"
+        ],
+        "title": "VerificationRequestSummary"
+      },
+      "VerificationRequestTrigger": {
+        "type": "string",
+        "enum": [
+          "card_reported_lost",
+          "suspicious_password_recovery",
+          "aid_redirection_attempt",
+          "high_risk_device",
+          "account_takeover_indicators",
+          "multiple_fraud_signals",
+          "officer_request"
+        ],
+        "title": "VerificationRequestTrigger"
+      },
       "VerificationRow": {
         "properties": {
           "id": {
@@ -8463,6 +15308,56 @@
           "created_at"
         ],
         "title": "VerificationRow"
+      },
+      "VerificationScheduleIn": {
+        "properties": {
+          "appointment_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Appointment At"
+          },
+          "location_note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 160
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "appointment_at"
+        ],
+        "title": "VerificationScheduleIn"
+      },
+      "VerificationStartIn": {
+        "properties": {
+          "method": {
+            "$ref": "#/components/schemas/VerificationRequestMethod"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "method"
+        ],
+        "title": "VerificationStartIn"
       },
       "VerificationStats": {
         "properties": {
@@ -8577,7 +15472,35 @@
     },
     {
       "name": "dashboard",
-      "description": "Fraud intelligence metrics"
+      "description": "Portfolio metrics, trends and recent security activity"
+    },
+    {
+      "name": "student accounts",
+      "description": "Provider-held financial aid accounts accessed with the ID card"
+    },
+    {
+      "name": "student id cards",
+      "description": "Card lifecycle: lost reports, provider blocks, replacements"
+    },
+    {
+      "name": "transaction intelligence",
+      "description": "Provider transaction events with explainable risk"
+    },
+    {
+      "name": "device & access intelligence",
+      "description": "Devices, sign-ins, credential and recovery events"
+    },
+    {
+      "name": "identity verification",
+      "description": "Re-verification requests: on-campus and remote pathways"
+    },
+    {
+      "name": "provider events (sandbox)",
+      "description": "HMAC-signed webhooks from the sandbox providers"
+    },
+    {
+      "name": "scenario simulator (demo)",
+      "description": "Replay synthetic scenarios (demo mode only)"
     },
     {
       "name": "applications",
@@ -8637,7 +15560,7 @@
     },
     {
       "name": "system",
-      "description": "Health and readiness"
+      "description": "Health, readiness and read-only system settings"
     }
   ]
 }

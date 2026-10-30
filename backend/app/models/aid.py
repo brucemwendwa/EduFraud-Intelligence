@@ -84,6 +84,8 @@ class PaymentDestinationToken(UUIDPrimaryKey, Base):
 
 
 class Disbursement(UUIDPrimaryKey, Timestamps, TenantScoped, Synthetic, Base):
+    """A financial aid allocation (shown as "Financial Aid Allocations" in the product)."""
+
     __tablename__ = "disbursements"
     __table_args__ = (
         CheckConstraint("amount > 0", name="amount_positive"),
@@ -96,6 +98,11 @@ class Disbursement(UUIDPrimaryKey, Timestamps, TenantScoped, Synthetic, Base):
     )
     destination_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("payment_destination_tokens.id", ondelete="RESTRICT"), index=True
+    )
+    # The student ID-linked account this allocation was credited to. When the destination is
+    # anything other than that account's own destination, the aid was redirected elsewhere.
+    account_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("student_financial_accounts.id", ondelete="SET NULL"), index=True
     )
     reference: Mapped[str] = mapped_column(String(24), unique=True)
     fund_type: Mapped[str] = mapped_column(String(32))

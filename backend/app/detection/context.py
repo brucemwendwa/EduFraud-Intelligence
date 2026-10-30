@@ -12,19 +12,23 @@ import statistics
 import uuid
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.types import utcnow
 from app.models import (
+    Device,
     Disbursement,
     EnrollmentRecord,
     FinancialAidApplication,
     IdentityVerification,
+    SecurityEvent,
     StudentIdentityToken,
+    Transaction,
 )
+from app.models.enums import SecurityEventType
 
 
 @dataclass
@@ -45,6 +49,10 @@ class DetectionContext:
     )
     # Robust amount statistics per fund type: (median, scaled MAD)
     amount_stats: dict[str, tuple[float, float]] = field(default_factory=dict)
+    # Student ID-linked account activity (last 30 days): devices signing in to several students'
+    # accounts, and external destinations that aid redirections or transfers point to.
+    account_device_students: dict[str, set[uuid.UUID]] = field(default_factory=lambda: defaultdict(set))
+    redirect_destination_students: dict[uuid.UUID, set[uuid.UUID]] = field(default_factory=lambda: defaultdict(set))
 
     def others_with_token(self, student_id: uuid.UUID, token_type: str) -> set[uuid.UUID]:
         value = self.student_tokens.get(student_id, {}).get(token_type)
@@ -93,4 +101,23 @@ def build_context(db: Session, now: datetime | None = None) -> DetectionContext:
         ctx.student_enrollments[e.student_id].append(e)
     for v in db.scalars(select(IdentityVerification).order_by(IdentityVerification.created_at)):
         ctx.student_verifications[v.student_id].append(v)
+
+    since = ctx.now - timedelta(days=30)
+    for token, student_id in db.execute(
+        select(Device.device_token, Device.student_id).where(
+            Device.is_shared_kiosk.is_(False), Device.last_seen_at >= since
+        )
+    ):
+        ctx.account_device_students[token].add(student_id)
+    redirects = select(SecurityEvent.destination_id, SecurityEvent.student_id).where(
+        SecurityEvent.event_type == SecurityEventType.AID_REDIRECT_REQUESTED,
+        SecurityEvent.destination_id.is_not(None),
+        SecurityEvent.occurred_at >= since,
+    )
+    transfers = select(Transaction.destination_id, Transaction.student_id).where(
+        Transaction.destination_id.is_not(None), Transaction.occurred_at >= since
+    )
+    for stmt in (redirects, transfers):
+        for dest_id, student_id in db.execute(stmt):
+            ctx.redirect_destination_students[dest_id].add(student_id)
     return ctx
