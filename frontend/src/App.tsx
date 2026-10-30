@@ -10,6 +10,8 @@ const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage'));
 const ApplicationsPage = lazy(() => import('@/features/applications/ApplicationsPage'));
 const ApplicationDetailPage = lazy(() => import('@/features/applications/ApplicationDetailPage'));
 const DisbursementsPage = lazy(() => import('@/features/disbursements/DisbursementsPage'));
+const AlertsPage = lazy(() => import('@/features/alerts/AlertsPage'));
+const EnginePage = lazy(() => import('@/features/engine/EnginePage'));
 
 export function App() {
   return (
@@ -22,6 +24,8 @@ export function App() {
           <Route path="applications" element={<ApplicationsPage />} />
           <Route path="applications/:id" element={<ApplicationDetailPage />} />
           <Route path="disbursements" element={<DisbursementsPage />} />
+          <Route path="alerts" element={<AlertsPage />} />
+          <Route path="engine" element={<EnginePage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Route>

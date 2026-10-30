@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
 import pytest
 from sqlalchemy import Engine, func, select
@@ -29,7 +30,7 @@ def _slug(db: Session, org_id) -> str:  # type: ignore[no-untyped-def]
 
 class TestSyntheticDataPrivacy:
     def test_no_raw_identifiers_or_plaintext_names_are_persisted(self, engine: Engine, db: Session) -> None:
-        raw = open(engine.url.database, "rb").read()  # type: ignore[arg-type]
+        raw = Path(engine.url.database).read_bytes()  # type: ignore[arg-type]
         assert not re.search(rb"000-\d{2}-\d{4}", raw), "SSN-shaped value found in database file"
         assert b"Robinson" not in raw and b"Maya" not in raw, "student names must be encrypted at rest"
         tokens = db.scalars(select(StudentIdentityToken.token_value)).all()
@@ -129,7 +130,9 @@ class TestDisbursementsApi:
     def test_destination_usage_spans_institutions_without_exposing_them(self, as_user, db: Session) -> None:  # type: ignore[no-untyped-def]
         app = _app(db, "shared_destination", "northbridge")
         refund = db.scalar(
-            select(Disbursement).where(Disbursement.application_id == app.id, Disbursement.fund_type == "credit_balance_refund")
+            select(Disbursement).where(
+                Disbursement.application_id == app.id, Disbursement.fund_type == "credit_balance_refund"
+            )
         )
         detail = as_user(NB_INVESTIGATOR).get(f"/api/v1/disbursements/{refund.id}").json()  # type: ignore[union-attr]
         usage = detail["destination_usage"]

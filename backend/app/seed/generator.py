@@ -446,15 +446,41 @@ class SyntheticGenerator:
         app = self.application(org, stu, submitted_at=submitted, device=kiosk_device)
         attended = self.rng.random() > 0.02
         status = EnrollmentStatus.ENROLLED if attended else EnrollmentStatus.WITHDRAWN
-        self.enrollment(org, stu, app, status=status, attended=attended)
+        record = self.enrollment(org, stu, app, status=status, attended=attended)
         self.db.flush()
         if app.status == ApplicationStatus.APPROVED:
-            self.standard_disbursements(org, stu, app, self.destination())
+            paid = self.standard_disbursements(org, stu, app, self.destination())
             if self.rng.random() < 0.18:
                 self.passed_verification(
                     org, stu, app, when=self._term_day(-14), trigger=VerificationTrigger.PRE_DISBURSEMENT
                 )
+            self._everyday_noise(org, stu, app, paid, record)
         return app
+
+    def _everyday_noise(
+        self,
+        org: Organization,
+        stu: Student,
+        app: FinancialAidApplication,
+        paid: list[Disbursement],
+        record: EnrollmentRecord,
+    ) -> None:
+        """Ordinary irregularities aid offices see daily: some deserve a look, very few are fraud."""
+        refunds = [d for d in paid if d.fund_type == FundType.CREDIT_BALANCE_REFUND]
+        if refunds and self.rng.random() < 0.12:
+            refund = refunds[0]
+            refund.destination = self.destination()
+            refund.destination_changed_at = refund.disbursed_at - timedelta(days=self.rng.uniform(1, 6))
+            if self.rng.random() < 0.5:  # most students confirm the change when prompted
+                self.passed_verification(
+                    org,
+                    stu,
+                    app,
+                    when=refund.destination_changed_at + timedelta(hours=2),
+                    trigger=VerificationTrigger.PAYMENT_DESTINATION_CHANGE,
+                )
+        if record.status == EnrollmentStatus.ENROLLED and self.rng.random() < 0.03:
+            record.last_attendance_at = None  # attendance not yet recorded by the instructor
 
     def baseline(self) -> None:
         for slug, count in BASELINE_COUNTS.items():

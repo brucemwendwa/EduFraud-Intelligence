@@ -161,7 +161,7 @@ class RelatedGroup(Schema):
     other_institution_matches: int
 
 
-class ApplicationDetail(ApplicationRow):
+class ApplicationRecord(ApplicationRow):
     dependency_status: str
     enrollment_intensity: str
     program: str

@@ -278,6 +278,23 @@ export interface paths {
         patch: operations["review_application_api_v1_applications__application_id__review_patch"];
         trace?: never;
     };
+    "/api/v1/applications/{application_id}/assess": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Re-run the risk assessment now */
+        post: operations["assess_application_api_v1_applications__application_id__assess_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/students/{student_id}/reveal": {
         parameters: {
             query?: never;
@@ -380,6 +397,126 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fraud alerts awaiting or under human review */
+        get: operations["list_alerts_api_v1_alerts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alerts/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Alert counts for the current scope */
+        get: operations["summary_api_v1_alerts_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/alerts/{alert_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Alert with its explainable assessment */
+        get: operations["get_alert_api_v1_alerts__alert_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Acknowledge, dismiss or reopen an alert */
+        patch: operations["triage_alert_api_v1_alerts__alert_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/detection/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Engine versions, recent runs, model card and rules */
+        get: operations["status_api_v1_detection_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/detection/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start a detection run (background job) */
+        post: operations["start_run_api_v1_detection_runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/detection/runs/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Detection run status */
+        get: operations["get_run_api_v1_detection_runs__run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/detection/scenario-validation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Checks that each documented demo scenario triggers its expected signals (not an accuracy metric) */
+        get: operations["scenario_validation_api_v1_detection_scenario_validation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/audit/events": {
         parameters: {
             query?: never;
@@ -435,7 +572,138 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /** ApplicationDetail */
+        /** AlertDetail */
+        AlertDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Reference */
+            reference: string;
+            organization: components["schemas"]["OrgRef"];
+            /** Category */
+            category: string;
+            /** Severity */
+            severity: string;
+            /** Title */
+            title: string;
+            /** Summary */
+            summary: string;
+            /** Status */
+            status: string;
+            /** Risk Score */
+            risk_score: number | null;
+            /** Application Id */
+            application_id: string | null;
+            /** Application Ref */
+            application_ref: string | null;
+            /** Case Id */
+            case_id: string | null;
+            /** Case Ref */
+            case_ref: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            student: components["schemas"]["StudentRef"] | null;
+            assessment: components["schemas"]["RiskAssessmentOut"] | null;
+            /** Disbursement Id */
+            disbursement_id: string | null;
+            /** Disbursement Ref */
+            disbursement_ref: string | null;
+            /** Verification Id */
+            verification_id: string | null;
+            /** Verification Ref */
+            verification_ref: string | null;
+            /** Triage Note */
+            triage_note: string | null;
+            /** Triaged By */
+            triaged_by: string | null;
+            /** Triaged At */
+            triaged_at: string | null;
+        };
+        /** AlertRow */
+        AlertRow: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Reference */
+            reference: string;
+            organization: components["schemas"]["OrgRef"];
+            /** Category */
+            category: string;
+            /** Severity */
+            severity: string;
+            /** Title */
+            title: string;
+            /** Summary */
+            summary: string;
+            /** Status */
+            status: string;
+            /** Risk Score */
+            risk_score: number | null;
+            /** Application Id */
+            application_id: string | null;
+            /** Application Ref */
+            application_ref: string | null;
+            /** Case Id */
+            case_id: string | null;
+            /** Case Ref */
+            case_ref: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * AlertStatus
+         * @enum {string}
+         */
+        AlertStatus: "open" | "acknowledged" | "in_investigation" | "dismissed" | "resolved";
+        /** AlertSummary */
+        AlertSummary: {
+            /** Open */
+            open: number;
+            /** Acknowledged */
+            acknowledged: number;
+            /** In Investigation */
+            in_investigation: number;
+            /** Critical Open */
+            critical_open: number;
+            /** By Category */
+            by_category: {
+                [key: string]: number;
+            };
+        };
+        /** AlertTriage */
+        AlertTriage: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "acknowledge" | "dismiss" | "reopen";
+            /** Note */
+            note?: string | null;
+        };
+        /**
+         * ApplicationDetail
+         * @description Application workspace: the record plus its explainable assessment, history and alerts.
+         */
         ApplicationDetail: {
             /**
              * Id
@@ -497,6 +765,11 @@ export interface components {
             verifications: components["schemas"]["VerificationRow"][];
             /** Related */
             related: components["schemas"]["RelatedGroup"][];
+            assessment: components["schemas"]["RiskAssessmentOut"] | null;
+            /** Assessment History */
+            assessment_history: components["schemas"]["AssessmentHistoryItem"][];
+            /** Alerts */
+            alerts: components["schemas"]["AlertRow"][];
         };
         /** ApplicationRow */
         ApplicationRow: {
@@ -543,6 +816,25 @@ export interface components {
          * @enum {string}
          */
         ApplicationStatus: "received" | "in_review" | "approved" | "on_hold" | "withdrawn";
+        /** AssessmentHistoryItem */
+        AssessmentHistoryItem: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Score */
+            score: number;
+            /** Level */
+            level: string;
+            /** Triggered By */
+            triggered_by: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
         /**
          * AuditCategory
          * @enum {string}
@@ -693,6 +985,68 @@ export interface components {
              */
             first_seen_at: string;
         };
+        /** DetectionRunOut */
+        DetectionRunOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Organization Id */
+            organization_id: string | null;
+            /** Status */
+            status: string;
+            /** Mode */
+            mode: string;
+            /** Rules Version */
+            rules_version: string;
+            /** Model Version */
+            model_version: string | null;
+            /** Applications Scored */
+            applications_scored: number;
+            /** Disbursements Scored */
+            disbursements_scored: number;
+            /** Alerts Created */
+            alerts_created: number;
+            /** Error */
+            error: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Started At */
+            started_at: string | null;
+            /** Finished At */
+            finished_at: string | null;
+        };
+        /** DetectionStatus */
+        DetectionStatus: {
+            /** Method */
+            method: string;
+            /** Rules Version */
+            rules_version: string;
+            /** Model Version */
+            model_version: string;
+            /** Graph Version */
+            graph_version: string;
+            /** Jobs Backend */
+            jobs_backend: string;
+            last_run: components["schemas"]["DetectionRunOut"] | null;
+            /** Recent Runs */
+            recent_runs: components["schemas"]["DetectionRunOut"][];
+            /** Assessed Applications */
+            assessed_applications: number;
+            model_card: components["schemas"]["ModelCardOut"];
+            /** Rules */
+            rules: components["schemas"]["RuleOut"][];
+            /** Level Thresholds */
+            level_thresholds: {
+                [key: string]: number;
+            };
+            /** Principles */
+            principles: string[];
+        };
         /** DisbursementDetail */
         DisbursementDetail: {
             /**
@@ -826,6 +1180,37 @@ export interface components {
             /** Last Attendance At */
             last_attendance_at: string | null;
         };
+        /** FraudSignalOut */
+        FraudSignalOut: {
+            /** Code */
+            code: string;
+            /** Category */
+            category: string;
+            /** Severity */
+            severity: string;
+            /**
+             * Weight
+             * @description Strength of this evidence on its own (0-1)
+             */
+            weight: number;
+            /**
+             * Points
+             * @description This signal's share of the final score; points sum to the score
+             */
+            points: number;
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            /** Evidence */
+            evidence: {
+                [key: string]: unknown;
+            };
+            /** Method */
+            method: string;
+            /** Version */
+            version: string;
+        };
         /**
          * FundType
          * @enum {string}
@@ -889,6 +1274,25 @@ export interface components {
             permissions: string[];
             /** Accessible Organizations */
             accessible_organizations: components["schemas"]["OrgRef"][];
+        };
+        /** ModelCardOut */
+        ModelCardOut: {
+            /** Version */
+            version: string;
+            /** Algorithm */
+            algorithm: string;
+            /** Trained On */
+            trained_on: string;
+            /** Features */
+            features: string[];
+            /** Excluded Features */
+            excluded_features: string[];
+            /** Explanation Method */
+            explanation_method: string;
+            /** Max Weight */
+            max_weight: number;
+            /** Evaluation */
+            evaluation: string;
         };
         /** OrgRef */
         OrgRef: {
@@ -990,6 +1394,17 @@ export interface components {
             city?: string | null;
             /** Is Active */
             is_active?: boolean | null;
+        };
+        /** Page[AlertRow] */
+        Page_AlertRow_: {
+            /** Items */
+            items: components["schemas"]["AlertRow"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
         };
         /** Page[ApplicationRow] */
         Page_ApplicationRow_: {
@@ -1122,6 +1537,37 @@ export interface components {
             /** Note */
             note: string;
         };
+        /** RiskAssessmentOut */
+        RiskAssessmentOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Score */
+            score: number;
+            /** Level */
+            level: string;
+            /** Method */
+            method: string;
+            /** Rules Version */
+            rules_version: string;
+            /** Model Version */
+            model_version: string | null;
+            /** Explanation */
+            explanation: string;
+            /** Recommended Action */
+            recommended_action: string;
+            /** Triggered By */
+            triggered_by: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Signals */
+            signals: components["schemas"]["FraudSignalOut"][];
+        };
         /**
          * RiskLevel
          * @enum {string}
@@ -1152,6 +1598,50 @@ export interface components {
             /** Name */
             name: string;
         };
+        /** RuleOut */
+        RuleOut: {
+            /** Code */
+            code: string;
+            /** Category */
+            category: string;
+            /** Method */
+            method: string;
+            /** Max Weight */
+            max_weight: number;
+            /** Description */
+            description: string;
+        };
+        /** ScenarioCheck */
+        ScenarioCheck: {
+            /** Scenario */
+            scenario: string;
+            /** Label */
+            label: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "fraud" | "control";
+            /** Applications */
+            applications: number;
+            /** Expected */
+            expected: string;
+            /** Expected Signals */
+            expected_signals: string[];
+            /** Observed Levels */
+            observed_levels: {
+                [key: string]: number;
+            };
+            /** Observed Signals */
+            observed_signals: string[];
+            /** Passed */
+            passed: boolean;
+        };
+        /**
+         * SignalCategory
+         * @enum {string}
+         */
+        SignalCategory: "identity" | "application" | "enrollment" | "disbursement" | "network" | "biometric" | "anomaly";
         /** StudentDetail */
         StudentDetail: {
             /**
@@ -1868,6 +2358,37 @@ export interface operations {
             };
         };
     };
+    assess_application_api_v1_applications__application_id__assess_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     reveal_student_api_v1_students__student_id__reveal_post: {
         parameters: {
             query?: never;
@@ -2061,6 +2582,257 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DisbursementDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_alerts_api_v1_alerts_get: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["AlertStatus"][] | null;
+                severity?: components["schemas"]["RiskLevel"] | null;
+                category?: components["schemas"]["SignalCategory"] | null;
+                /** @description Alert or application reference */
+                q?: string | null;
+                sort?: "created_at" | "risk_score";
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_AlertRow_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    summary_api_v1_alerts_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_alert_api_v1_alerts__alert_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alert_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    triage_alert_api_v1_alerts__alert_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alert_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlertTriage"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    status_api_v1_detection_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DetectionStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_run_api_v1_detection_runs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DetectionRunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_run_api_v1_detection_runs__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DetectionRunOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scenario_validation_api_v1_detection_scenario_validation_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenarioCheck"][];
                 };
             };
             /** @description Validation Error */

@@ -2,6 +2,7 @@ import {
   Banknote,
   Bell,
   Building2,
+  Cpu,
   FileSearch,
   FolderKanban,
   LayoutDashboard,
@@ -35,6 +36,7 @@ export const navSections: { title: string; items: NavItem[] }[] = [
       { label: 'Identity verification', to: '/app/verification', icon: ScanFace, permission: P.verificationsRead },
       { label: 'Fraud network', to: '/app/network', icon: Network, permission: P.networkRead },
       { label: 'Disbursements', to: '/app/disbursements', icon: Banknote, permission: P.disbursementsRead },
+      { label: 'Detection engine', to: '/app/engine', icon: Cpu, permission: P.dashboardRead },
     ],
   },
   {

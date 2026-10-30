@@ -875,6 +875,49 @@
         }
       }
     },
+    "/api/v1/applications/{application_id}/assess": {
+      "post": {
+        "tags": [
+          "applications"
+        ],
+        "summary": "Re-run the risk assessment now",
+        "operationId": "assess_application_api_v1_applications__application_id__assess_post",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Application Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/students/{student_id}/reveal": {
       "post": {
         "tags": [
@@ -1298,6 +1341,412 @@
         }
       }
     },
+    "/api/v1/alerts": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Fraud alerts awaiting or under human review",
+        "operationId": "list_alerts_api_v1_alerts_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlertStatus"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/RiskLevel"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Severity"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/SignalCategory"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Category"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 60
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Alert or application reference",
+              "title": "Q"
+            },
+            "description": "Alert or application reference"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "created_at",
+                "risk_score"
+              ],
+              "type": "string",
+              "default": "created_at",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 10000,
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_AlertRow_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/summary": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Alert counts for the current scope",
+        "operationId": "summary_api_v1_alerts_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts/{alert_id}": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Alert with its explainable assessment",
+        "operationId": "get_alert_api_v1_alerts__alert_id__get",
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Alert Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Acknowledge, dismiss or reopen an alert",
+        "operationId": "triage_alert_api_v1_alerts__alert_id__patch",
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Alert Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertTriage"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/detection/status": {
+      "get": {
+        "tags": [
+          "detection"
+        ],
+        "summary": "Engine versions, recent runs, model card and rules",
+        "operationId": "status_api_v1_detection_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectionStatus"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/detection/runs": {
+      "post": {
+        "tags": [
+          "detection"
+        ],
+        "summary": "Start a detection run (background job)",
+        "operationId": "start_run_api_v1_detection_runs_post",
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectionRunOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/detection/runs/{run_id}": {
+      "get": {
+        "tags": [
+          "detection"
+        ],
+        "summary": "Detection run status",
+        "operationId": "get_run_api_v1_detection_runs__run_id__get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectionRunOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/detection/scenario-validation": {
+      "get": {
+        "tags": [
+          "detection"
+        ],
+        "summary": "Checks that each documented demo scenario triggers its expected signals (not an accuracy metric)",
+        "operationId": "scenario_validation_api_v1_detection_scenario_validation_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScenarioCheck"
+                  },
+                  "type": "array",
+                  "title": "Response Scenario Validation Api V1 Detection Scenario Validation Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/audit/events": {
       "get": {
         "tags": [
@@ -1505,6 +1954,436 @@
   },
   "components": {
     "schemas": {
+      "AlertDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrgRef"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "risk_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Score"
+          },
+          "application_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Id"
+          },
+          "application_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Ref"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "case_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Ref"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "student": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StudentRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "assessment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RiskAssessmentOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "disbursement_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disbursement Id"
+          },
+          "disbursement_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Disbursement Ref"
+          },
+          "verification_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verification Id"
+          },
+          "verification_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verification Ref"
+          },
+          "triage_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Triage Note"
+          },
+          "triaged_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Triaged By"
+          },
+          "triaged_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Triaged At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reference",
+          "organization",
+          "category",
+          "severity",
+          "title",
+          "summary",
+          "status",
+          "risk_score",
+          "application_id",
+          "application_ref",
+          "case_id",
+          "case_ref",
+          "created_at",
+          "updated_at",
+          "student",
+          "assessment",
+          "disbursement_id",
+          "disbursement_ref",
+          "verification_id",
+          "verification_ref",
+          "triage_note",
+          "triaged_by",
+          "triaged_at"
+        ],
+        "title": "AlertDetail"
+      },
+      "AlertRow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrgRef"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "risk_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Score"
+          },
+          "application_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Id"
+          },
+          "application_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Ref"
+          },
+          "case_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Id"
+          },
+          "case_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Case Ref"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reference",
+          "organization",
+          "category",
+          "severity",
+          "title",
+          "summary",
+          "status",
+          "risk_score",
+          "application_id",
+          "application_ref",
+          "case_id",
+          "case_ref",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "AlertRow"
+      },
+      "AlertStatus": {
+        "type": "string",
+        "enum": [
+          "open",
+          "acknowledged",
+          "in_investigation",
+          "dismissed",
+          "resolved"
+        ],
+        "title": "AlertStatus"
+      },
+      "AlertSummary": {
+        "properties": {
+          "open": {
+            "type": "integer",
+            "title": "Open"
+          },
+          "acknowledged": {
+            "type": "integer",
+            "title": "Acknowledged"
+          },
+          "in_investigation": {
+            "type": "integer",
+            "title": "In Investigation"
+          },
+          "critical_open": {
+            "type": "integer",
+            "title": "Critical Open"
+          },
+          "by_category": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Category"
+          }
+        },
+        "type": "object",
+        "required": [
+          "open",
+          "acknowledged",
+          "in_investigation",
+          "critical_open",
+          "by_category"
+        ],
+        "title": "AlertSummary"
+      },
+      "AlertTriage": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "acknowledge",
+              "dismiss",
+              "reopen"
+            ],
+            "title": "Action"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action"
+        ],
+        "title": "AlertTriage"
+      },
       "ApplicationDetail": {
         "properties": {
           "id": {
@@ -1669,6 +2548,30 @@
             },
             "type": "array",
             "title": "Related"
+          },
+          "assessment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RiskAssessmentOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "assessment_history": {
+            "items": {
+              "$ref": "#/components/schemas/AssessmentHistoryItem"
+            },
+            "type": "array",
+            "title": "Assessment History"
+          },
+          "alerts": {
+            "items": {
+              "$ref": "#/components/schemas/AlertRow"
+            },
+            "type": "array",
+            "title": "Alerts"
           }
         },
         "type": "object",
@@ -1698,9 +2601,13 @@
           "enrollments",
           "disbursements",
           "verifications",
-          "related"
+          "related",
+          "assessment",
+          "assessment_history",
+          "alerts"
         ],
-        "title": "ApplicationDetail"
+        "title": "ApplicationDetail",
+        "description": "Application workspace: the record plus its explainable assessment, history and alerts."
       },
       "ApplicationRow": {
         "properties": {
@@ -1824,6 +2731,41 @@
           "withdrawn"
         ],
         "title": "ApplicationStatus"
+      },
+      "AssessmentHistoryItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "level": {
+            "type": "string",
+            "title": "Level"
+          },
+          "triggered_by": {
+            "type": "string",
+            "title": "Triggered By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "score",
+          "level",
+          "triggered_by",
+          "created_at"
+        ],
+        "title": "AssessmentHistoryItem"
       },
       "AuditCategory": {
         "type": "string",
@@ -2232,6 +3174,204 @@
         ],
         "title": "DestinationUsage"
       },
+      "DetectionRunOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "organization_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "mode": {
+            "type": "string",
+            "title": "Mode"
+          },
+          "rules_version": {
+            "type": "string",
+            "title": "Rules Version"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version"
+          },
+          "applications_scored": {
+            "type": "integer",
+            "title": "Applications Scored"
+          },
+          "disbursements_scored": {
+            "type": "integer",
+            "title": "Disbursements Scored"
+          },
+          "alerts_created": {
+            "type": "integer",
+            "title": "Alerts Created"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "organization_id",
+          "status",
+          "mode",
+          "rules_version",
+          "model_version",
+          "applications_scored",
+          "disbursements_scored",
+          "alerts_created",
+          "error",
+          "created_at",
+          "started_at",
+          "finished_at"
+        ],
+        "title": "DetectionRunOut"
+      },
+      "DetectionStatus": {
+        "properties": {
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "rules_version": {
+            "type": "string",
+            "title": "Rules Version"
+          },
+          "model_version": {
+            "type": "string",
+            "title": "Model Version"
+          },
+          "graph_version": {
+            "type": "string",
+            "title": "Graph Version"
+          },
+          "jobs_backend": {
+            "type": "string",
+            "title": "Jobs Backend"
+          },
+          "last_run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DetectionRunOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "recent_runs": {
+            "items": {
+              "$ref": "#/components/schemas/DetectionRunOut"
+            },
+            "type": "array",
+            "title": "Recent Runs"
+          },
+          "assessed_applications": {
+            "type": "integer",
+            "title": "Assessed Applications"
+          },
+          "model_card": {
+            "$ref": "#/components/schemas/ModelCardOut"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/RuleOut"
+            },
+            "type": "array",
+            "title": "Rules"
+          },
+          "level_thresholds": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Level Thresholds"
+          },
+          "principles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Principles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "method",
+          "rules_version",
+          "model_version",
+          "graph_version",
+          "jobs_backend",
+          "last_run",
+          "recent_runs",
+          "assessed_applications",
+          "model_card",
+          "rules",
+          "level_thresholds",
+          "principles"
+        ],
+        "title": "DetectionStatus"
+      },
       "DisbursementDetail": {
         "properties": {
           "id": {
@@ -2639,6 +3779,67 @@
         ],
         "title": "EnrollmentOut"
       },
+      "FraudSignalOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "weight": {
+            "type": "number",
+            "title": "Weight",
+            "description": "Strength of this evidence on its own (0-1)"
+          },
+          "points": {
+            "type": "number",
+            "title": "Points",
+            "description": "This signal's share of the final score; points sum to the score"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Evidence"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "category",
+          "severity",
+          "weight",
+          "points",
+          "title",
+          "description",
+          "evidence",
+          "method",
+          "version"
+        ],
+        "title": "FraudSignalOut"
+      },
       "FundType": {
         "type": "string",
         "enum": [
@@ -2800,6 +4001,60 @@
           "accessible_organizations"
         ],
         "title": "Me"
+      },
+      "ModelCardOut": {
+        "properties": {
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "algorithm": {
+            "type": "string",
+            "title": "Algorithm"
+          },
+          "trained_on": {
+            "type": "string",
+            "title": "Trained On"
+          },
+          "features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Features"
+          },
+          "excluded_features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Excluded Features"
+          },
+          "explanation_method": {
+            "type": "string",
+            "title": "Explanation Method"
+          },
+          "max_weight": {
+            "type": "number",
+            "title": "Max Weight"
+          },
+          "evaluation": {
+            "type": "string",
+            "title": "Evaluation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version",
+          "algorithm",
+          "trained_on",
+          "features",
+          "excluded_features",
+          "explanation_method",
+          "max_weight",
+          "evaluation"
+        ],
+        "title": "ModelCardOut"
       },
       "OrgRef": {
         "properties": {
@@ -3051,6 +4306,37 @@
         },
         "type": "object",
         "title": "OrganizationUpdate"
+      },
+      "Page_AlertRow_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AlertRow"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "Page[AlertRow]"
       },
       "Page_ApplicationRow_": {
         "properties": {
@@ -3390,6 +4676,81 @@
         "title": "ReviewUpdate",
         "description": "A human review decision. The platform never changes status on its own."
       },
+      "RiskAssessmentOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "level": {
+            "type": "string",
+            "title": "Level"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "rules_version": {
+            "type": "string",
+            "title": "Rules Version"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version"
+          },
+          "explanation": {
+            "type": "string",
+            "title": "Explanation"
+          },
+          "recommended_action": {
+            "type": "string",
+            "title": "Recommended Action"
+          },
+          "triggered_by": {
+            "type": "string",
+            "title": "Triggered By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "signals": {
+            "items": {
+              "$ref": "#/components/schemas/FraudSignalOut"
+            },
+            "type": "array",
+            "title": "Signals"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "score",
+          "level",
+          "method",
+          "rules_version",
+          "model_version",
+          "explanation",
+          "recommended_action",
+          "triggered_by",
+          "created_at",
+          "signals"
+        ],
+        "title": "RiskAssessmentOut"
+      },
       "RiskLevel": {
         "type": "string",
         "enum": [
@@ -3459,6 +4820,118 @@
           "name"
         ],
         "title": "RoleRef"
+      },
+      "RuleOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "max_weight": {
+            "type": "number",
+            "title": "Max Weight"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "category",
+          "method",
+          "max_weight",
+          "description"
+        ],
+        "title": "RuleOut"
+      },
+      "ScenarioCheck": {
+        "properties": {
+          "scenario": {
+            "type": "string",
+            "title": "Scenario"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "fraud",
+              "control"
+            ],
+            "title": "Kind"
+          },
+          "applications": {
+            "type": "integer",
+            "title": "Applications"
+          },
+          "expected": {
+            "type": "string",
+            "title": "Expected"
+          },
+          "expected_signals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Expected Signals"
+          },
+          "observed_levels": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Observed Levels"
+          },
+          "observed_signals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Observed Signals"
+          },
+          "passed": {
+            "type": "boolean",
+            "title": "Passed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scenario",
+          "label",
+          "kind",
+          "applications",
+          "expected",
+          "expected_signals",
+          "observed_levels",
+          "observed_signals",
+          "passed"
+        ],
+        "title": "ScenarioCheck"
+      },
+      "SignalCategory": {
+        "type": "string",
+        "enum": [
+          "identity",
+          "application",
+          "enrollment",
+          "disbursement",
+          "network",
+          "biometric",
+          "anomaly"
+        ],
+        "title": "SignalCategory"
       },
       "StudentDetail": {
         "properties": {

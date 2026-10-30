@@ -37,3 +37,15 @@ export function useRevealStudent() {
       (await api.post<RevealResponse>(`/students/${studentId}/reveal`, { reason })).data,
   });
 }
+
+export function useAssessApplication(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => (await api.post<ApplicationDetail>(`/applications/${id}/assess`)).data,
+    onSuccess: (data) => {
+      qc.setQueryData(applicationKeys.detail(id), data);
+      void qc.invalidateQueries({ queryKey: ['applications', 'list'] });
+      void qc.invalidateQueries({ queryKey: ['alerts'] });
+    },
+  });
+}

@@ -62,12 +62,12 @@ def _prepare_template() -> None:
 def seeded_db(template_db: Path) -> Path:
     """Template plus the full synthetic dataset (all demo scenarios), generated once per session."""
     from app.seed.base import ensure_institutions
-    from app.seed.generator import SyntheticGenerator
+    from app.seed.pipeline import seed_synthetic
 
     shutil.copy(template_db, _SEEDED)
     engine = build_engine(f"sqlite:///{_SEEDED}")
     with Session(engine) as db:
-        SyntheticGenerator(db, ensure_institutions(db)).run()
+        seed_synthetic(db, ensure_institutions(db))
         db.commit()
     engine.dispose()
     return _SEEDED

@@ -39,3 +39,14 @@ export type DisbursementDetail = S['DisbursementDetail'];
 export type DisbursementSummary = S['DisbursementSummary'];
 export type VerificationRow = S['VerificationRow'];
 export type StudentDetail = S['StudentDetail'];
+
+export type FraudSignal = S['FraudSignalOut'];
+export type RiskAssessment = S['RiskAssessmentOut'];
+export type AssessmentHistoryItem = S['AssessmentHistoryItem'];
+export type AlertRow = S['AlertRow'];
+export type AlertDetail = S['AlertDetail'];
+export type AlertSummary = S['AlertSummary'];
+export type AlertTriage = S['AlertTriage'];
+export type DetectionRun = S['DetectionRunOut'];
+export type DetectionStatus = S['DetectionStatus'];
+export type ScenarioCheck = S['ScenarioCheck'];

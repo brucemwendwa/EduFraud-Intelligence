@@ -16,7 +16,7 @@ from app.core.config import get_settings
 from app.db.session import SessionLocal
 from app.models import FinancialAidApplication
 from app.seed.base import bootstrap
-from app.seed.generator import SyntheticGenerator
+from app.seed.pipeline import seed_synthetic
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 
@@ -45,12 +45,13 @@ def main() -> None:
         if db.query(FinancialAidApplication).first() is not None:
             print("Synthetic records already present; use --reset to regenerate.")
             return
-        summary = SyntheticGenerator(db, orgs).run()
+        summary, stats = seed_synthetic(db, orgs)
         db.commit()
     print(
         f"Synthetic data: {summary.students} students, {summary.applications} applications, "
         f"{summary.disbursements} disbursements, {summary.verifications} verifications."
     )
+    print(f"Detection: {stats.applications_scored} applications scored, {stats.alerts_created} alerts raised.")
     for scenario, refs in summary.scenario_refs.items():
         print(f"  {scenario:<24} {', '.join(refs[:4])}{' …' if len(refs) > 4 else ''}")
 

@@ -9,7 +9,8 @@ from sqlalchemy import func, or_, select
 from app.api.deps import DB, Principal, get_scoped_or_404, require, scoped
 from app.core.permissions import P
 from app.core.tokenization import display_token
-from app.models import Disbursement, EnrollmentRecord, FinancialAidApplication, IdentityVerification, Student
+from app.detection.engine import DetectionEngine
+from app.models import Alert, Disbursement, EnrollmentRecord, FinancialAidApplication, IdentityVerification, Student
 from app.models.enums import (
     ApplicationStatus,
     AuditCategory,
@@ -18,7 +19,6 @@ from app.models.enums import (
     VerificationStatus,
 )
 from app.schemas.aid import (
-    ApplicationDetail,
     ApplicationRow,
     EnrollmentOut,
     ReviewUpdate,
@@ -26,7 +26,8 @@ from app.schemas.aid import (
     VerificationRow,
 )
 from app.schemas.common import Page, Pagination
-from app.services import audit, records
+from app.schemas.risk import ApplicationDetail
+from app.services import audit, records, risk_views
 
 router = APIRouter(prefix="/applications", tags=["applications"])
 
@@ -109,8 +110,12 @@ def build_detail(db: DB, app: FinancialAidApplication, principal: Principal) -> 
     enrollments = db.scalars(
         select(EnrollmentRecord).where(EnrollmentRecord.student_id == stu.id).order_by(EnrollmentRecord.term_start)
     ).all()
+    alerts = db.scalars(select(Alert).where(Alert.application_id == app.id).order_by(Alert.created_at.desc())).all()
     return ApplicationDetail(
         **row.model_dump(),
+        assessment=risk_views.current_assessment(db, app.id),
+        assessment_history=risk_views.assessment_history(db, app.id),
+        alerts=risk_views.alert_rows(db, list(alerts)),
         dependency_status=app.dependency_status,
         enrollment_intensity=app.enrollment_intensity,
         program=app.program,
@@ -160,3 +165,35 @@ def review_application(
     )
     db.commit()
     return records.application_rows(db, [app])[0]
+
+
+@router.post("/{application_id}/assess", response_model=ApplicationDetail, summary="Re-run the risk assessment now")
+def assess_application(
+    application_id: uuid.UUID,
+    request: Request,
+    db: DB,
+    principal: Annotated[Principal, Depends(require(P.APPLICATIONS_ASSESS))],
+) -> ApplicationDetail:
+    app = get_scoped_or_404(db, FinancialAidApplication, application_id, principal, "Application")
+    assessment, changed, alert_created = (
+        DetectionEngine(db).prepare().assess(app, triggered_by="user", user=principal.user)
+    )
+    audit.record(
+        db,
+        category=AuditCategory.DETECTION,
+        action="application.assess",
+        actor=principal.user,
+        organization_id=app.organization_id,
+        target_type="application",
+        target_id=app.id,
+        target_ref=app.reference,
+        details={
+            "score": assessment.score,
+            "level": assessment.level,
+            "changed": changed,
+            "alert_created": alert_created,
+        },
+        request=request,
+    )
+    db.commit()
+    return build_detail(db, app, principal)
