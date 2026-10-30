@@ -16,6 +16,7 @@ const VerificationPage = lazy(() => import('@/features/verification/Verification
 const NetworkPage = lazy(() => import('@/features/network/NetworkPage'));
 const CasesPage = lazy(() => import('@/features/cases/CasesPage'));
 const CaseWorkspacePage = lazy(() => import('@/features/cases/CaseWorkspacePage'));
+const StudentDashboardPage = lazy(() => import('@/features/student/StudentDashboardPage'));
 
 export function App() {
   return (
@@ -23,6 +24,7 @@ export function App() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route element={<RequireAuth />}>
+        <Route path="/student" element={<StudentDashboardPage />} />
         <Route path="/app" element={<AppShell />}>
           <Route index element={<DashboardPage />} />
           <Route path="applications" element={<ApplicationsPage />} />

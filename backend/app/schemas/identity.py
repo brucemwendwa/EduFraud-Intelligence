@@ -29,6 +29,7 @@ class Me(Schema):
     role: RoleRef
     organization: OrgRef | None
     is_platform_admin: bool
+    is_demo: bool
     permissions: list[str]
     accessible_organizations: list[OrgRef]
 

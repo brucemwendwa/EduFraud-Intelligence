@@ -23,6 +23,7 @@ from app.models import Organization, User
 from app.models.enums import AuditCategory, AuditOutcome
 from app.schemas.common import OrgRef
 from app.schemas.identity import ChangePasswordRequest, DemoAccount, LoginRequest, Me, RoleRef, TokenResponse
+from app.seed.base import DEMO_PRESENTER_EMAIL
 from app.services import audit
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -48,6 +49,7 @@ def build_me(db: DB, user: User) -> Me:
         role=RoleRef(key=user.role.key, name=user.role.name),
         organization=OrgRef.model_validate(user.organization) if user.organization else None,
         is_platform_admin=user.is_platform_admin,
+        is_demo=user.is_demo,
         permissions=sorted(user.permission_keys),
         accessible_organizations=[OrgRef.model_validate(o) for o in orgs],
     )
@@ -128,6 +130,26 @@ def login(body: LoginRequest, request: Request, response: Response, db: DB) -> M
         secure=settings.is_production,
         samesite="strict",
         path="/api",
+    )
+    return build_me(db, user)
+
+
+@router.post("/demo-login", response_model=Me, summary="Start the restricted synthetic demo session")
+def demo_login(request: Request, response: Response, db: DB) -> Me:
+    """Explicit demo-only session; production rejects DEMO_MODE at startup."""
+    settings = get_settings()
+    if not settings.demo_mode:
+        raise UnauthorizedError(_INVALID)
+    user = db.scalar(select(User).where(User.email == DEMO_PRESENTER_EMAIL, User.is_demo, User.is_active))
+    if user is None:
+        raise UnauthorizedError(_INVALID)
+    user.last_login_at = utcnow()
+    audit.record(db, category=AuditCategory.AUTHENTICATION, action="auth.demo_login", actor=user, request=request)
+    db.commit()
+    token, expires = create_access_token(user.id)
+    response.set_cookie(
+        settings.session_cookie_name, token, max_age=settings.access_token_ttl_minutes * 60,
+        expires=expires, httponly=True, secure=settings.is_production, samesite="strict", path="/api",
     )
     return build_me(db, user)
 

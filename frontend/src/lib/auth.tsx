@@ -11,6 +11,7 @@ interface AuthContextValue {
   loading: boolean;
   can: (p: Permission) => boolean;
   login: (email: string, password: string) => Promise<Me>;
+  demoLogin: () => Promise<Me>;
   logout: () => Promise<void>;
   activeOrgId: string | null;
   setActiveOrgId: (id: string | null) => void;
@@ -55,6 +56,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [qc],
   );
 
+  const demoLogin = useCallback(async () => {
+    const me = (await api.post<Me>('/auth/demo-login')).data;
+    orgScope.set(null);
+    setActiveOrg(null);
+    dropDataQueries(qc);
+    qc.setQueryData(meKey, me);
+    return me;
+  }, [qc]);
+
   const logout = useCallback(async () => {
     try {
       await api.post('/auth/logout');
@@ -83,11 +93,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading: isLoading,
       can: (p) => perms.has(p),
       login,
+      demoLogin,
       logout,
       activeOrgId,
       setActiveOrgId,
     };
-  }, [data, isLoading, login, logout, activeOrgId, setActiveOrgId]);
+  }, [data, isLoading, login, demoLogin, logout, activeOrgId, setActiveOrgId]);
 
   return <AuthContext value={value}>{children}</AuthContext>;
 }

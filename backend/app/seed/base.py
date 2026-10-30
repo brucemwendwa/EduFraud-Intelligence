@@ -8,10 +8,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.security import hash_password
-from app.models import Organization, Role, User
+from app.models import Organization, Role, Student, User
 from app.services.rbac import sync_rbac
 
 DEMO_PASSWORD = "EduShield!Demo2026"
+DEMO_PRESENTER_EMAIL = "presenter@edushield.demo"
+DEMO_STUDENT_EMAIL = "student@northbridge.demo"
 
 
 @dataclass(frozen=True)
@@ -32,6 +34,7 @@ INSTITUTIONS = (
 
 # (email, full name, title, role key, institution slug or None for platform)
 DEMO_USERS = (
+    (DEMO_PRESENTER_EMAIL, "Avery Morgan", "Hackathon Demo Presenter", "demo_presenter", "northbridge"),
     ("admin@edushield.demo", "Jordan Ellis", "Platform Administrator", "platform_admin", None),
     ("inst.admin@northbridge.demo", "Priya Raman", "Director of Financial Aid", "institution_admin", "northbridge"),
     ("investigator@northbridge.demo", "Marcus Bell", "Senior Fraud Investigator", "fraud_investigator", "northbridge"),
@@ -88,3 +91,29 @@ def bootstrap(db: Session) -> tuple[dict[str, Organization], dict[str, User]]:
     orgs = ensure_institutions(db)
     users = ensure_demo_users(db, orgs, roles)
     return orgs, users
+
+
+def ensure_demo_student_user(db: Session, orgs: dict[str, Organization]) -> User:
+    """Attach one synthetic student to a portal-only demo account after student data exists."""
+    existing = db.scalar(select(User).where(User.email == DEMO_STUDENT_EMAIL))
+    if existing:
+        return existing
+    student = db.scalar(
+        select(Student).where(Student.organization_id == orgs["northbridge"].id).order_by(Student.student_ref)
+    )
+    role = db.scalar(select(Role).where(Role.key == "student"))
+    if student is None or role is None:
+        raise RuntimeError("Seed student data and roles before creating the demo student account.")
+    user = User(
+        email=DEMO_STUDENT_EMAIL,
+        full_name="Synthetic Student",
+        title=None,
+        role_id=role.id,
+        organization_id=student.organization_id,
+        student_id=student.id,
+        password_hash=hash_password(DEMO_PASSWORD),
+        is_demo=True,
+    )
+    db.add(user)
+    db.flush()
+    return user

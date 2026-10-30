@@ -37,7 +37,7 @@ export function UserMenu() {
           </span>
           <span className="hidden text-left lg:block">
             <span className="block text-sm leading-tight font-medium text-slate-900">{user.full_name}</span>
-            <span className="block text-xs leading-tight text-slate-500">{user.role.name}</span>
+            <span className="block text-xs leading-tight text-slate-500">{user.is_demo ? 'Demo Account' : user.role.name}</span>
           </span>
         </button>
       </MenuTrigger>
@@ -48,7 +48,7 @@ export function UserMenu() {
         </MenuLabel>
         <div className="mx-2.5 mb-1.5 inline-flex items-center gap-1.5 rounded-md bg-navy-50 px-2 py-0.5 text-xs font-medium text-navy-800">
           <ShieldCheck className="size-3.5" aria-hidden />
-          {user.role.name}
+          {user.is_demo ? 'Demo Account' : user.role.name}
         </div>
         <MenuSeparator />
         <MenuItem icon={<Settings className="size-4" />} onSelect={() => navigate('/app/settings')}>

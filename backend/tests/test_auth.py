@@ -10,7 +10,7 @@ from app.core.config import get_settings
 from app.db.types import utcnow
 from app.main import app
 from app.models import AuditEvent, User
-from app.seed.base import DEMO_PASSWORD
+from app.seed.base import DEMO_PASSWORD, DEMO_PRESENTER_EMAIL, DEMO_STUDENT_EMAIL
 from tests.conftest import ADMIN, NB_INVESTIGATOR
 
 
@@ -109,9 +109,31 @@ def test_demo_accounts_are_listed_without_secrets_and_disabled_outside_demo_mode
         assert res.status_code == 401
 
 
+def test_demo_login_uses_a_restricted_synthetic_session(engine, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    with _client() as c:
+        res = c.post("/api/v1/auth/demo-login")
+        assert res.status_code == 200
+        body = res.json()
+        assert body["email"] == DEMO_PRESENTER_EMAIL and body["is_demo"] is True
+        assert "audit:read" in body["permissions"] and "pii:reveal" not in body["permissions"]
+        assert "disbursements:hold" not in body["permissions"] and body["is_platform_admin"] is False
+        assert "httponly" in res.headers["set-cookie"].lower()
+        monkeypatch.setattr(get_settings(), "demo_mode", False)
+        assert c.post("/api/v1/auth/demo-login").status_code == 401
+
+
 def test_login_payload_is_validated(engine) -> None:  # type: ignore[no-untyped-def]
     with _client() as c:
         res = c.post("/api/v1/auth/login", json={"email": "not-an-email", "password": "x"})
     assert res.status_code == 422
     assert res.json()["error"]["details"][0]["field"] == "email"
     assert "not-an-email" not in res.text  # submitted values are never echoed back
+
+
+def test_synthetic_student_can_only_access_own_portal(as_user) -> None:  # type: ignore[no-untyped-def]
+    student = as_user(DEMO_STUDENT_EMAIL)
+    portal = student.get("/api/v1/student-portal/me")
+    assert portal.status_code == 200 and portal.json()["applications"]
+    assert student.get("/api/v1/applications").status_code == 403
+    with _client() as anonymous:
+        assert anonymous.get("/api/v1/student-portal/me").status_code == 401

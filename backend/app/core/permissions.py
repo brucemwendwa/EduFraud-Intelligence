@@ -10,6 +10,7 @@ from enum import StrEnum
 
 
 class P(StrEnum):
+    STUDENT_PORTAL_READ = "student_portal:read"
     DASHBOARD_READ = "dashboard:read"
     APPLICATIONS_READ = "applications:read"
     APPLICATIONS_REVIEW = "applications:review"
@@ -35,6 +36,7 @@ class P(StrEnum):
 
 
 PERMISSION_DESCRIPTIONS: dict[P, tuple[str, str]] = {
+    P.STUDENT_PORTAL_READ: ("student_portal", "View the signed-in student's own synthetic aid information"),
     P.DASHBOARD_READ: ("overview", "View the fraud intelligence dashboard"),
     P.APPLICATIONS_READ: ("applications", "View financial aid applications and risk assessments"),
     P.APPLICATIONS_REVIEW: ("applications", "Record a review decision on an application"),
@@ -82,6 +84,24 @@ _READ_ONLY = frozenset(
 )
 
 ROLES: tuple[RoleDef, ...] = (
+    RoleDef(
+        key="student",
+        name="Student",
+        description="Views only their own synthetic aid record in the student portal.",
+        permissions=frozenset({P.STUDENT_PORTAL_READ}),
+    ),
+    RoleDef(
+        key="demo_presenter",
+        name="Demo Presenter",
+        description="Synthetic-data presenter account; cannot reveal PII, hold payments, or administer users.",
+        permissions=frozenset(
+            {
+                P.DASHBOARD_READ, P.APPLICATIONS_READ, P.DISBURSEMENTS_READ, P.VERIFICATIONS_READ,
+                P.VERIFICATIONS_INITIATE, P.ALERTS_READ, P.NETWORK_READ, P.CASES_READ, P.CASES_CREATE,
+                P.CASES_UPDATE, P.CASES_ASSIGN, P.CASES_RESOLVE, P.AUDIT_READ,
+            }
+        ),
+    ),
     RoleDef(
         key="platform_admin",
         name="Platform Administrator",

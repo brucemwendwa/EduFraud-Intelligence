@@ -59,6 +59,7 @@ class User(UUIDPrimaryKey, Timestamps, Base):
     organization_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("organizations.id", ondelete="RESTRICT"), index=True
     )
+    student_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("students.id", ondelete="RESTRICT"), unique=True)
     role_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("roles.id", ondelete="RESTRICT"), index=True)
     email: Mapped[str] = mapped_column(String(254))
     full_name: Mapped[str] = mapped_column(String(120))

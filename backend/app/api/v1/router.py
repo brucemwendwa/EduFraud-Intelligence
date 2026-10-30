@@ -12,6 +12,7 @@ from app.api.v1 import (
     disbursements,
     network,
     organizations,
+    student_portal,
     students,
     users,
     verifications,
@@ -23,6 +24,7 @@ api_router.include_router(organizations.router)
 api_router.include_router(users.router)
 api_router.include_router(applications.router)
 api_router.include_router(students.router)
+api_router.include_router(student_portal.router)
 api_router.include_router(disbursements.router)
 api_router.include_router(verifications.router)
 api_router.include_router(network.router)

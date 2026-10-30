@@ -15,7 +15,7 @@ from alembic.config import Config
 from app.core.config import get_settings
 from app.db.session import SessionLocal
 from app.models import FinancialAidApplication
-from app.seed.base import bootstrap
+from app.seed.base import bootstrap, ensure_demo_student_user
 from app.seed.pipeline import seed_synthetic
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
@@ -43,9 +43,12 @@ def main() -> None:
         db.commit()
         print(f"Reference data: {len(orgs)} institutions, {len(users)} demo accounts.")
         if db.query(FinancialAidApplication).first() is not None:
+            ensure_demo_student_user(db, orgs)
+            db.commit()
             print("Synthetic records already present; use --reset to regenerate.")
             return
         summary, stats = seed_synthetic(db, orgs)
+        ensure_demo_student_user(db, orgs)
         db.commit()
     print(
         f"Synthetic data: {summary.students} students, {summary.applications} applications, "

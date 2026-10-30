@@ -3,18 +3,14 @@ import { ArrowRight, Building2, KeyRound, Lock, Mail, ShieldCheck } from 'lucide
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router';
 import { toast } from 'sonner';
-import type { DemoAccount } from '@/api/types';
 import { Logo } from '@/components/layout/Logo';
 import { Button } from '@/components/ui/Button';
 import { Field, Input } from '@/components/ui/Field';
 import { api, errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
-/** Shared password of the synthetic demo accounts (public by design; disabled when DEMO_MODE=false). */
-export const DEMO_PASSWORD = 'EduShield!Demo2026';
-
 export function LoginPage() {
-  const { user, login } = useAuth();
+  const { user, login, demoLogin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from ?? '/app';
@@ -25,7 +21,7 @@ export function LoginPage() {
 
   const demo = useQuery({
     queryKey: ['auth', 'demo-accounts'],
-    queryFn: async () => (await api.get<DemoAccount[]>('/auth/demo-accounts')).data,
+    queryFn: async () => (await api.get('/auth/demo-accounts')).data,
     retry: false,
     staleTime: Infinity,
   });
@@ -38,6 +34,20 @@ export function LoginPage() {
     try {
       const me = await login(mail, pass);
       toast.success(`Welcome, ${me.full_name.split(' ')[0]}`, { description: `Signed in as ${me.role.name}` });
+      navigate(me.role.key === 'student' ? '/student' : from, { replace: true });
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setPending(null);
+    }
+  };
+
+  const enterDemo = async () => {
+    setError(null);
+    setPending('demo');
+    try {
+      await demoLogin();
+      toast.success('Demo session started', { description: 'Synthetic data · restricted presenter permissions' });
       navigate(from, { replace: true });
     } catch (err) {
       setError(errorMessage(err));
@@ -135,41 +145,11 @@ export function LoginPage() {
 
           {demo.data && demo.data.length > 0 && (
             <section className="mt-10" aria-labelledby="demo-heading">
-              <div className="flex items-center justify-between">
-                <h3 id="demo-heading" className="text-xs font-semibold tracking-wider text-slate-500 uppercase">
-                  Demo accounts
-                </h3>
-                <span className="text-xs text-slate-400">
-                  Password <code className="rounded bg-slate-100 px-1 py-0.5 text-slate-600">{DEMO_PASSWORD}</code>
-                </span>
-              </div>
-              <ul className="mt-3 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white">
-                {demo.data.map((acct) => (
-                  <li key={acct.email}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEmail(acct.email);
-                        setPassword(DEMO_PASSWORD);
-                        void signIn(acct.email, DEMO_PASSWORD);
-                      }}
-                      disabled={pending !== null}
-                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-navy-50/60 disabled:opacity-60"
-                    >
-                      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-navy-50 text-navy-700">
-                        <Building2 className="size-4" aria-hidden />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-medium text-slate-900">{acct.role_name}</span>
-                        <span className="block truncate text-xs text-slate-500">
-                          {acct.full_name} · {acct.organization_name ?? 'All institutions'}
-                        </span>
-                      </span>
-                      <ArrowRight className="size-4 text-slate-300" aria-hidden />
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <h3 id="demo-heading" className="text-xs font-semibold tracking-wider text-slate-500 uppercase">Hackathon demo</h3>
+              <Button type="button" size="lg" className="mt-3 w-full" loading={pending === 'demo'} onClick={() => void enterDemo()}>
+                <Building2 className="size-4" aria-hidden /> Enter Demo <ArrowRight className="size-4" aria-hidden />
+              </Button>
+              <p className="mt-2 text-xs text-slate-500">Synthetic data only. Demo sessions are disabled outside DEMO_MODE.</p>
             </section>
           )}
         </div>

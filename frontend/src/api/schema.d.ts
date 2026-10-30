@@ -55,6 +55,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/demo-login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start the restricted synthetic demo session
+         * @description Explicit demo-only session; production rejects DEMO_MODE at startup.
+         */
+        post: operations["demo_login_api_v1_auth_demo_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/token": {
         parameters: {
             query?: never;
@@ -306,6 +326,23 @@ export interface paths {
         put?: never;
         /** Reveal a masked student name (justification required; recorded as a data-access event) */
         post: operations["reveal_student_api_v1_students__student_id__reveal_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/student-portal/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Signed-in student's own synthetic aid record */
+        get: operations["me_api_v1_student_portal_me_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1926,6 +1963,8 @@ export interface components {
             organization: components["schemas"]["OrgRef"] | null;
             /** Is Platform Admin */
             is_platform_admin: boolean;
+            /** Is Demo */
+            is_demo: boolean;
             /** Permissions */
             permissions: string[];
             /** Accessible Organizations */
@@ -2454,6 +2493,26 @@ export interface components {
             /** Identity Tokens */
             identity_tokens: components["schemas"]["IdentityTokenOut"][];
         };
+        /** StudentPortalApplication */
+        StudentPortalApplication: {
+            /** Reference */
+            reference: string;
+            /** Status */
+            status: string;
+            /** Program */
+            program: string;
+            /** Requested Amount */
+            requested_amount: string;
+            /** Risk Level */
+            risk_level: string | null;
+        };
+        /** StudentPortalOut */
+        StudentPortalOut: {
+            /** Student Ref */
+            student_ref: string;
+            /** Applications */
+            applications: components["schemas"]["StudentPortalApplication"][];
+        };
         /** StudentRef */
         StudentRef: {
             /**
@@ -2816,6 +2875,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    demo_login_api_v1_auth_demo_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
                 };
             };
         };
@@ -3340,6 +3419,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RevealResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    me_api_v1_student_portal_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentPortalOut"];
                 };
             };
             /** @description Validation Error */
