@@ -483,6 +483,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/network/clusters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Linked application clusters, riskiest first */
+        get: operations["clusters_api_v1_network_clusters_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/network/graph": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Relationship graph for a cluster or around one application */
+        get: operations["graph_api_v1_network_graph_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/alerts": {
         parameters: {
             query?: never;
@@ -1411,6 +1445,84 @@ export interface components {
             max_weight: number;
             /** Evaluation */
             evaluation: string;
+        };
+        /** NetworkCluster */
+        NetworkCluster: {
+            /** Id */
+            id: string;
+            /** Size */
+            size: number;
+            /** Applications In Scope */
+            applications_in_scope: number;
+            /** Applications Other Institutions */
+            applications_other_institutions: number;
+            /** Institutions */
+            institutions: number;
+            /** Link Types */
+            link_types: {
+                [key: string]: number;
+            };
+            /** Risk Level */
+            risk_level: string;
+            /** Max Score */
+            max_score: number;
+            /** References */
+            references: string[];
+            /** Scenarios */
+            scenarios: string[];
+        };
+        /** NetworkEdge */
+        NetworkEdge: {
+            /** Id */
+            id: string;
+            /** Source */
+            source: string;
+            /** Target */
+            target: string;
+            /** Relation */
+            relation: string;
+            /** Suspicious */
+            suspicious: boolean;
+        };
+        /** NetworkGraph */
+        NetworkGraph: {
+            /** Title */
+            title: string;
+            /** Cluster Id */
+            cluster_id: string | null;
+            /** Focus */
+            focus: string | null;
+            /** Stats */
+            stats: {
+                [key: string]: number;
+            };
+            /** Nodes */
+            nodes: components["schemas"]["NetworkNode"][];
+            /** Edges */
+            edges: components["schemas"]["NetworkEdge"][];
+        };
+        /** NetworkNode */
+        NetworkNode: {
+            /** Id */
+            id: string;
+            /** Type */
+            type: string;
+            /** Label */
+            label: string;
+            /** Sublabel */
+            sublabel: string;
+            /** Risk Level */
+            risk_level: string | null;
+            /** Details */
+            details: {
+                [key: string]: unknown;
+            };
+            /** Link */
+            link: string | null;
+            /** X */
+            x: number;
+            /** Y */
+            y: number;
         };
         /** OrgRef */
         OrgRef: {
@@ -3048,6 +3160,67 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["VerificationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    clusters_api_v1_network_clusters_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkCluster"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    graph_api_v1_network_graph_get: {
+        parameters: {
+            query?: {
+                cluster?: string | null;
+                focus?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkGraph"];
                 };
             };
             /** @description Validation Error */

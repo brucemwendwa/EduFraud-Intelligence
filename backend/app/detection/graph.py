@@ -11,6 +11,7 @@ link records, which keeps legitimate students out of clusters.
 
 from __future__ import annotations
 
+import hashlib
 import uuid
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -86,8 +87,7 @@ def link_graph(ctx: DetectionContext) -> nx.Graph:
 def find_clusters(g: nx.Graph) -> dict[uuid.UUID, Cluster]:
     """Maps each application to its cluster (connected component with >= MIN_CLUSTER applications)."""
     by_app: dict[uuid.UUID, Cluster] = {}
-    components = sorted(nx.connected_components(g), key=len, reverse=True)
-    for idx, component in enumerate(components, start=1):
+    for component in nx.connected_components(g):
         app_ids = {n for n in component if g.nodes[n].get("kind") == "application"}
         if len(app_ids) < MIN_CLUSTER:
             continue
@@ -96,8 +96,10 @@ def find_clusters(g: nx.Graph) -> dict[uuid.UUID, Cluster]:
             kind = g.nodes[n].get("kind")
             if kind != "application":
                 links[kind] += 1
+        # Stable identifier derived from the members, so links and bookmarks survive re-runs.
+        digest = hashlib.sha1("".join(sorted(str(a) for a in app_ids)).encode(), usedforsecurity=False).hexdigest()
         cluster = Cluster(
-            id=f"CL-{idx:03d}",
+            id=f"CL-{digest[:6].upper()}",
             application_ids=app_ids,
             link_types=dict(links),
             organizations={g.nodes[a]["org"] for a in app_ids},

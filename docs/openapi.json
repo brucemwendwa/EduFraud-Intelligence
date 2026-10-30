@@ -1651,6 +1651,109 @@
         }
       }
     },
+    "/api/v1/network/clusters": {
+      "get": {
+        "tags": [
+          "network"
+        ],
+        "summary": "Linked application clusters, riskiest first",
+        "operationId": "clusters_api_v1_network_clusters_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/NetworkCluster"
+                  },
+                  "type": "array",
+                  "title": "Response Clusters Api V1 Network Clusters Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/network/graph": {
+      "get": {
+        "tags": [
+          "network"
+        ],
+        "summary": "Relationship graph for a cluster or around one application",
+        "operationId": "graph_api_v1_network_graph_get",
+        "parameters": [
+          {
+            "name": "cluster",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 16,
+                  "pattern": "^CL-[0-9A-F]{6}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cluster"
+            }
+          },
+          {
+            "name": "focus",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Focus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkGraph"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/alerts": {
       "get": {
         "tags": [
@@ -4433,6 +4536,235 @@
           "evaluation"
         ],
         "title": "ModelCardOut"
+      },
+      "NetworkCluster": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "size": {
+            "type": "integer",
+            "title": "Size"
+          },
+          "applications_in_scope": {
+            "type": "integer",
+            "title": "Applications In Scope"
+          },
+          "applications_other_institutions": {
+            "type": "integer",
+            "title": "Applications Other Institutions"
+          },
+          "institutions": {
+            "type": "integer",
+            "title": "Institutions"
+          },
+          "link_types": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Link Types"
+          },
+          "risk_level": {
+            "type": "string",
+            "title": "Risk Level"
+          },
+          "max_score": {
+            "type": "number",
+            "title": "Max Score"
+          },
+          "references": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "References"
+          },
+          "scenarios": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Scenarios"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "size",
+          "applications_in_scope",
+          "applications_other_institutions",
+          "institutions",
+          "link_types",
+          "risk_level",
+          "max_score",
+          "references",
+          "scenarios"
+        ],
+        "title": "NetworkCluster"
+      },
+      "NetworkEdge": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "relation": {
+            "type": "string",
+            "title": "Relation"
+          },
+          "suspicious": {
+            "type": "boolean",
+            "title": "Suspicious"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "source",
+          "target",
+          "relation",
+          "suspicious"
+        ],
+        "title": "NetworkEdge"
+      },
+      "NetworkGraph": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "cluster_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cluster Id"
+          },
+          "focus": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Focus"
+          },
+          "stats": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Stats"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/NetworkNode"
+            },
+            "type": "array",
+            "title": "Nodes"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/NetworkEdge"
+            },
+            "type": "array",
+            "title": "Edges"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "cluster_id",
+          "focus",
+          "stats",
+          "nodes",
+          "edges"
+        ],
+        "title": "NetworkGraph"
+      },
+      "NetworkNode": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "sublabel": {
+            "type": "string",
+            "title": "Sublabel"
+          },
+          "risk_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Level"
+          },
+          "details": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Details"
+          },
+          "link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link"
+          },
+          "x": {
+            "type": "number",
+            "title": "X"
+          },
+          "y": {
+            "type": "number",
+            "title": "Y"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "label",
+          "sublabel",
+          "risk_level",
+          "details",
+          "link",
+          "x",
+          "y"
+        ],
+        "title": "NetworkNode"
       },
       "OrgRef": {
         "properties": {

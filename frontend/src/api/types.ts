@@ -56,3 +56,8 @@ export type VerificationStats = S['VerificationStats'];
 export type ProviderInfo = S['ProviderInfo'];
 export type BiometricVerificationIn = S['BiometricVerificationIn'];
 export type AlternativeVerificationIn = S['AlternativeVerificationIn'];
+
+export type NetworkCluster = S['NetworkCluster'];
+export type NetworkGraph = S['NetworkGraph'];
+export type NetworkNode = S['NetworkNode'];
+export type NetworkEdge = S['NetworkEdge'];

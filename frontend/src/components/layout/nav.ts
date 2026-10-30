@@ -36,7 +36,7 @@ export const navSections: { title: string; items: NavItem[] }[] = [
     items: [
       { label: 'Applications', to: '/app/applications', icon: FileSearch, permission: P.applicationsRead },
       { label: 'Identity verification', to: '/app/verification', icon: ScanFace, permission: P.verificationsRead },
-      { label: 'Fraud network', to: '/app/network', icon: Network, permission: P.networkRead, planned: true },
+      { label: 'Fraud network', to: '/app/network', icon: Network, permission: P.networkRead },
       { label: 'Disbursements', to: '/app/disbursements', icon: Banknote, permission: P.disbursementsRead },
       { label: 'Detection engine', to: '/app/engine', icon: Cpu, permission: P.dashboardRead },
     ],

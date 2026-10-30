@@ -64,7 +64,7 @@ const features: { icon: LucideIcon; title: string; body: string; status?: string
   { icon: Fingerprint, title: 'Biometric identity protection', body: 'Step-up verification with liveness and anti-spoofing behind a vendor-neutral provider interface.' },
   { icon: FileSearch, title: 'Application fraud detection', body: 'Search, filter and triage applications with risk explanations attached.' },
   { icon: BrainCircuit, title: 'Explainable AI engine', body: 'Rule signals combine with an Isolation Forest, with attributions you can inspect.' },
-  { icon: Network, title: 'Fraud network intelligence', body: 'Graph analysis links identities, devices and payment destinations, and cluster membership raises risk scores.', status: 'Explorer planned' },
+  { icon: Network, title: 'Fraud network intelligence', body: 'An interactive graph links identities, devices and payment destinations; cluster membership raises risk scores.' },
   { icon: Banknote, title: 'Disbursement monitoring', body: 'Catches repeated destinations, unusual amounts and bursts of payments before funds move.' },
   { icon: FolderKanban, title: 'Investigation workspace', body: 'Cases hold evidence, timelines, notes and resolutions, with role-based assignment.', status: 'Planned' },
   { icon: ScrollText, title: 'Audit & security center', body: 'Tamper-evident, hash-chained audit trail covering every sensitive action.', status: 'UI planned' },
@@ -85,7 +85,7 @@ type Status = 'Operational' | 'Simulated' | 'Planned';
 const capabilities: { name: string; status: Status; note: string }[] = [
   { name: 'Rule-based detection & explainable risk scoring', status: 'Operational', note: 'Versioned rules with per-signal contributions' },
   { name: 'Anomaly detection (Isolation Forest)', status: 'Operational', note: 'Trained on synthetic data only, so accuracy is not claimed' },
-  { name: 'Fraud network graph analysis', status: 'Operational', note: 'NetworkX clustering feeds risk scores; graph explorer UI planned' },
+  { name: 'Fraud network graph analysis', status: 'Operational', note: 'NetworkX clustering feeds risk scores; interactive explorer with anonymised cross-institution links' },
   { name: 'Audit trail, RBAC, tenant isolation', status: 'Operational', note: 'Enforced by the API and covered by automated tests' },
   { name: 'Biometric document, face, liveness & PAD checks', status: 'Simulated', note: 'Deterministic mock provider, labelled throughout' },
   { name: 'Student records & financial data', status: 'Simulated', note: 'Synthetic generator. No real students or FSA data' },
@@ -161,11 +161,11 @@ export function LandingPage() {
         reverse
         eyebrow="Fraud network intelligence"
         title="See the ring, not just the record"
-        body="Graph analysis links applications that share identity tokens, devices or payment destinations. Membership in a linked cluster raises every member's risk score and is explained like any other signal. An interactive explorer for investigators is planned."
+        body="Graph analysis links applications that share identity tokens, devices or payment destinations. Membership in a linked cluster raises every member's risk score and is explained like any other signal. Investigators explore each cluster interactively and inspect any node's connected records."
         points={[
           'Clusters of four or more linked applications are flagged',
           'Cross-institution matches without exposing another school’s data',
-          'Planned: click a graph node to see its evidence and open a case',
+          'Click any graph node to inspect its details and connected records',
         ]}
         visual={<NetworkVisual />}
         className="bg-canvas"

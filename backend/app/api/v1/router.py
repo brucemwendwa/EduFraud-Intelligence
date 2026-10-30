@@ -9,6 +9,7 @@ from app.api.v1 import (
     auth,
     detection,
     disbursements,
+    network,
     organizations,
     students,
     users,
@@ -23,6 +24,7 @@ api_router.include_router(applications.router)
 api_router.include_router(students.router)
 api_router.include_router(disbursements.router)
 api_router.include_router(verifications.router)
+api_router.include_router(network.router)
 api_router.include_router(alerts.router)
 api_router.include_router(detection.router)
 api_router.include_router(audit.router)
