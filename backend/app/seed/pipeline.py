@@ -17,12 +17,14 @@ from app.detection.versions import MODEL_VERSION, RULES_VERSION
 from app.models import Alert, DetectionRun, Disbursement, FinancialAidApplication, Organization, RiskAssessment
 from app.models.enums import RunStatus
 from app.seed.accounts import seed_accounts
+from app.seed.base import ensure_demo_student_user
 from app.seed.generator import GenerationSummary, SyntheticGenerator
 
 
 def seed_synthetic(db: Session, orgs: dict[str, Organization]) -> tuple[GenerationSummary, RunStats]:
     summary = SyntheticGenerator(db, orgs).run()
     db.flush()
+    ensure_demo_student_user(db, orgs)
     seed_verification_events(db)
     accounts = seed_accounts(db, orgs)
     summary.scenario_refs.update({f"account:{k}": refs for k, refs in accounts.scenario_refs.items()})

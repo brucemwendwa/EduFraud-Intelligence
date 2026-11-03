@@ -78,7 +78,9 @@ def list_scenarios(_: Annotated[Principal, Depends(require(P.DASHBOARD_READ))]) 
     response_model=list[AccountScenarioCheck],
     summary="Checks each seeded account scenario against its expected risk level (coverage, not accuracy)",
 )
-def validation(db: DB, principal: Annotated[Principal, Depends(require(P.DASHBOARD_READ))]) -> list[AccountScenarioCheck]:
+def validation(
+    db: DB, principal: Annotated[Principal, Depends(require(P.DASHBOARD_READ))]
+) -> list[AccountScenarioCheck]:
     out = []
     for s in scenarios.SCENARIOS.values():
         levels = Counter(

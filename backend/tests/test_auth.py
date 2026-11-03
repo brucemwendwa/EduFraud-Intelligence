@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -130,6 +131,7 @@ def test_login_payload_is_validated(engine) -> None:  # type: ignore[no-untyped-
     assert "not-an-email" not in res.text  # submitted values are never echoed back
 
 
+@pytest.mark.seeded
 def test_synthetic_student_can_only_access_own_portal(as_user) -> None:  # type: ignore[no-untyped-def]
     student = as_user(DEMO_STUDENT_EMAIL)
     portal = student.get("/api/v1/student-portal/me")
