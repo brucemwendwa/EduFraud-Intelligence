@@ -1,5 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { AlertDetail, AlertRow, AlertSummary, AlertTriage, Page } from '@/api/types';
+import { invalidateAccountData } from '@/features/accounts/api';
 import { api } from '@/lib/api';
 
 export function useAlerts(params: Record<string, string | string[]>) {
@@ -36,6 +37,19 @@ export function useTriageAlert() {
       void qc.invalidateQueries({ queryKey: ['alerts', 'list'] });
       void qc.invalidateQueries({ queryKey: ['alerts', 'summary'] });
       void qc.invalidateQueries({ queryKey: ['applications'] });
+    },
+  });
+}
+
+/** Assignment, notes and verification requests on an alert. */
+export function useAlertAction(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ action, body }: { action: 'assign' | 'notes' | 'request-verification'; body: unknown }) =>
+      (await api.post<AlertDetail>(`/alerts/${id}/${action}`, body)).data,
+    onSuccess: (data) => {
+      qc.setQueryData(['alerts', 'detail', data.id], data);
+      invalidateAccountData(qc);
     },
   });
 }

@@ -17,6 +17,13 @@ const NetworkPage = lazy(() => import('@/features/network/NetworkPage'));
 const CasesPage = lazy(() => import('@/features/cases/CasesPage'));
 const CaseWorkspacePage = lazy(() => import('@/features/cases/CaseWorkspacePage'));
 const StudentDashboardPage = lazy(() => import('@/features/student/StudentDashboardPage'));
+const AccountsPage = lazy(() => import('@/features/accounts/AccountsPage'));
+const AccountDetailPage = lazy(() => import('@/features/accounts/AccountDetailPage'));
+const CardsPage = lazy(() => import('@/features/cards/CardsPage'));
+const TransactionsPage = lazy(() => import('@/features/transactions/TransactionsPage'));
+const AccessPage = lazy(() => import('@/features/access/AccessPage'));
+const AuditPage = lazy(() => import('@/features/audit/AuditPage'));
+const SettingsPage = lazy(() => import('@/features/settings/SettingsPage'));
 
 export function App() {
   return (
@@ -36,6 +43,13 @@ export function App() {
           <Route path="network" element={<NetworkPage />} />
           <Route path="cases" element={<CasesPage />} />
           <Route path="cases/:id" element={<CaseWorkspacePage />} />
+          <Route path="accounts" element={<AccountsPage />} />
+          <Route path="accounts/:id" element={<AccountDetailPage />} />
+          <Route path="cards" element={<CardsPage />} />
+          <Route path="transactions" element={<TransactionsPage />} />
+          <Route path="access" element={<AccessPage />} />
+          <Route path="audit" element={<AuditPage />} />
+          <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Route>

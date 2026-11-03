@@ -15,17 +15,23 @@ import { dateTime, label } from '@/lib/format';
 import { P } from '@/lib/permissions';
 import { verificationStatusTone } from '@/lib/status';
 import { toParams, useSearchState } from '@/lib/useSearchState';
+import { cn } from '@/lib/cn';
 import { useProviderInfo, useVerification, useVerificationStats, useVerifications } from './api';
+import { RequestsPanel } from './requests/RequestsPanel';
 import { VerificationResult } from './VerificationResult';
 import { VerificationWizard } from './VerificationWizard';
 
-const DEFAULTS = { status: '', trigger: '', q: '', page: '1', selected: '' };
+const DEFAULTS = { tab: 'requests', status: '', trigger: '', q: '', page: '1', selected: '', rq: '', rstatus: '', pathway: '', rpage: '1' };
+const TABS = [
+  { key: 'requests', label: 'Verification requests' },
+  { key: 'checks', label: 'Step-up checks & history' },
+];
 
 export default function VerificationPage() {
   const { can } = useAuth();
   const [filters, setFilters] = useSearchState(DEFAULTS);
   const [wizard, setWizard] = useState(false);
-  const { selected, ...rest } = filters;
+  const { selected, tab, rq: _rq, rstatus: _rs, pathway: _pw, rpage: _rp, ...rest } = filters;
   const list = useVerifications({ ...toParams(rest), page_size: '15' });
   const stats = useVerificationStats();
   const provider = useProviderInfo();
@@ -35,11 +41,32 @@ export default function VerificationPage() {
     <>
       <PageHeader
         title="Identity verification"
-        description="Step-up checks protect accounts at risky moments, such as refund destination changes, account recovery and new devices. Students without biometric consent are verified in person instead."
-        meta={<Badge tone="blue" icon={<FlaskConical className="size-3" />}>Simulated biometric provider</Badge>}
-        actions={can(P.verificationsInitiate) && <Button icon={<Fingerprint className="size-4" />} onClick={() => setWizard(true)}>Start verification</Button>}
+        description="Re-verify a student's identity when suspicious activity is detected. On-campus students visit the verification office; remote and international students use secure video, document checks, a provider liveness check or, only where a formal arrangement exists, embassy-assisted verification."
+        meta={<Badge tone="blue" icon={<FlaskConical className="size-3" />}>Biometric and liveness checks are simulated</Badge>}
+        actions={can(P.verificationsInitiate) && tab === 'checks' && <Button icon={<Fingerprint className="size-4" />} onClick={() => setWizard(true)}>Start step-up check</Button>}
       />
 
+      <div className="mb-6 flex gap-1 overflow-x-auto border-b border-slate-200" role="tablist" aria-label="Verification views">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            role="tab"
+            aria-selected={tab === t.key}
+            onClick={() => setFilters({ tab: t.key, selected: '' })}
+            className={cn(
+              '-mb-px border-b-2 px-3 py-2.5 text-sm font-medium whitespace-nowrap transition-colors',
+              tab === t.key ? 'border-navy-900 text-navy-900' : 'border-transparent text-slate-500 hover:text-slate-800',
+            )}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'requests' ? (
+        <RequestsPanel filters={filters} setFilters={setFilters} />
+      ) : (
+      <>
       <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Verifications" value={s?.total ?? '—'} footnote={s?.biometric_share != null ? `${Math.round(s.biometric_share * 100)}% biometric` : undefined} icon={<ScanFace className="size-4" />} loading={stats.isLoading} />
         <StatCard label="Pass rate (decided)" value={s?.pass_rate != null ? `${Math.round(s.pass_rate * 100)}%` : '—'} footnote={s && `${s.passed} passed`} icon={<UserCheck className="size-4" />} accent="success" loading={stats.isLoading} />
@@ -105,6 +132,8 @@ export default function VerificationPage() {
       </div>
 
       <VerificationDrawer id={selected || null} onClose={() => setFilters({ selected: '', page: filters.page })} />
+      </>
+      )}
       <VerificationWizard open={wizard} onOpenChange={setWizard} />
     </>
   );

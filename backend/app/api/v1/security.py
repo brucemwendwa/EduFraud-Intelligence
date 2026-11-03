@@ -77,6 +77,12 @@ def list_events(
     )
 
 
+@router.get("/events/{event_id}", response_model=SecurityEventRow, summary="One security event")
+def get_event(event_id: uuid.UUID, db: DB, principal: Reader) -> SecurityEventRow:
+    event = get_scoped_or_404(db, SecurityEvent, event_id, principal, "Security event")
+    return account_views.security_event_rows(db, principal, [event])[0]
+
+
 def _shared_tokens(db: DB, principal: Principal) -> dict[str, int]:
     since = utcnow() - timedelta(days=30)
     stmt = (

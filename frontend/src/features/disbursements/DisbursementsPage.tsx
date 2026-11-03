@@ -1,4 +1,4 @@
-import { AlertTriangle, Banknote, CalendarClock, CreditCard, Landmark, PauseCircle, X } from 'lucide-react';
+import { AlertTriangle, Banknote, CalendarClock, CreditCard, Landmark, PauseCircle, WalletCards, X } from 'lucide-react';
 import { useState } from 'react';
 import { Badge, StatusBadge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -35,11 +35,11 @@ export default function DisbursementsPage() {
   return (
     <>
       <PageHeader
-        title="Disbursement monitoring"
-        description="Watch funds before and after they move. The system detects repeated payment destinations, unusual amounts and bursts of payments. Holds are always placed by a person."
+        title="Financial aid allocations"
+        description="Aid allocated to each student is credited to their student ID-linked account at the payment provider. Allocations sent anywhere else (an external bank account or prepaid card) are shown as redirected. The system flags repeated destinations, unusual amounts and bursts; holds are always placed by a person."
       />
       <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Disbursements in scope" value={s ? s.total_count.toLocaleString() : '—'} footnote={s && money(s.total_amount)} icon={<Banknote className="size-4" />} loading={summary.isLoading} />
+        <StatCard label="Allocations in scope" value={s ? s.total_count.toLocaleString() : '—'} footnote={s && money(s.total_amount)} icon={<Banknote className="size-4" />} loading={summary.isLoading} />
         <StatCard label="Flagged for review" value={s ? s.flagged_count.toLocaleString() : '—'} footnote={s && `${money(s.flagged_amount)} at risk`} icon={<AlertTriangle className="size-4" />} accent="critical" loading={summary.isLoading}
           to="/app/disbursements?flagged=true&sort=risk_score" />
         <StatCard label="On hold" value={s ? s.held_count.toLocaleString() : '—'} footnote={s && money(s.held_amount)} icon={<PauseCircle className="size-4" />} accent="warning" loading={summary.isLoading}
@@ -51,7 +51,7 @@ export default function DisbursementsPage() {
       <Card>
         <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 p-4">
           <div className="w-full sm:w-64">
-            <SearchInput placeholder="Search DSB- or STU- reference" label="Search disbursements" value={filters.q} onChange={(q) => setFilters({ q })} />
+            <SearchInput placeholder="Search DSB- or STU- reference" label="Search allocations" value={filters.q} onChange={(q) => setFilters({ q })} />
           </div>
           <Select aria-label="Status" value={filters.status} onChange={(e) => setFilters({ status: e.target.value })} className="w-[calc(50%-0.25rem)] sm:w-40">
             <option value="">Status: all</option>
@@ -76,7 +76,7 @@ export default function DisbursementsPage() {
         ) : error ? (
           <ErrorState error={error} onRetry={() => refetch()} />
         ) : !data || data.items.length === 0 ? (
-          <EmptyState icon={<Banknote className="size-5" />} title="No disbursements match these filters" action={filtered ? <Button variant="secondary" size="sm" onClick={reset}>Clear filters</Button> : undefined} />
+          <EmptyState icon={<Banknote className="size-5" />} title="No allocations match these filters" action={filtered ? <Button variant="secondary" size="sm" onClick={reset}>Clear filters</Button> : undefined} />
         ) : (
           <div className={isFetching ? 'opacity-70 transition-opacity' : undefined}>
             <Table>
@@ -108,8 +108,8 @@ export default function DisbursementsPage() {
                     <TD className="tabular whitespace-nowrap">{date(d.disbursed_at)}</TD>
                     <TD>
                       <span className="inline-flex items-center gap-1.5">
-                        {d.destination.destination_type === 'prepaid_card' ? <CreditCard className="size-3.5 text-slate-400" aria-label="Prepaid card" /> : <Landmark className="size-3.5 text-slate-400" aria-label="Bank account" />}
-                        <code className="text-xs">{d.destination.handle}</code>
+                        {d.destination.destination_type === 'id_card_account' ? <WalletCards className="size-3.5 text-risk-low" aria-label="Student ID-linked account" /> : d.destination.destination_type === 'prepaid_card' ? <CreditCard className="size-3.5 text-slate-400" aria-label="Prepaid card" /> : <Landmark className="size-3.5 text-slate-400" aria-label="Bank account" />}
+                        {d.destination.destination_type === 'id_card_account' ? <span className="text-xs">ID-linked account</span> : <code className="text-xs">{d.destination.handle}</code>}
                       </span>
                       {d.destination_changed_at && <Badge tone="warning" className="mt-1">Changed {date(d.destination_changed_at)}</Badge>}
                     </TD>

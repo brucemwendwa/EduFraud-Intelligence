@@ -2,6 +2,10 @@ import { Handle, Position, type Node, type NodeProps } from '@xyflow/react';
 import {
   Bell,
   Building2,
+  IdCard,
+  ShieldAlert,
+  Store,
+  WalletCards,
   CalendarDays,
   CreditCard,
   EyeOff,
@@ -22,7 +26,11 @@ export const entityTypes: Record<string, { label: string; Icon: LucideIcon; tone
   student: { label: 'Student', Icon: UserRound, tone: 'bg-slate-50 text-slate-700 border-slate-300' },
   institution: { label: 'Institution', Icon: Building2, tone: 'bg-navy-900 text-white border-navy-900' },
   enrollment: { label: 'Enrollment', Icon: CalendarDays, tone: 'bg-slate-50 text-slate-600 border-slate-300' },
+  account: { label: 'ID-linked aid account', Icon: WalletCards, tone: 'bg-white text-navy-800 border-navy-500' },
+  card: { label: 'Student ID card', Icon: IdCard, tone: 'bg-slate-50 text-navy-700 border-navy-200' },
   destination: { label: 'Payment destination', Icon: CreditCard, tone: 'bg-red-50 text-flag-red border-flag-red' },
+  merchant: { label: 'Merchant', Icon: Store, tone: 'bg-amber-50 text-amber-800 border-amber-400' },
+  security_event: { label: 'Security event', Icon: ShieldAlert, tone: 'bg-orange-50 text-orange-800 border-orange-400' },
   device: { label: 'Device', Icon: Laptop, tone: 'bg-blue-50 text-brand-blue border-brand-blue' },
   network: { label: 'Network address', Icon: Globe, tone: 'bg-sky-50 text-sky-700 border-sky-500' },
   ssn: { label: 'SSN token', Icon: Fingerprint, tone: 'bg-violet-50 text-violet-700 border-violet-500' },
@@ -44,7 +52,7 @@ export type EntityFlowNode = Node<EntityNodeData, 'entity'>;
 /** One graph entity: icon + label so type is never conveyed by colour alone. */
 export const EntityNode = memo(function EntityNode({ data, selected }: NodeProps<EntityFlowNode>) {
   const meta = entityTypes[data.type] ?? entityTypes.application!;
-  const risk = data.type === 'application' && data.risk_level ? riskRing[data.risk_level] : undefined;
+  const risk = (data.type === 'application' || data.type === 'account') && data.risk_level ? riskRing[data.risk_level] : undefined;
   return (
     <div className={cn('flex max-w-48 items-center gap-2 transition-opacity', data.dimmed && 'opacity-25')}>
       <Handle type="target" position={Position.Top} className="!size-1 !min-h-0 !min-w-0 !border-0 !bg-transparent" style={{ top: '50%' }} />
