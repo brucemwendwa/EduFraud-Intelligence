@@ -17,6 +17,8 @@ const NetworkPage = lazy(() => import('@/features/network/NetworkPage'));
 const CasesPage = lazy(() => import('@/features/cases/CasesPage'));
 const CaseWorkspacePage = lazy(() => import('@/features/cases/CaseWorkspacePage'));
 const StudentDashboardPage = lazy(() => import('@/features/student/StudentDashboardPage'));
+const StudentApplicationsPage = lazy(() => import('@/features/student/StudentApplicationsPage'));
+const StudentApplicationPage = lazy(() => import('@/features/student/StudentApplicationPage'));
 const StudentProfilePage = lazy(() => import('@/features/student/StudentProfilePage'));
 const ActivationPage = lazy(() => import('@/features/student/ActivationPage'));
 const AccountsPage = lazy(() => import('@/features/accounts/AccountsPage'));
@@ -35,6 +37,8 @@ export function App() {
       <Route path="/activate" element={<ActivationPage />} />
       <Route element={<RequireAuth />}>
         <Route path="/student" element={<StudentDashboardPage />} />
+        <Route path="/student/applications" element={<StudentApplicationsPage />} />
+        <Route path="/student/applications/:id" element={<StudentApplicationPage />} />
         <Route path="/student/profile" element={<StudentProfilePage />} />
         <Route path="/app" element={<AppShell />}>
           <Route index element={<DashboardPage />} />

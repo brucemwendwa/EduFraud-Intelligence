@@ -1231,6 +1231,260 @@
         }
       }
     },
+    "/api/v1/student-applications": {
+      "get": {
+        "tags": [
+          "student applications"
+        ],
+        "summary": "Signed-in student's applications",
+        "operationId": "list_student_applications_api_v1_student_applications_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StudentApplicationOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Student Applications Api V1 Student Applications Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "student applications"
+        ],
+        "summary": "Create a financial-aid application draft",
+        "operationId": "create_student_application_api_v1_student_applications_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentApplicationDraft"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentApplicationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student-applications/{application_id}": {
+      "get": {
+        "tags": [
+          "student applications"
+        ],
+        "summary": "Signed-in student's application detail",
+        "operationId": "get_student_application_api_v1_student_applications__application_id__get",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Application Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentApplicationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "student applications"
+        ],
+        "summary": "Save an editable application draft",
+        "operationId": "update_student_application_api_v1_student_applications__application_id__patch",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Application Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentApplicationDraft"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentApplicationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student-applications/{application_id}/submit": {
+      "post": {
+        "tags": [
+          "student applications"
+        ],
+        "summary": "Submit a completed application",
+        "operationId": "submit_student_application_api_v1_student_applications__application_id__submit_post",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Application Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentApplicationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student-applications/{application_id}/withdraw": {
+      "post": {
+        "tags": [
+          "student applications"
+        ],
+        "summary": "Withdraw an application",
+        "operationId": "withdraw_student_application_api_v1_student_applications__application_id__withdraw_post",
+        "parameters": [
+          {
+            "name": "application_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Application Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentApplicationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/disbursements": {
       "get": {
         "tags": [
@@ -7973,9 +8227,13 @@
       "ApplicationStatus": {
         "type": "string",
         "enum": [
+          "draft",
+          "submitted",
           "received",
           "in_review",
+          "additional_information_required",
           "approved",
+          "rejected",
           "on_hold",
           "withdrawn"
         ],
@@ -12542,8 +12800,10 @@
                 "type": "string",
                 "enum": [
                   "in_review",
+                  "additional_information_required",
                   "on_hold",
-                  "approved"
+                  "approved",
+                  "rejected"
                 ]
               },
               {
@@ -13264,6 +13524,274 @@
           "password"
         ],
         "title": "StudentActivationRequest"
+      },
+      "StudentApplicationDraft": {
+        "properties": {
+          "award_year": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^20\\d{2}-20\\d{2}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Award Year"
+          },
+          "dependency_status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "dependent",
+                  "independent"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dependency Status"
+          },
+          "enrollment_intensity": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "full_time",
+                  "three_quarter_time",
+                  "half_time",
+                  "less_than_half_time"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enrollment Intensity"
+          },
+          "program": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Program"
+          },
+          "requested_amount": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested Amount"
+          },
+          "student_aid_index": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 999999.0,
+                "minimum": -1500.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Student Aid Index"
+          }
+        },
+        "type": "object",
+        "title": "StudentApplicationDraft"
+      },
+      "StudentApplicationHistory": {
+        "properties": {
+          "from_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Status"
+          },
+          "to_status": {
+            "type": "string",
+            "title": "To Status"
+          },
+          "actor_role": {
+            "type": "string",
+            "title": "Actor Role"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "from_status",
+          "to_status",
+          "actor_role",
+          "created_at"
+        ],
+        "title": "StudentApplicationHistory"
+      },
+      "StudentApplicationOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "award_year": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Award Year"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "submitted_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted At"
+          },
+          "dependency_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dependency Status"
+          },
+          "enrollment_intensity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enrollment Intensity"
+          },
+          "program": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Program"
+          },
+          "requested_amount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested Amount"
+          },
+          "student_aid_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Student Aid Index"
+          },
+          "risk_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Level"
+          },
+          "is_editable": {
+            "type": "boolean",
+            "title": "Is Editable"
+          },
+          "outstanding_requirements": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Outstanding Requirements"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/StudentApplicationHistory"
+            },
+            "type": "array",
+            "title": "History"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reference",
+          "award_year",
+          "status",
+          "submitted_at",
+          "dependency_status",
+          "enrollment_intensity",
+          "program",
+          "requested_amount",
+          "student_aid_index",
+          "risk_level",
+          "is_editable",
+          "outstanding_requirements",
+          "history"
+        ],
+        "title": "StudentApplicationOut"
       },
       "StudentDetail": {
         "properties": {

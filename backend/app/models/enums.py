@@ -11,9 +11,13 @@ class RiskLevel(StrEnum):
 
 
 class ApplicationStatus(StrEnum):
+    DRAFT = "draft"
+    SUBMITTED = "submitted"
     RECEIVED = "received"
     IN_REVIEW = "in_review"
+    ADDITIONAL_INFORMATION_REQUIRED = "additional_information_required"
     APPROVED = "approved"
+    REJECTED = "rejected"
     ON_HOLD = "on_hold"
     WITHDRAWN = "withdrawn"
 

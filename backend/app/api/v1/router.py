@@ -18,6 +18,7 @@ from app.api.v1 import (
     provider_events,
     security,
     simulations,
+    student_applications,
     student_onboarding,
     student_portal,
     students,
@@ -36,6 +37,7 @@ api_router.include_router(applications.router)
 api_router.include_router(students.router)
 api_router.include_router(student_portal.router)
 api_router.include_router(student_onboarding.router)
+api_router.include_router(student_applications.router)
 api_router.include_router(disbursements.router)
 api_router.include_router(verifications.router)
 api_router.include_router(network.router)

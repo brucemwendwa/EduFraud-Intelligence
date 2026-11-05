@@ -181,6 +181,13 @@ class ReviewUpdate(Schema):
 
     review_status: Literal[ReviewStatus.IN_REVIEW, ReviewStatus.CLEARED, ReviewStatus.ESCALATED]
     application_status: (
-        Literal[ApplicationStatus.IN_REVIEW, ApplicationStatus.ON_HOLD, ApplicationStatus.APPROVED] | None
+        Literal[
+            ApplicationStatus.IN_REVIEW,
+            ApplicationStatus.ADDITIONAL_INFORMATION_REQUIRED,
+            ApplicationStatus.ON_HOLD,
+            ApplicationStatus.APPROVED,
+            ApplicationStatus.REJECTED,
+        ]
+        | None
     ) = None
     note: str = Field(min_length=5, max_length=1000)

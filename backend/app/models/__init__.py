@@ -1,7 +1,13 @@
 """Import every model so SQLAlchemy metadata (and Alembic autogenerate) sees all tables."""
 
 from app.models.account import Device, SecurityEvent, StudentFinancialAccount, StudentIDCard, Transaction
-from app.models.aid import Disbursement, EnrollmentRecord, FinancialAidApplication, PaymentDestinationToken
+from app.models.aid import (
+    ApplicationStatusHistory,
+    Disbursement,
+    EnrollmentRecord,
+    FinancialAidApplication,
+    PaymentDestinationToken,
+)
 from app.models.audit import AuditEvent
 from app.models.case import CaseDecision, CaseEvidence, CaseNote, InvestigationCase
 from app.models.identity import Organization, Permission, Role, User, role_permissions
@@ -13,6 +19,7 @@ from app.models.verification import IdentityVerification, VerificationRequest, V
 __all__ = [
     "Alert",
     "AlertNote",
+    "ApplicationStatusHistory",
     "Device",
     "SecurityEvent",
     "StudentFinancialAccount",

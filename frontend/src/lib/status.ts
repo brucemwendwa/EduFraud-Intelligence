@@ -1,9 +1,13 @@
 import type { Tone } from '@/components/ui/Badge';
 
 export const applicationStatusTone: Record<string, Tone> = {
+  draft: 'neutral',
+  submitted: 'blue',
   received: 'neutral',
   in_review: 'blue',
+  additional_information_required: 'warning',
   approved: 'success',
+  rejected: 'critical',
   on_hold: 'warning',
   withdrawn: 'neutral',
 };

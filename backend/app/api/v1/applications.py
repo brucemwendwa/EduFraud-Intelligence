@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import func, or_, select
 
 from app.api.deps import DB, Principal, get_scoped_or_404, require, scoped
+from app.core.errors import NotFoundError
 from app.core.permissions import P
 from app.core.tokenization import display_token
 from app.detection.engine import DetectionEngine
@@ -28,6 +29,7 @@ from app.schemas.aid import (
 from app.schemas.common import Page, Pagination
 from app.schemas.risk import ApplicationDetail
 from app.services import audit, records, risk_views
+from app.services.application_lifecycle import change_status, require_staff_transition
 
 router = APIRouter(prefix="/applications", tags=["applications"])
 
@@ -57,6 +59,7 @@ def list_applications(
     direction: Literal["asc", "desc"] = "desc",
 ) -> Page[ApplicationRow]:
     stmt = scoped(select(FinancialAidApplication), FinancialAidApplication, principal)
+    stmt = stmt.where(FinancialAidApplication.status != ApplicationStatus.DRAFT)
     if q:
         like = f"%{q.strip().lower()}%"
         stmt = stmt.join(Student, Student.id == FinancialAidApplication.student_id).where(
@@ -93,6 +96,8 @@ def list_applications(
 @router.get("/{application_id}", response_model=ApplicationDetail, summary="Application detail with related records")
 def get_application(application_id: uuid.UUID, db: DB, principal: Reader) -> ApplicationDetail:
     app = get_scoped_or_404(db, FinancialAidApplication, application_id, principal, "Application")
+    if app.status == ApplicationStatus.DRAFT:
+        raise NotFoundError("Application not found.")
     return build_detail(db, app, principal)
 
 
@@ -150,7 +155,16 @@ def review_application(
     before = {"review_status": app.review_status, "status": app.status}
     app.review_status = body.review_status
     if body.application_status:
-        app.status = body.application_status
+        require_staff_transition(app.status, body.application_status)
+        change_status(
+            db,
+            app,
+            to_status=body.application_status,
+            actor=principal.user,
+            request=request,
+            action="application.status_change",
+            note=body.note,
+        )
     audit.record(
         db,
         category=AuditCategory.APPLICATION,

@@ -418,6 +418,76 @@ export interface paths {
         patch: operations["update_profile_api_v1_student_profile_me_patch"];
         trace?: never;
     };
+    "/api/v1/student-applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Signed-in student's applications */
+        get: operations["list_student_applications_api_v1_student_applications_get"];
+        put?: never;
+        /** Create a financial-aid application draft */
+        post: operations["create_student_application_api_v1_student_applications_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/student-applications/{application_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Signed-in student's application detail */
+        get: operations["get_student_application_api_v1_student_applications__application_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Save an editable application draft */
+        patch: operations["update_student_application_api_v1_student_applications__application_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/student-applications/{application_id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit a completed application */
+        post: operations["submit_student_application_api_v1_student_applications__application_id__submit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/student-applications/{application_id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw an application */
+        post: operations["withdraw_student_application_api_v1_student_applications__application_id__withdraw_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/disbursements": {
         parameters: {
             query?: never;
@@ -2315,7 +2385,7 @@ export interface components {
          * ApplicationStatus
          * @enum {string}
          */
-        ApplicationStatus: "received" | "in_review" | "approved" | "on_hold" | "withdrawn";
+        ApplicationStatus: "draft" | "submitted" | "received" | "in_review" | "additional_information_required" | "approved" | "rejected" | "on_hold" | "withdrawn";
         /** AssessmentHistoryItem */
         AssessmentHistoryItem: {
             /**
@@ -3920,7 +3990,7 @@ export interface components {
              */
             review_status: "in_review" | "cleared" | "escalated";
             /** Application Status */
-            application_status?: ("in_review" | "on_hold" | "approved") | null;
+            application_status?: ("in_review" | "additional_information_required" | "on_hold" | "approved" | "rejected") | null;
             /** Note */
             note: string;
         };
@@ -4169,6 +4239,69 @@ export interface components {
             token: string;
             /** Password */
             password: string;
+        };
+        /** StudentApplicationDraft */
+        StudentApplicationDraft: {
+            /** Award Year */
+            award_year?: string | null;
+            /** Dependency Status */
+            dependency_status?: ("dependent" | "independent") | null;
+            /** Enrollment Intensity */
+            enrollment_intensity?: ("full_time" | "three_quarter_time" | "half_time" | "less_than_half_time") | null;
+            /** Program */
+            program?: string | null;
+            /** Requested Amount */
+            requested_amount?: number | string | null;
+            /** Student Aid Index */
+            student_aid_index?: number | null;
+        };
+        /** StudentApplicationHistory */
+        StudentApplicationHistory: {
+            /** From Status */
+            from_status: string | null;
+            /** To Status */
+            to_status: string;
+            /** Actor Role */
+            actor_role: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** StudentApplicationOut */
+        StudentApplicationOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Reference */
+            reference: string;
+            /** Award Year */
+            award_year: string | null;
+            /** Status */
+            status: string;
+            /** Submitted At */
+            submitted_at: string | null;
+            /** Dependency Status */
+            dependency_status: string | null;
+            /** Enrollment Intensity */
+            enrollment_intensity: string | null;
+            /** Program */
+            program: string | null;
+            /** Requested Amount */
+            requested_amount: string | null;
+            /** Student Aid Index */
+            student_aid_index: number | null;
+            /** Risk Level */
+            risk_level: string | null;
+            /** Is Editable */
+            is_editable: boolean;
+            /** Outstanding Requirements */
+            outstanding_requirements: string[];
+            /** History */
+            history: components["schemas"]["StudentApplicationHistory"][];
         };
         /** StudentDetail */
         StudentDetail: {
@@ -5856,6 +5989,196 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StudentProfileOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_student_applications_api_v1_student_applications_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentApplicationOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_student_application_api_v1_student_applications_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StudentApplicationDraft"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentApplicationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_student_application_api_v1_student_applications__application_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentApplicationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_student_application_api_v1_student_applications__application_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StudentApplicationDraft"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentApplicationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_student_application_api_v1_student_applications__application_id__submit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentApplicationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    withdraw_student_application_api_v1_student_applications__application_id__withdraw_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentApplicationOut"];
                 };
             };
             /** @description Validation Error */
