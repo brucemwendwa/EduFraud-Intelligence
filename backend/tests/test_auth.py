@@ -4,10 +4,11 @@ from datetime import timedelta
 
 import pytest
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.config import get_settings
+from app.core.config import Settings, get_settings
 from app.db.types import utcnow
 from app.main import app
 from app.models import AuditEvent, User
@@ -19,6 +20,35 @@ def _client() -> TestClient:
     c = TestClient(app)
     c.headers["X-EduShield-Client"] = "test"
     return c
+
+
+_PRODUCTION_SETTINGS = {
+    "env": "production",
+    "database_url": "postgresql+psycopg://edushield:password@db.example/edushield",
+    "jwt_secret": "production-jwt-secret",
+    "tokenization_key": "production-tokenization-key",
+    "provider_webhook_secret": "production-webhook-secret",
+    "data_encryption_key": "not-used-during-settings-validation",
+}
+
+
+def test_demo_mode_defaults_to_disabled_without_environment_override(monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    monkeypatch.delenv("DEMO_MODE", raising=False)
+    assert Settings(_env_file=None).demo_mode is False
+
+
+def test_demo_mode_can_be_explicitly_enabled_for_development() -> None:
+    assert Settings(_env_file=None, env="development", demo_mode=True).demo_mode is True
+
+
+def test_production_rejects_demo_mode() -> None:
+    with pytest.raises(ValidationError, match="DEMO_MODE must be false in production"):
+        Settings(_env_file=None, demo_mode=True, **_PRODUCTION_SETTINGS)
+
+
+def test_production_configuration_is_valid_when_demo_mode_is_disabled() -> None:
+    settings = Settings(_env_file=None, demo_mode=False, **_PRODUCTION_SETTINGS)
+    assert settings.env == "production" and settings.demo_mode is False
 
 
 def test_login_sets_hardened_session_cookie_and_returns_profile(engine) -> None:  # type: ignore[no-untyped-def]
@@ -120,7 +150,11 @@ def test_demo_login_uses_a_restricted_synthetic_session(engine, monkeypatch) -> 
         assert "disbursements:hold" not in body["permissions"] and body["is_platform_admin"] is False
         assert "httponly" in res.headers["set-cookie"].lower()
         monkeypatch.setattr(get_settings(), "demo_mode", False)
-        assert c.post("/api/v1/auth/demo-login").status_code == 401
+        disabled = c.post("/api/v1/auth/demo-login")
+        assert disabled.status_code == 401
+        assert disabled.json()["error"]["message"] == "Invalid email or password."
+        # Disabling demo mode also invalidates an already-issued demo session.
+        assert c.get("/api/v1/auth/me").status_code == 401
 
 
 def test_login_payload_is_validated(engine) -> None:  # type: ignore[no-untyped-def]

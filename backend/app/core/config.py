@@ -19,7 +19,9 @@ class Settings(BaseSettings):
     app_name: str = "EduShield AI"
     app_version: str = "0.1.0"
     env: Literal["development", "test", "production"] = "development"
-    demo_mode: bool = True
+    # Demo authentication is opt-in. Shared and production deployments must enable it
+    # explicitly for an isolated synthetic-data demonstration.
+    demo_mode: bool = False
 
     database_url: str = "sqlite:///./var/edushield.db"
     celery_broker_url: str | None = None
@@ -49,6 +51,8 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def _require_real_secrets_in_production(self) -> Settings:
         if self.env == "production":
+            if self.demo_mode:
+                raise ValueError("DEMO_MODE must be false in production")
             if self.jwt_secret.get_secret_value() == _DEV_JWT_SECRET:
                 raise ValueError("JWT_SECRET must be set to a unique value in production")
             if self.tokenization_key.get_secret_value() == _DEV_TOKENIZATION_KEY:

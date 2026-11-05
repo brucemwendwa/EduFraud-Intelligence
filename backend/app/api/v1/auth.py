@@ -136,7 +136,7 @@ def login(body: LoginRequest, request: Request, response: Response, db: DB) -> M
 
 @router.post("/demo-login", response_model=Me, summary="Start the restricted synthetic demo session")
 def demo_login(request: Request, response: Response, db: DB) -> Me:
-    """Explicit demo-only session; production rejects DEMO_MODE at startup."""
+    """Explicit development-only synthetic demo session."""
     settings = get_settings()
     if not settings.demo_mode:
         raise UnauthorizedError(_INVALID)

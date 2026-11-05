@@ -1,5 +1,6 @@
 /** Permission keys — must stay in sync with backend `app/core/permissions.py`. */
 export const P = {
+  studentPortalRead: 'student_portal:read',
   dashboardRead: 'dashboard:read',
   applicationsRead: 'applications:read',
   applicationsReview: 'applications:review',

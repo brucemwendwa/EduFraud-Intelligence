@@ -188,7 +188,7 @@ cp .env.example backend/.env
 | Variable | Default | Purpose |
 |---|---|---|
 | `ENV` | `development` | `development`, `test` or `production`. Production refuses to start with development secrets or SQLite. |
-| `DEMO_MODE` | `true` | Enables demo-account quick login on the sign-in page. Set to `false` outside demonstrations. |
+| `DEMO_MODE` | `false` | Enables demo-account quick login only when explicitly set to `true` for an isolated synthetic-data demonstration. Production refuses to start if it is enabled. |
 | `DATABASE_URL` | `sqlite:///./var/edushield.db` | SQLAlchemy URL. PostgreSQL example: `postgresql+psycopg://user:pass@localhost:5432/edushield` |
 | `CELERY_BROKER_URL` | empty | Leave empty to run detection jobs inline; set a Redis URL to use Celery. |
 | `JWT_SECRET` | development placeholder | Signs session tokens. **Must** be changed in production. |
