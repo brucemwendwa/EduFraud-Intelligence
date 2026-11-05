@@ -104,9 +104,10 @@ def client(engine: Engine) -> Iterator[TestClient]:
 
 @pytest.fixture(autouse=True)
 def _reset_rate_limits() -> None:
-    from app.core.ratelimit import login_limiter
+    from app.core.ratelimit import activation_limiter, login_limiter
 
     login_limiter.reset()
+    activation_limiter.reset()
 
 
 @pytest.fixture

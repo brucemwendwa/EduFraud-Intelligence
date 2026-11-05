@@ -29,6 +29,10 @@ _PRODUCTION_SETTINGS = {
     "tokenization_key": "production-tokenization-key",
     "provider_webhook_secret": "production-webhook-secret",
     "data_encryption_key": "not-used-during-settings-validation",
+    "email_provider": "smtp",
+    "smtp_host": "smtp.example",
+    "smtp_username": "edushield-test",
+    "smtp_password": "not-a-real-password",
 }
 
 
@@ -49,6 +53,12 @@ def test_production_rejects_demo_mode() -> None:
 def test_production_configuration_is_valid_when_demo_mode_is_disabled() -> None:
     settings = Settings(_env_file=None, demo_mode=False, **_PRODUCTION_SETTINGS)
     assert settings.env == "production" and settings.demo_mode is False
+
+
+def test_production_rejects_unconfigured_student_invitation_delivery() -> None:
+    config = {**_PRODUCTION_SETTINGS, "email_provider": "development", "smtp_host": None}
+    with pytest.raises(ValidationError, match="SMTP email delivery"):
+        Settings(_env_file=None, demo_mode=False, **config)
 
 
 def test_login_sets_hardened_session_cookie_and_returns_profile(engine) -> None:  # type: ignore[no-untyped-def]

@@ -66,7 +66,7 @@ export interface paths {
         put?: never;
         /**
          * Start the restricted synthetic demo session
-         * @description Explicit demo-only session; production rejects DEMO_MODE at startup.
+         * @description Explicit development-only synthetic demo session.
          */
         post: operations["demo_login_api_v1_auth_demo_login_post"];
         delete?: never;
@@ -347,6 +347,75 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/students/{student_id}/invitation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Invite an existing student to activate their portal account */
+        post: operations["create_invitation_api_v1_students__student_id__invitation_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/student-invitations/{invitation_id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke an unused student invitation */
+        post: operations["revoke_invitation_api_v1_student_invitations__invitation_id__revoke_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/student-activation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Activate an invited student account */
+        post: operations["activate_student_api_v1_student_activation_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/student-profile/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Signed-in student's permitted profile */
+        get: operations["get_profile_api_v1_student_profile_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update permitted student profile fields */
+        patch: operations["update_profile_api_v1_student_profile_me_patch"];
         trace?: never;
     };
     "/api/v1/disbursements": {
@@ -4082,6 +4151,25 @@ export interface components {
             /** Detail */
             detail: string;
         };
+        /** StudentActivationOut */
+        StudentActivationOut: {
+            /** Email */
+            email: string;
+            /** Full Name */
+            full_name: string;
+            /**
+             * Activated
+             * @default true
+             */
+            activated: boolean;
+        };
+        /** StudentActivationRequest */
+        StudentActivationRequest: {
+            /** Token */
+            token: string;
+            /** Password */
+            password: string;
+        };
         /** StudentDetail */
         StudentDetail: {
             /**
@@ -4104,6 +4192,45 @@ export interface components {
             /** Identity Tokens */
             identity_tokens: components["schemas"]["IdentityTokenOut"][];
         };
+        /** StudentInvitationCreate */
+        StudentInvitationCreate: {
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+        };
+        /** StudentInvitationOut */
+        StudentInvitationOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Student Id
+             * Format: uuid
+             */
+            student_id: string;
+            /** Email */
+            email: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Used At */
+            used_at: string | null;
+            /** Revoked At */
+            revoked_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Activation Url */
+            activation_url?: string | null;
+        };
         /** StudentPortalApplication */
         StudentPortalApplication: {
             /** Reference */
@@ -4123,6 +4250,34 @@ export interface components {
             student_ref: string;
             /** Applications */
             applications: components["schemas"]["StudentPortalApplication"][];
+        };
+        /** StudentProfileOut */
+        StudentProfileOut: {
+            /** Email */
+            email: string;
+            /** Full Name */
+            full_name: string;
+            /** Student Ref */
+            student_ref: string;
+            organization: components["schemas"]["OrgRef"];
+            /** State Of Residence */
+            state_of_residence: string;
+            /** Biometric Consent */
+            biometric_consent: boolean;
+            /** Biometric Consent At */
+            biometric_consent_at: string | null;
+            /**
+             * Account Status
+             * @enum {string}
+             */
+            account_status: "active" | "inactive";
+        };
+        /** StudentProfileUpdate */
+        StudentProfileUpdate: {
+            /** State Of Residence */
+            state_of_residence?: string | null;
+            /** Biometric Consent */
+            biometric_consent?: boolean | null;
         };
         /** StudentRef */
         StudentRef: {
@@ -5540,6 +5695,167 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StudentPortalOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_invitation_api_v1_students__student_id__invitation_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StudentInvitationCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentInvitationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_invitation_api_v1_student_invitations__invitation_id__revoke_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invitation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentInvitationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    activate_student_api_v1_student_activation_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StudentActivationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentActivationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_profile_api_v1_student_profile_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentProfileOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_profile_api_v1_student_profile_me_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StudentProfileUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentProfileOut"];
                 };
             };
             /** @description Validation Error */

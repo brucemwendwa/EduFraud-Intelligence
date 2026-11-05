@@ -46,3 +46,19 @@ class StudentIdentityToken(UUIDPrimaryKey, TenantScoped, Base):
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
 
     student: Mapped[Student] = relationship(back_populates="identity_tokens")
+
+
+class StudentInvitation(UUIDPrimaryKey, Timestamps, TenantScoped, Synthetic, Base):
+    """Single-use invitation to activate the portal account for one existing student."""
+
+    __tablename__ = "student_invitations"
+    __table_args__ = (Index("ix_student_invitations_token_hash", "token_hash", unique=True),)
+
+    student_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("students.id", ondelete="RESTRICT"), index=True)
+    email: Mapped[str] = mapped_column(String(254))
+    token_hash: Mapped[str] = mapped_column(String(64))
+    expires_at: Mapped[datetime]
+    used_at: Mapped[datetime | None]
+    revoked_at: Mapped[datetime | None]
+    invited_by_user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+    activated_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))

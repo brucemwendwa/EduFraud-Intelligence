@@ -11,6 +11,7 @@ from enum import StrEnum
 
 class P(StrEnum):
     STUDENT_PORTAL_READ = "student_portal:read"
+    STUDENT_PORTAL_UPDATE = "student_portal:update"
     DASHBOARD_READ = "dashboard:read"
     APPLICATIONS_READ = "applications:read"
     APPLICATIONS_REVIEW = "applications:review"
@@ -46,6 +47,7 @@ class P(StrEnum):
 
 PERMISSION_DESCRIPTIONS: dict[P, tuple[str, str]] = {
     P.STUDENT_PORTAL_READ: ("student_portal", "View the signed-in student's own synthetic aid information"),
+    P.STUDENT_PORTAL_UPDATE: ("student_portal", "Update the signed-in student's permitted portal profile fields"),
     P.DASHBOARD_READ: ("overview", "View the fraud intelligence dashboard"),
     P.APPLICATIONS_READ: ("applications", "View financial aid applications and risk assessments"),
     P.APPLICATIONS_REVIEW: ("applications", "Record a review decision on an application"),
@@ -109,7 +111,7 @@ ROLES: tuple[RoleDef, ...] = (
         key="student",
         name="Student",
         description="Views only their own synthetic aid record in the student portal.",
-        permissions=frozenset({P.STUDENT_PORTAL_READ}),
+        permissions=frozenset({P.STUDENT_PORTAL_READ, P.STUDENT_PORTAL_UPDATE}),
     ),
     RoleDef(
         key="demo_presenter",

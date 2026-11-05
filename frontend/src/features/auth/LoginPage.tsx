@@ -26,7 +26,7 @@ export function LoginPage() {
     staleTime: Infinity,
   });
 
-  if (user) return <Navigate to={from} replace />;
+  if (user) return <Navigate to={user.role.key === 'student' ? '/student' : from} replace />;
 
   const signIn = async (mail: string, pass: string) => {
     setError(null);

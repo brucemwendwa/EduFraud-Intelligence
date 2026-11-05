@@ -36,3 +36,4 @@ class RateLimiter:
 
 
 login_limiter = RateLimiter(limit=20, window_seconds=60)
+activation_limiter = RateLimiter(limit=10, window_seconds=60)

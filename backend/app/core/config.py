@@ -42,8 +42,26 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173"
     login_max_attempts: int = 5
     lockout_minutes: int = 15
+    student_invitation_ttl_hours: int = Field(default=72, ge=1, le=24 * 14)
+    student_activation_base_url: str = "http://localhost:5173/activate"
 
-    @field_validator("celery_broker_url", "data_encryption_key", "account_risk_weights", mode="before")
+    # SMTP is an integration boundary; development deliberately never sends real mail.
+    email_provider: Literal["development", "smtp"] = "development"
+    email_from: str = "no-reply@edushield.local"
+    smtp_host: str | None = None
+    smtp_port: int = Field(default=587, ge=1, le=65535)
+    smtp_username: str | None = None
+    smtp_password: SecretStr | None = None
+
+    @field_validator(
+        "celery_broker_url",
+        "data_encryption_key",
+        "account_risk_weights",
+        "smtp_host",
+        "smtp_username",
+        "smtp_password",
+        mode="before",
+    )
     @classmethod
     def _blank_to_none(cls, v: object) -> object:
         return None if isinstance(v, str) and not v.strip() else v
@@ -63,6 +81,8 @@ class Settings(BaseSettings):
                 raise ValueError("DATA_ENCRYPTION_KEY is required in production")
             if self.database_url.startswith("sqlite"):
                 raise ValueError("Production deployments must use PostgreSQL")
+            if self.email_provider != "smtp" or not self.smtp_host or not self.smtp_username or not self.smtp_password:
+                raise ValueError("Production requires configured SMTP email delivery for student invitations")
         return self
 
     @property

@@ -196,6 +196,9 @@ cp .env.example backend/.env
 | `DATA_ENCRYPTION_KEY` | empty (derived development key) | Fernet key for revealable PII. **Required** in production. |
 | `CORS_ORIGINS` | `http://localhost:5173` | Comma-separated allowed origins. |
 | `ACCESS_TOKEN_TTL_MINUTES` | `60` | Session length (5–1440). |
+| `STUDENT_INVITATION_TTL_HOURS` | `72` | Lifetime of one-time student account activation links. |
+| `STUDENT_ACTIVATION_BASE_URL` | local `/activate` page | Public frontend URL used in activation links. |
+| `EMAIL_PROVIDER` | `development` | `development` never sends mail and returns the URL only to the authorized inviter; production requires SMTP. |
 
 Generate real secrets with:
 
@@ -203,6 +206,15 @@ Generate real secrets with:
 python -c "import secrets; print(secrets.token_urlsafe(48))"                                  # JWT_SECRET, TOKENIZATION_KEY
 python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"     # DATA_ENCRYPTION_KEY
 ```
+
+### Student account activation
+
+Students do not self-register or choose an institution. An institution administrator invites an existing student
+record through the protected API, which creates a hashed, one-time link tied to that record and institution. In
+development, the authorized invitation response includes the link for local testing; it is never returned in
+production. Production requires `EMAIL_PROVIDER=smtp` and `SMTP_HOST`, `SMTP_USERNAME`, `SMTP_PASSWORD`, and
+`EMAIL_FROM` to deliver activation emails. The activation link proves access to the invited email address; no
+activation token is stored or logged in plaintext.
 
 ### 3. Create the database and load demo data
 

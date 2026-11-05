@@ -103,7 +103,7 @@
           "auth"
         ],
         "summary": "Start the restricted synthetic demo session",
-        "description": "Explicit demo-only session; production rejects DEMO_MODE at startup.",
+        "description": "Explicit development-only synthetic demo session.",
         "operationId": "demo_login_api_v1_auth_demo_login_post",
         "responses": {
           "200": {
@@ -1007,6 +1007,213 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/StudentPortalOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/students/{student_id}/invitation": {
+      "post": {
+        "tags": [
+          "student onboarding"
+        ],
+        "summary": "Invite an existing student to activate their portal account",
+        "operationId": "create_invitation_api_v1_students__student_id__invitation_post",
+        "parameters": [
+          {
+            "name": "student_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Student Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentInvitationCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentInvitationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student-invitations/{invitation_id}/revoke": {
+      "post": {
+        "tags": [
+          "student onboarding"
+        ],
+        "summary": "Revoke an unused student invitation",
+        "operationId": "revoke_invitation_api_v1_student_invitations__invitation_id__revoke_post",
+        "parameters": [
+          {
+            "name": "invitation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Invitation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentInvitationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student-activation": {
+      "post": {
+        "tags": [
+          "student onboarding"
+        ],
+        "summary": "Activate an invited student account",
+        "operationId": "activate_student_api_v1_student_activation_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentActivationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentActivationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student-profile/me": {
+      "get": {
+        "tags": [
+          "student onboarding"
+        ],
+        "summary": "Signed-in student's permitted profile",
+        "operationId": "get_profile_api_v1_student_profile_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentProfileOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "student onboarding"
+        ],
+        "summary": "Update permitted student profile fields",
+        "operationId": "update_profile_api_v1_student_profile_me_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentProfileUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentProfileOut"
                 }
               }
             }
@@ -13013,6 +13220,51 @@
         ],
         "title": "StageOut"
       },
+      "StudentActivationOut": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "activated": {
+            "type": "boolean",
+            "title": "Activated",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "full_name"
+        ],
+        "title": "StudentActivationOut"
+      },
+      "StudentActivationRequest": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 32,
+            "title": "Token"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 12,
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token",
+          "password"
+        ],
+        "title": "StudentActivationRequest"
+      },
       "StudentDetail": {
         "properties": {
           "id": {
@@ -13072,6 +13324,94 @@
           "identity_tokens"
         ],
         "title": "StudentDetail"
+      },
+      "StudentInvitationCreate": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "StudentInvitationCreate"
+      },
+      "StudentInvitationOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "student_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Student Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          },
+          "used_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Used At"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "activation_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Activation Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "student_id",
+          "email",
+          "expires_at",
+          "used_at",
+          "revoked_at",
+          "created_at"
+        ],
+        "title": "StudentInvitationOut"
       },
       "StudentPortalApplication": {
         "properties": {
@@ -13133,6 +13473,96 @@
           "applications"
         ],
         "title": "StudentPortalOut"
+      },
+      "StudentProfileOut": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "student_ref": {
+            "type": "string",
+            "title": "Student Ref"
+          },
+          "organization": {
+            "$ref": "#/components/schemas/OrgRef"
+          },
+          "state_of_residence": {
+            "type": "string",
+            "title": "State Of Residence"
+          },
+          "biometric_consent": {
+            "type": "boolean",
+            "title": "Biometric Consent"
+          },
+          "biometric_consent_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Biometric Consent At"
+          },
+          "account_status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive"
+            ],
+            "title": "Account Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "full_name",
+          "student_ref",
+          "organization",
+          "state_of_residence",
+          "biometric_consent",
+          "biometric_consent_at",
+          "account_status"
+        ],
+        "title": "StudentProfileOut"
+      },
+      "StudentProfileUpdate": {
+        "properties": {
+          "state_of_residence": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2,
+                "minLength": 2,
+                "pattern": "^[A-Z]{2}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State Of Residence"
+          },
+          "biometric_consent": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Biometric Consent"
+          }
+        },
+        "type": "object",
+        "title": "StudentProfileUpdate"
       },
       "StudentRef": {
         "properties": {

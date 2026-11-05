@@ -7,7 +7,7 @@ from app.models.case import CaseDecision, CaseEvidence, CaseNote, InvestigationC
 from app.models.identity import Organization, Permission, Role, User, role_permissions
 from app.models.notification import Notification
 from app.models.risk import Alert, AlertNote, DetectionRun, FraudSignal, RiskAssessment
-from app.models.student import Student, StudentIdentityToken
+from app.models.student import Student, StudentIdentityToken, StudentInvitation
 from app.models.verification import IdentityVerification, VerificationRequest, VerificationRequestEvent
 
 __all__ = [
@@ -39,6 +39,7 @@ __all__ = [
     "Role",
     "Student",
     "StudentIdentityToken",
+    "StudentInvitation",
     "User",
     "role_permissions",
 ]

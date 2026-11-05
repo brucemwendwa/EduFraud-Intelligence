@@ -17,6 +17,11 @@ export interface Page<T> {
 export type OrganizationRef = S['OrgRef'];
 export type Me = S['Me'];
 export type DemoAccount = S['DemoAccount'];
+export type StudentInvitation = S['StudentInvitationOut'];
+export type StudentInvitationCreate = S['StudentInvitationCreate'];
+export type StudentActivationRequest = S['StudentActivationRequest'];
+export type StudentProfile = S['StudentProfileOut'];
+export type StudentProfileUpdate = S['StudentProfileUpdate'];
 export type Organization = S['OrganizationStats'];
 export type UserRow = S['UserOut'];
 export type UserCreate = S['UserCreate'];
