@@ -33,6 +33,9 @@ _PRODUCTION_SETTINGS = {
     "smtp_host": "smtp.example",
     "smtp_username": "edushield-test",
     "smtp_password": "not-a-real-password",
+    "s3_bucket_name": "edushield-private-test",
+    "s3_access_key_id": "test-access-key",
+    "s3_secret_access_key": "not-a-real-storage-secret",
 }
 
 
@@ -58,6 +61,12 @@ def test_production_configuration_is_valid_when_demo_mode_is_disabled() -> None:
 def test_production_rejects_unconfigured_student_invitation_delivery() -> None:
     config = {**_PRODUCTION_SETTINGS, "email_provider": "development", "smtp_host": None}
     with pytest.raises(ValidationError, match="SMTP email delivery"):
+        Settings(_env_file=None, demo_mode=False, **config)
+
+
+def test_production_rejects_unconfigured_document_storage() -> None:
+    config = {**_PRODUCTION_SETTINGS, "s3_bucket_name": None}
+    with pytest.raises(ValidationError, match="S3 document storage"):
         Settings(_env_file=None, demo_mode=False, **config)
 
 

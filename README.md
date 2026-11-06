@@ -216,6 +216,18 @@ production. Production requires `EMAIL_PROVIDER=smtp` and `SMTP_HOST`, `SMTP_USE
 `EMAIL_FROM` to deliver activation emails. The activation link proves access to the invited email address; no
 activation token is stored or logged in plaintext.
 
+### Supporting-document storage
+
+Student evidence uses a private S3-compatible bucket. Configure `S3_BUCKET_NAME`, `S3_ACCESS_KEY_ID`,
+`S3_SECRET_ACCESS_KEY`, `S3_REGION`, and, for MinIO or another compatible provider, `S3_ENDPOINT_URL`.
+EduShield stores only metadata and an opaque server-generated key in the database; downloads are authorized
+per request and use short-lived attachment-only URLs. A malware scanner is not bundled: with the default
+`DOCUMENT_SCANNER_PROVIDER=unconfigured`, uploads remain quarantined and cannot be downloaded or reviewed.
+Configure a real scanner adapter before enabling uploads in a shared environment. With `CELERY_BROKER_URL`,
+production must run both a Celery worker and Celery Beat: Beat dispatches `document.reconcile` every minute to
+recover expired worker leases and enqueue durable retries. The inline development runner is not durable and is
+not suitable for production evidence processing.
+
 ### 3. Create the database and load demo data
 
 ```bash
