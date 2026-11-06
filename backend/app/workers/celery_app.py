@@ -16,4 +16,7 @@ celery_app.conf.update(
     worker_prefetch_multiplier=1,
     task_ignore_result=True,
     broker_connection_retry_on_startup=True,
+    beat_schedule={
+        "reconcile-document-scans": {"task": "document.reconcile", "schedule": 60.0},
+    },
 )

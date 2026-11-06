@@ -53,6 +53,21 @@ class Settings(BaseSettings):
     smtp_username: str | None = None
     smtp_password: SecretStr | None = None
 
+    # Private S3-compatible evidence storage. There is deliberately no filesystem fallback.
+    s3_endpoint_url: str | None = None
+    s3_region: str = "us-east-1"
+    s3_bucket_name: str | None = None
+    s3_access_key_id: SecretStr | None = None
+    s3_secret_access_key: SecretStr | None = None
+    s3_use_tls: bool = True
+    s3_addressing_style: Literal["auto", "path", "virtual"] = "auto"
+    s3_presigned_url_ttl_seconds: int = Field(default=300, ge=30, le=900)
+    document_max_upload_bytes: int = Field(default=10 * 1024 * 1024, ge=1, le=50 * 1024 * 1024)
+    document_scanner_provider: Literal["unconfigured"] = "unconfigured"
+    document_scan_max_attempts: int = Field(default=3, ge=1, le=10)
+    document_scan_lease_seconds: int = Field(default=15 * 60, ge=60, le=24 * 60 * 60)
+    document_scan_retry_base_seconds: int = Field(default=60, ge=10, le=60 * 60)
+
     @field_validator(
         "celery_broker_url",
         "data_encryption_key",
@@ -60,6 +75,10 @@ class Settings(BaseSettings):
         "smtp_host",
         "smtp_username",
         "smtp_password",
+        "s3_endpoint_url",
+        "s3_bucket_name",
+        "s3_access_key_id",
+        "s3_secret_access_key",
         mode="before",
     )
     @classmethod
@@ -83,6 +102,8 @@ class Settings(BaseSettings):
                 raise ValueError("Production deployments must use PostgreSQL")
             if self.email_provider != "smtp" or not self.smtp_host or not self.smtp_username or not self.smtp_password:
                 raise ValueError("Production requires configured SMTP email delivery for student invitations")
+            if not self.s3_bucket_name or not self.s3_access_key_id or not self.s3_secret_access_key:
+                raise ValueError("Production requires private S3 document storage configuration")
         return self
 
     @property

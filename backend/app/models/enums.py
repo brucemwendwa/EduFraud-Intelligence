@@ -22,6 +22,22 @@ class ApplicationStatus(StrEnum):
     WITHDRAWN = "withdrawn"
 
 
+class DocumentStatus(StrEnum):
+    PENDING_SCAN = "pending_scan"
+    SCANNING = "scanning"
+    AVAILABLE = "available"
+    REJECTED = "rejected"
+    SUPERSEDED = "superseded"
+    FAILED = "failed"
+
+
+class DocumentReviewStatus(StrEnum):
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+    REPLACEMENT_REQUESTED = "replacement_requested"
+
+
 class VerificationStatus(StrEnum):
     NOT_REQUIRED = "not_required"
     PENDING = "pending"

@@ -13,6 +13,7 @@ from app.api.v1 import (
     dashboard,
     detection,
     disbursements,
+    documents,
     network,
     organizations,
     provider_events,
@@ -38,6 +39,7 @@ api_router.include_router(students.router)
 api_router.include_router(student_portal.router)
 api_router.include_router(student_onboarding.router)
 api_router.include_router(student_applications.router)
+api_router.include_router(documents.router)
 api_router.include_router(disbursements.router)
 api_router.include_router(verifications.router)
 api_router.include_router(network.router)
