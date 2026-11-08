@@ -165,7 +165,8 @@ def _error_monitoring(settings: Settings) -> ServiceHealth:
     name = "Error monitoring"
     if settings.sentry_dsn:
         return ServiceHealth(key="monitoring", name=name, status="ok", detail="Sentry configured; events are scrubbed.")
-    return ServiceHealth(key="monitoring", name=name, status="not_configured", detail="Errors go to application logs only.")
+    detail = "Errors go to application logs only."
+    return ServiceHealth(key="monitoring", name=name, status="not_configured", detail=detail)
 
 
 def _email(settings: Settings) -> ServiceHealth:

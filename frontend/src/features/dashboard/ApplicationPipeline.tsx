@@ -38,7 +38,7 @@ export function ApplicationPipeline() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
         {tiles.map((tile) => <StatCard key={tile.label} {...tile} loading={isLoading} />)}
       </div>
-      <div className="mt-6 grid gap-6 xl:grid-cols-5">
+      <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-5">
         <OpenRisk data={data} loading={isLoading} className="xl:col-span-2" />
         <RecentApplications items={data?.recent_activity} loading={isLoading} className="xl:col-span-3" />
       </div>
@@ -87,7 +87,7 @@ function RecentApplications({ items, loading, className }: { items?: Application
         <ul className="divide-y divide-slate-100 border-t border-slate-100">
           {items.slice(0, 8).map((item) => (
             <li key={`${item.application_id}-${item.occurred_at}`}>
-              <Link to={`/app/applications/${item.application_id}`} className="flex items-center gap-3 px-5 py-2.5 transition-colors hover:bg-slate-50">
+              <Link to={`/app/applications/${item.application_id}`} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-2.5 transition-colors hover:bg-slate-50">
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-medium text-slate-900">{item.reference}</span>
                   <span className="block truncate text-xs text-slate-500">

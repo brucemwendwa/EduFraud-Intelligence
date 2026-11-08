@@ -77,7 +77,7 @@ export default function DashboardPage() {
           <h2 className="mb-3 text-sm font-semibold text-slate-900">Accounts and security</h2>
           <Metrics data={data} loading={isLoading} />
           <Charts data={data} loading={isLoading} />
-          <div className="mt-6 grid gap-6 xl:grid-cols-5">
+          <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-5">
             <RecentActivity items={data?.recent_activity} loading={isLoading} className="xl:col-span-3" />
             <div className="xl:col-span-2"><ScenarioLab /></div>
           </div>
@@ -122,7 +122,7 @@ function Charts({ data, loading }: { data?: DashboardOverview; loading: boolean 
   ];
 
   return (
-    <div className="mt-6 grid gap-6 lg:grid-cols-2">
+    <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
       <ChartCard
         title="Financial aid allocation"
         description="Weekly totals credited to ID-linked accounts, scheduled, or on hold"

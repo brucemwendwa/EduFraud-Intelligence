@@ -23,6 +23,8 @@
   --color-flag-red: #b22234;
   --color-brand-blue: #2563eb;
   --color-canvas: #f5f7fb;
+  /* Darker than Tailwind's default so small muted text keeps 4.5:1 on the canvas and tinted panels. */
+  --color-slate-500: #566579;
 
   --color-risk-low: #16a34a;
   --color-risk-medium: #d97706;
