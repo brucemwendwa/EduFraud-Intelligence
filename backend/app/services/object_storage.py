@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -13,6 +14,7 @@ class ObjectStorage(Protocol):
     def put(self, *, key: str, body: bytes, content_type: str, checksum: str) -> StoredObject: ...
     def delete(self, *, key: str, version_id: str | None = None) -> None: ...
     def inspect(self, *, key: str, version_id: str | None = None) -> StoredObject | None: ...
+    def get(self, *, key: str, version_id: str | None = None) -> bytes: ...
     def download_url(self, *, key: str, filename: str, content_type: str) -> str: ...
 
 
@@ -22,6 +24,18 @@ class StoredObject:
 
     version_id: str | None
     checksum: str | None
+
+
+def attachment_disposition(filename: str) -> str:
+    """Build a Content-Disposition value that a user-supplied file name cannot break out of."""
+    safe = re.sub(r"[^A-Za-z0-9._ -]", "_", filename).strip() or "document"
+    return f'attachment; filename="{safe}"'
+
+
+@dataclass(frozen=True)
+class StorageHealth:
+    reachable: bool
+    versioning: str | None = None
 
 
 @dataclass(frozen=True)
@@ -41,7 +55,12 @@ class S3ObjectStorage:
             aws_access_key_id=self.settings.s3_access_key_id.get_secret_value(),
             aws_secret_access_key=self.settings.s3_secret_access_key.get_secret_value(),
             use_ssl=self.settings.s3_use_tls,
-            config=Config(s3={"addressing_style": self.settings.s3_addressing_style}),
+            config=Config(
+                s3={"addressing_style": self.settings.s3_addressing_style},
+                connect_timeout=5,
+                read_timeout=30,
+                retries={"max_attempts": 2},
+            ),
         )
 
     def put(self, *, key: str, body: bytes, content_type: str, checksum: str) -> StoredObject:
@@ -71,6 +90,25 @@ class S3ObjectStorage:
             return None
         return StoredObject(response.get("VersionId"), response.get("Metadata", {}).get("sha256"))
 
+    def get(self, *, key: str, version_id: str | None = None) -> bytes:
+        params = {"Bucket": self.settings.s3_bucket_name, "Key": key}
+        if version_id:
+            params["VersionId"] = version_id
+        return self._client().get_object(**params)["Body"].read()
+
+    def health(self) -> StorageHealth:
+        """Probe the configured bucket. Provider errors are reduced to a reachable/unreachable answer."""
+        client = self._client()
+        try:
+            client.head_bucket(Bucket=self.settings.s3_bucket_name)
+        except Exception:  # noqa: BLE001 - provider details must not leak through the API
+            return StorageHealth(reachable=False)
+        try:
+            versioning = client.get_bucket_versioning(Bucket=self.settings.s3_bucket_name).get("Status", "Disabled")
+        except Exception:  # noqa: BLE001 - some providers or restricted keys cannot report this
+            versioning = None
+        return StorageHealth(reachable=True, versioning=versioning)
+
     def download_url(self, *, key: str, filename: str, content_type: str) -> str:
         return self._client().generate_presigned_url(
             "get_object",
@@ -78,7 +116,7 @@ class S3ObjectStorage:
                 "Bucket": self.settings.s3_bucket_name,
                 "Key": key,
                 "ResponseContentType": content_type,
-                "ResponseContentDisposition": f'attachment; filename="{filename}"',
+                "ResponseContentDisposition": attachment_disposition(filename),
             },
             ExpiresIn=self.settings.s3_presigned_url_ttl_seconds,
         )

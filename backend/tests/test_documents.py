@@ -56,6 +56,10 @@ class MemoryStorage:
             return None
         return StoredObject(item[1], item[2])
 
+    def get(self, *, key: str, version_id: str | None = None) -> bytes:
+        del version_id
+        return self.objects[key][0]
+
     def download_url(self, *, key: str, filename: str, content_type: str) -> str:
         assert key in self.objects
         return f"https://storage.invalid/{key}?filename={filename}&type={content_type}"

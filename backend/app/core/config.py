@@ -63,7 +63,10 @@ class Settings(BaseSettings):
     s3_addressing_style: Literal["auto", "path", "virtual"] = "auto"
     s3_presigned_url_ttl_seconds: int = Field(default=300, ge=30, le=900)
     document_max_upload_bytes: int = Field(default=10 * 1024 * 1024, ge=1, le=50 * 1024 * 1024)
-    document_scanner_provider: Literal["unconfigured"] = "unconfigured"
+    document_scanner_provider: Literal["unconfigured", "clamav"] = "unconfigured"
+    clamav_host: str | None = None
+    clamav_port: int = Field(default=3310, ge=1, le=65535)
+    clamav_timeout_seconds: int = Field(default=60, ge=1, le=600)
     document_scan_max_attempts: int = Field(default=3, ge=1, le=10)
     document_scan_lease_seconds: int = Field(default=15 * 60, ge=60, le=24 * 60 * 60)
     document_scan_retry_base_seconds: int = Field(default=60, ge=10, le=60 * 60)
@@ -79,11 +82,18 @@ class Settings(BaseSettings):
         "s3_bucket_name",
         "s3_access_key_id",
         "s3_secret_access_key",
+        "clamav_host",
         mode="before",
     )
     @classmethod
     def _blank_to_none(cls, v: object) -> object:
         return None if isinstance(v, str) and not v.strip() else v
+
+    @model_validator(mode="after")
+    def _scanner_needs_a_host(self) -> Settings:
+        if self.document_scanner_provider == "clamav" and not self.clamav_host:
+            raise ValueError("CLAMAV_HOST is required when DOCUMENT_SCANNER_PROVIDER is clamav")
+        return self
 
     @model_validator(mode="after")
     def _require_real_secrets_in_production(self) -> Settings:
