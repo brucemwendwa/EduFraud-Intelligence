@@ -5,16 +5,25 @@ from __future__ import annotations
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.errors import register_error_handlers
 from app.core.logging import configure_logging
-from app.core.middleware import CSRFMiddleware, RequestContextMiddleware, SecurityHeadersMiddleware
+from app.core.middleware import (
+    CSRFMiddleware,
+    RequestContextMiddleware,
+    RequestSizeLimitMiddleware,
+    SecurityHeadersMiddleware,
+)
 from app.db.session import SessionLocal
 from app.services.rbac import sync_rbac
 
@@ -72,6 +81,21 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     yield
 
 
+def mount_web_client(app: FastAPI, directory: str) -> None:
+    """Serve the built web client from the API's origin, which the SameSite=Strict session cookie relies on."""
+    dist = Path(directory).resolve()
+    app.mount("/assets", StaticFiles(directory=dist / "assets"), name="assets")
+
+    @app.api_route("/{path:path}", methods=["GET", "HEAD"], include_in_schema=False)
+    def web_client(path: str) -> FileResponse:
+        if path == "api" or path.startswith("api/"):
+            raise StarletteHTTPException(status_code=404)
+        candidate = (dist / path).resolve()
+        if path and candidate.is_file() and candidate.is_relative_to(dist):
+            return FileResponse(candidate)
+        return FileResponse(dist / "index.html", headers={"Cache-Control": "no-cache"})
+
+
 def create_app() -> FastAPI:
     settings = get_settings()
     configure_logging("INFO" if settings.env != "test" else "WARNING")
@@ -81,14 +105,15 @@ def create_app() -> FastAPI:
         version=settings.app_version,
         description=DESCRIPTION,
         openapi_tags=TAGS,
-        docs_url="/api/docs",
+        docs_url=None if settings.is_production else "/api/docs",
         redoc_url=None,
-        openapi_url="/api/openapi.json",
+        openapi_url=None if settings.is_production else "/api/openapi.json",
         lifespan=lifespan,
     )
 
     # Starlette runs middleware in reverse order of registration: CORS is outermost.
     app.add_middleware(CSRFMiddleware)
+    app.add_middleware(RequestSizeLimitMiddleware)
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(RequestContextMiddleware)
     app.add_middleware(
@@ -111,6 +136,8 @@ def create_app() -> FastAPI:
         return {"status": "ready", "database": "ok", "jobs_backend": settings.jobs_backend}
 
     app.include_router(api_router, prefix="/api/v1")
+    if settings.frontend_dist:
+        mount_web_client(app, settings.frontend_dist)  # last, so its catch-all never shadows an API route
     return app
 
 

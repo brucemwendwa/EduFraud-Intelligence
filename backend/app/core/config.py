@@ -40,6 +40,8 @@ class Settings(BaseSettings):
     account_risk_weights: str | None = None
 
     cors_origins: str = "http://localhost:5173"
+    # Set to the built web client's directory to serve it from the API's own origin.
+    frontend_dist: str | None = None
     login_max_attempts: int = 5
     lockout_minutes: int = 15
     student_invitation_ttl_hours: int = Field(default=72, ge=1, le=24 * 14)
@@ -83,6 +85,7 @@ class Settings(BaseSettings):
         "s3_access_key_id",
         "s3_secret_access_key",
         "clamav_host",
+        "frontend_dist",
         mode="before",
     )
     @classmethod

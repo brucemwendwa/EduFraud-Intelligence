@@ -179,3 +179,29 @@ def test_now_is_timezone_aware() -> None:
 def test_unsafe_request_ids_are_replaced(client) -> None:  # type: ignore[no-untyped-def]
     assert client.get("/api/health", headers={"X-Request-ID": "trace-123"}).headers["X-Request-ID"] == "trace-123"
     assert client.get("/api/health", headers={"X-Request-ID": "x" * 200}).headers["X-Request-ID"] != "x" * 200
+
+
+def test_oversized_requests_are_refused_before_parsing(client) -> None:  # type: ignore[no-untyped-def]
+    response = client.post("/api/v1/auth/login", content=b"{}", headers={"Content-Length": str(1024**3)})
+    assert response.status_code == 413
+    assert response.json()["error"]["code"] == "payload_too_large"
+
+
+def test_web_client_is_served_without_shadowing_the_api(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from app.main import mount_web_client
+
+    (tmp_path / "assets").mkdir()
+    (tmp_path / "assets" / "app.js").write_text("console.log(1)")
+    (tmp_path / "index.html").write_text("<title>EduShield</title>")
+    (tmp_path.parent / "secret.txt").write_text("private")
+    app = FastAPI()
+    mount_web_client(app, str(tmp_path))
+    client = TestClient(app)
+
+    assert "EduShield" in client.get("/student/applications").text
+    assert client.get("/assets/app.js").status_code == 200
+    assert client.get("/api/v1/does-not-exist").status_code == 404
+    assert "private" not in client.get("/%2e%2e/secret.txt").text
