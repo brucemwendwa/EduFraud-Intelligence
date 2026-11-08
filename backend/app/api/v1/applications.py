@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request
 from sqlalchemy import func, or_, select
 
 from app.api.deps import DB, Principal, require, scoped
@@ -48,6 +48,8 @@ from app.services.application_lifecycle import (
     staff_application_or_404,
     staff_targets,
 )
+from app.services.application_notifications import queue_status_emails
+from app.workers.email_jobs import dispatch_emails
 
 router = APIRouter(prefix="/applications", tags=["applications"])
 
@@ -191,6 +193,7 @@ def review_application(
     application_id: uuid.UUID,
     body: ReviewUpdate,
     request: Request,
+    background: BackgroundTasks,
     db: DB,
     principal: Annotated[Principal, Depends(require(P.APPLICATIONS_REVIEW))],
 ) -> ApplicationRow:
@@ -205,8 +208,9 @@ def review_application(
         require_staff_transition(app.status, target)
     before = {"review_status": app.review_status, "status": app.status}
     app.review_status = body.review_status
+    emails: list[uuid.UUID] = []
     if target and target.value != app.status:
-        change_status(
+        history = change_status(
             db,
             app,
             to_status=target,
@@ -216,6 +220,7 @@ def review_application(
             note=body.note,
             student_message=body.student_message,
         )
+        emails = queue_status_emails(db, app, history)
     else:
         # A review with no status change still belongs on the staff timeline; students only see status changes.
         db.add(
@@ -248,6 +253,7 @@ def review_application(
         request=request,
     )
     db.commit()
+    dispatch_emails(emails, background)
     return records.application_rows(db, [app])[0]
 
 

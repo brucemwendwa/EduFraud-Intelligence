@@ -25,6 +25,7 @@ from app.models import (
     DetectionRun,
     DocumentObjectCleanup,
     DocumentScanJob,
+    EmailOutbox,
     FinancialAidApplication,
     RiskAssessment,
 )
@@ -70,8 +71,16 @@ class DocumentProcessing(Schema):
     awaiting_staff_review: int
 
 
+class EmailDelivery(Schema):
+    queued: int
+    retrying: int
+    sent_24h: int
+    failed: int
+    suppressed: int
+
+
 class JobFailure(Schema):
-    kind: Literal["document_scan", "document_cleanup", "detection_run"]
+    kind: Literal["document_scan", "document_cleanup", "detection_run", "email"]
     status: str
     error_code: str | None
     attempts: int | None
@@ -107,6 +116,7 @@ class OperationsOverview(Schema):
     risk: RiskActivity
     documents: DocumentProcessing
     jobs: JobSummary
+    email: EmailDelivery
     recent_audit: list[AuditEntry] | None
 
 
@@ -239,6 +249,17 @@ def overview(db: DB, principal: Annotated[Principal, Depends(require(P.OPERATION
         )
         for r in failed_runs[:_RECENT_LIMIT]
     ]
+    failures += [
+        JobFailure(
+            kind="email", status=m.status, error_code=m.error_code, attempts=m.attempts, occurred_at=m.updated_at
+        )
+        for m in db.scalars(
+            scoped(select(EmailOutbox), EmailOutbox, principal)
+            .where(EmailOutbox.status.in_(("failed", "retry")))
+            .order_by(EmailOutbox.updated_at.desc())
+            .limit(_RECENT_LIMIT)
+        )
+    ]
     failures.sort(key=lambda f: f.occurred_at, reverse=True)
 
     recent_audit = None
@@ -257,6 +278,15 @@ def overview(db: DB, principal: Annotated[Principal, Depends(require(P.OPERATION
             )
             for e in db.scalars(stmt)
         ]
+
+    email_states = _by(db, principal, EmailOutbox, EmailOutbox.status)
+    email = EmailDelivery(
+        queued=email_states["queued"],
+        retrying=email_states["retry"],
+        sent_24h=_count(db, principal, EmailOutbox, EmailOutbox.status == "sent", EmailOutbox.sent_at >= day),
+        failed=email_states["failed"],
+        suppressed=email_states["suppressed"],
+    )
 
     checks = service_health(db)
     return OperationsOverview(
@@ -277,5 +307,6 @@ def overview(db: DB, principal: Annotated[Principal, Depends(require(P.OPERATION
             stalled=stalled,
             recent_failures=failures[:_RECENT_LIMIT],
         ),
+        email=email,
         recent_audit=recent_audit,
     )

@@ -47,6 +47,8 @@ class Settings(BaseSettings):
     lockout_minutes: int = 15
     student_invitation_ttl_hours: int = Field(default=72, ge=1, le=24 * 14)
     student_activation_base_url: str = "http://localhost:5173/activate"
+    # Public address used in notification emails. Defaults to the host of the activation link.
+    public_url: str | None = None
 
     # SMTP is an integration boundary; development deliberately never sends real mail.
     email_provider: Literal["development", "smtp"] = "development"
@@ -87,6 +89,7 @@ class Settings(BaseSettings):
         "s3_secret_access_key",
         "clamav_host",
         "frontend_dist",
+        "public_url",
         mode="before",
     )
     @classmethod
@@ -124,6 +127,10 @@ class Settings(BaseSettings):
             if not self.s3_use_tls:
                 raise ValueError("Production requires TLS for document storage")
         return self
+
+    @property
+    def public_app_url(self) -> str:
+        return (self.public_url or self.student_activation_base_url.removesuffix("/activate")).rstrip("/")
 
     @property
     def cors_origin_list(self) -> list[str]:

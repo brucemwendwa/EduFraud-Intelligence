@@ -3682,6 +3682,19 @@ export interface components {
             /** Expires In Seconds */
             expires_in_seconds: number;
         };
+        /** EmailDelivery */
+        EmailDelivery: {
+            /** Queued */
+            queued: number;
+            /** Retrying */
+            retrying: number;
+            /** Sent 24H */
+            sent_24h: number;
+            /** Failed */
+            failed: number;
+            /** Suppressed */
+            suppressed: number;
+        };
         /** EnrollmentOut */
         EnrollmentOut: {
             /**
@@ -3822,7 +3835,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "document_scan" | "document_cleanup" | "detection_run";
+            kind: "document_scan" | "document_cleanup" | "detection_run" | "email";
             /** Status */
             status: string;
             /** Error Code */
@@ -4040,6 +4053,7 @@ export interface components {
             risk: components["schemas"]["RiskActivity"];
             documents: components["schemas"]["DocumentProcessing"];
             jobs: components["schemas"]["JobSummary"];
+            email: components["schemas"]["EmailDelivery"];
             /** Recent Audit */
             recent_audit: components["schemas"]["AuditEntry"][] | null;
         };

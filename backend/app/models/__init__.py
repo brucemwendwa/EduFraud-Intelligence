@@ -11,6 +11,7 @@ from app.models.aid import (
 from app.models.audit import AuditEvent
 from app.models.case import CaseDecision, CaseEvidence, CaseNote, InvestigationCase
 from app.models.document import ApplicationDocument, DocumentObjectCleanup, DocumentScanJob
+from app.models.email import EmailOutbox
 from app.models.identity import Organization, Permission, Role, User, role_permissions
 from app.models.notification import Notification
 from app.models.risk import Alert, AlertNote, DetectionRun, FraudSignal, RiskAssessment
@@ -42,6 +43,7 @@ __all__ = [
     "FraudSignal",
     "IdentityVerification",
     "InvestigationCase",
+    "EmailOutbox",
     "Notification",
     "Organization",
     "PaymentDestinationToken",

@@ -19,6 +19,7 @@ const data = {
   risk: { assessments_24h: 5, assessments_7d: 11, open_elevated: 2, open_unassessed: 1, last_run_status: 'completed', last_run_finished_at: null, failed_runs_7d: 0 },
   documents: { pending_scan: 4, scanning: 0, available: 2, rejected: 1, failed: 1, superseded: 0, awaiting_staff_review: 2 },
   jobs: { scan_queued: 0, scan_running: 0, scan_retrying: 4, scan_failed: 1, cleanup_failed: 0, stalled: 0, recent_failures: [{ kind: 'document_scan', status: 'failed', error_code: 'unavailable', attempts: 3, occurred_at: '2026-11-01T00:00:00Z' }] },
+  email: { queued: 0, retrying: 1, sent_24h: 4, failed: 2, suppressed: 0 },
   recent_audit: [{ sequence: 9, occurred_at: '2026-11-01T00:00:00Z', category: 'application', action: 'application.submit', outcome: 'success', actor_role: 'student' }],
 };
 
@@ -36,6 +37,7 @@ describe('OperationsPage', () => {
     renderWithProviders(<OperationsPage />);
     expect(screen.getByRole('link', { name: /Awaiting review\s*12/ })).toBeInTheDocument();
     expect(screen.getByText('unavailable')).toBeInTheDocument();
+    expect(screen.getByText(/Email: 4 sent in 24 h, 1 pending, 2 failed/)).toBeInTheDocument();
     expect(screen.getByText('application.submit')).toBeInTheDocument();
   });
 

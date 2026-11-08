@@ -7,7 +7,7 @@ import secrets
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from sqlalchemy import select
 
 from app.api.deps import DB, Principal, require
@@ -32,6 +32,8 @@ from app.services.application_lifecycle import (
     change_status,
     require_transition,
 )
+from app.services.application_notifications import queue_status_emails
+from app.workers.email_jobs import dispatch_emails
 
 router = APIRouter(prefix="/student-applications", tags=["student applications"])
 logger = logging.getLogger("edushield.applications")
@@ -254,6 +256,7 @@ def _assess_after_submission(db: DB, app: FinancialAidApplication, principal: Pr
 def submit_student_application(
     application_id: uuid.UUID,
     request: Request,
+    background: BackgroundTasks,
     db: DB,
     principal: Annotated[Principal, Depends(require(P.STUDENT_PORTAL_UPDATE))],
     body: StudentApplicationSubmit | None = None,
@@ -267,7 +270,7 @@ def submit_student_application(
         )
     response_note = (body.response_note or "").strip() or None if body else None
     app.submitted_at = utcnow()
-    change_status(
+    history = change_status(
         db,
         app,
         to_status=ApplicationStatus.SUBMITTED,
@@ -277,7 +280,9 @@ def submit_student_application(
         note=response_note,
         student_message=response_note,
     )
+    emails = queue_status_emails(db, app, history)
     db.commit()
+    dispatch_emails(emails, background)
     _assess_after_submission(db, app, principal, request)
     db.refresh(app)
     return _out(db, app)

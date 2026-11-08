@@ -22,5 +22,6 @@ celery_app.conf.update(
     redis_socket_connect_timeout=3,
     beat_schedule={
         "reconcile-document-scans": {"task": "document.reconcile", "schedule": 60.0},
+        "reconcile-email": {"task": "email.reconcile", "schedule": 60.0},
     },
 )

@@ -9,6 +9,7 @@ from app.services.document_processing import (
     reconcile_document_cleanups,
     reconcile_document_scans,
 )
+from app.services.email_outbox import deliver, due_messages
 from app.workers.celery_app import celery_app
 
 
@@ -33,3 +34,14 @@ def reconcile_document_scan_jobs() -> None:
 @celery_app.task(name="document.cleanup")
 def run_document_cleanup(cleanup_id: str) -> None:
     execute_cleanup(uuid.UUID(cleanup_id))
+
+
+@celery_app.task(name="email.deliver")
+def deliver_email(outbox_id: str) -> None:
+    deliver(uuid.UUID(outbox_id))
+
+
+@celery_app.task(name="email.reconcile")
+def reconcile_email() -> None:
+    for outbox_id in due_messages():
+        deliver_email.delay(str(outbox_id))

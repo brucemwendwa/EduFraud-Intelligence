@@ -113,7 +113,7 @@ function Processing({ data, loading }: { data?: OperationsOverview; loading: boo
 
 function Jobs({ data, loading }: { data?: OperationsOverview; loading: boolean }) {
   const jobs = data?.jobs;
-  const summary = jobs && `Scans: ${jobs.scan_queued} queued, ${jobs.scan_running} running, ${jobs.scan_retrying} retrying, ${jobs.scan_failed} failed · Cleanup failures: ${jobs.cleanup_failed} · Stalled: ${jobs.stalled} · Last detection run: ${data.risk.last_run_status ? label(data.risk.last_run_status) : 'none'}`;
+  const summary = jobs && `Scans: ${jobs.scan_queued} queued, ${jobs.scan_running} running, ${jobs.scan_retrying} retrying, ${jobs.scan_failed} failed · Cleanup failures: ${jobs.cleanup_failed} · Stalled: ${jobs.stalled} · Last detection run: ${data.risk.last_run_status ? label(data.risk.last_run_status) : 'none'} · Email: ${data.email.sent_24h} sent in 24 h, ${data.email.queued + data.email.retrying} pending, ${data.email.failed} failed${data.email.suppressed ? `, ${data.email.suppressed} not sent (development mode)` : ''}`;
   return (
     <Card>
       <CardHeader title="Background jobs" description={summary} icon={<ServerCog className="size-4" />} />

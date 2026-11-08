@@ -127,6 +127,33 @@ Behaviour: only clamd's exact clean reply releases a document. Infected files ar
 `DOCUMENT_SCAN_MAX_ATTEMPTS` times with backoff, then mark the document failed, and it stays unavailable throughout. A scanner or
 queue outage never blocks submitting an application.
 
+## Email with Resend
+
+Status: **no real message has been delivered.** Delivery is live only after a message reaches a real inbox.
+
+The existing SMTP sender works with Resend's relay, so there is no second email integration to maintain.
+
+1. Create a Resend account and add a sending domain you control, for example `mail.example.edu`.
+2. Add the DNS records Resend shows: the DKIM record, and the SPF `TXT` and `MX` records for its return-path subdomain.
+3. Add a DMARC record at `_dmarc.<domain>`, starting with `v=DMARC1; p=none; rua=mailto:<monitored-address>`, and tighten it
+   once reports are clean.
+4. Create an API key with sending access only, and store it in the host's secret store.
+
+| Variable | Value |
+|---|---|
+| `EMAIL_PROVIDER` | `smtp` |
+| `SMTP_HOST` | `smtp.resend.com` |
+| `SMTP_PORT` | `587` (STARTTLS) or `465` (TLS) |
+| `SMTP_USERNAME` | `resend` |
+| `SMTP_PASSWORD` | The API key |
+| `EMAIL_FROM` | `EduShield AI <no-reply@mail.example.edu>` |
+| `PUBLIC_URL` | `https://<host>`, used in email links |
+
+Status-change messages go through a durable outbox: one per event, retried with backoff up to five times, visible on the
+Operations page. If email fails, the application and its status are unaffected, and students still see everything in the
+portal. Messages carry only the application reference and a sign-in link. Activation and reset links are sent directly and
+never stored. Delivery webhooks are not integrated.
+
 ## Release order
 
 1. Provision PostgreSQL, Redis, ClamAV and the bucket.

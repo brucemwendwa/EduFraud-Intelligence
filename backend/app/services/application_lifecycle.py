@@ -76,24 +76,23 @@ def change_status(
     action: str,
     note: str | None = None,
     student_message: str | None = None,
-) -> None:
+) -> ApplicationStatusHistory | None:
     """Record a deliberate lifecycle movement and its audit event in one transaction."""
     before = app.status
     if before == to_status.value:
-        return
+        return None
     app.status = to_status.value
-    db.add(
-        ApplicationStatusHistory(
-            organization_id=app.organization_id,
-            application_id=app.id,
-            from_status=before,
-            to_status=to_status.value,
-            actor_user_id=actor.id,
-            actor_role=actor.role.key,
-            note=note,
-            student_message=student_message,
-        )
+    history = ApplicationStatusHistory(
+        organization_id=app.organization_id,
+        application_id=app.id,
+        from_status=before,
+        to_status=to_status.value,
+        actor_user_id=actor.id,
+        actor_role=actor.role.key,
+        note=note,
+        student_message=student_message,
     )
+    db.add(history)
     audit.record(
         db,
         category=AuditCategory.APPLICATION,
@@ -106,6 +105,7 @@ def change_status(
         details={"from_status": before, "to_status": to_status.value},
         request=request,
     )
+    return history
 
 
 def require_transition(current: str, allowed: set[ApplicationStatus], target: ApplicationStatus) -> None:

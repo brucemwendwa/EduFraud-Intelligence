@@ -12070,6 +12070,39 @@
         ],
         "title": "DownloadUrl"
       },
+      "EmailDelivery": {
+        "properties": {
+          "queued": {
+            "type": "integer",
+            "title": "Queued"
+          },
+          "retrying": {
+            "type": "integer",
+            "title": "Retrying"
+          },
+          "sent_24h": {
+            "type": "integer",
+            "title": "Sent 24H"
+          },
+          "failed": {
+            "type": "integer",
+            "title": "Failed"
+          },
+          "suppressed": {
+            "type": "integer",
+            "title": "Suppressed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "queued",
+          "retrying",
+          "sent_24h",
+          "failed",
+          "suppressed"
+        ],
+        "title": "EmailDelivery"
+      },
       "EnrollmentOut": {
         "properties": {
           "id": {
@@ -12407,7 +12440,8 @@
             "enum": [
               "document_scan",
               "document_cleanup",
-              "detection_run"
+              "detection_run",
+              "email"
             ],
             "title": "Kind"
           },
@@ -13015,6 +13049,9 @@
           "jobs": {
             "$ref": "#/components/schemas/JobSummary"
           },
+          "email": {
+            "$ref": "#/components/schemas/EmailDelivery"
+          },
           "recent_audit": {
             "anyOf": [
               {
@@ -13041,6 +13078,7 @@
           "risk",
           "documents",
           "jobs",
+          "email",
           "recent_audit"
         ],
         "title": "OperationsOverview"
