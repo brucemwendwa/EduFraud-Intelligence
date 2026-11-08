@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import uuid
+from datetime import timedelta
 
 import pytest
 from sqlalchemy import select
@@ -20,7 +21,12 @@ from app.models import (
 )
 from app.models.enums import DocumentStatus
 from app.seed.base import DEMO_STUDENT_EMAIL
-from app.services.document_processing import execute_cleanup, execute_scan, reconcile_document_scans
+from app.services.document_processing import (
+    execute_cleanup,
+    execute_scan,
+    reconcile_document_cleanups,
+    reconcile_document_scans,
+)
 from app.services.document_scanner import ScanOutcome, ScanResult
 from app.services.object_storage import StoredObject
 
@@ -60,8 +66,8 @@ class MemoryStorage:
         del version_id
         return self.objects[key][0]
 
-    def download_url(self, *, key: str, filename: str, content_type: str) -> str:
-        assert key in self.objects
+    def download_url(self, *, key: str, filename: str, content_type: str, version_id: str | None = None) -> str:
+        assert key in self.objects and version_id == self.objects[key][1]
         return f"https://storage.invalid/{key}?filename={filename}&type={content_type}"
 
 
@@ -300,3 +306,20 @@ def test_durable_cleanup_retries_and_never_deletes_referenced_object(
     storage.fail_delete = False
     assert execute_cleanup(orphan.id) == "completed"
     assert orphan.object_key not in storage.objects
+
+
+def test_cleanup_leaves_an_upload_in_flight_alone_until_it_has_settled(as_user, db: Session) -> None:  # type: ignore[no-untyped-def]
+    student, _ = _draft(as_user)
+    del student
+    owner = db.scalar(select(User).where(User.email == DEMO_STUDENT_EMAIL))
+    assert owner is not None
+    intent = DocumentObjectCleanup(
+        organization_id=owner.organization_id, object_key="quarantine/in-flight", status="queued"
+    )
+    db.add(intent)
+    db.commit()
+    assert intent.id not in reconcile_document_cleanups()
+
+    intent.created_at = utcnow() - timedelta(hours=1)
+    db.commit()
+    assert intent.id in reconcile_document_cleanups()

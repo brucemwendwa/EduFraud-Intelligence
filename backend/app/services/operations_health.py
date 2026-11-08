@@ -94,9 +94,16 @@ def _storage(settings: Settings) -> ServiceHealth:
         return ServiceHealth(key="storage", name=name, status="down", detail="The storage client could not start.")
     if not health.reachable:
         return ServiceHealth(key="storage", name=name, status="down", detail="The configured bucket is unreachable.")
-    versioning = health.versioning or "unknown"
-    status: HealthStatus = "ok" if versioning == "Enabled" else "degraded"
-    return ServiceHealth(key="storage", name=name, status=status, detail=f"Bucket reachable; versioning: {versioning}.")
+    gaps = []
+    if health.versioning != "Enabled":
+        gaps.append(f"versioning {health.versioning or 'unknown'}")
+    if health.public_access_blocked is False:
+        gaps.append("public access not fully blocked")
+    if health.default_encryption is False:
+        gaps.append("default encryption off")
+    if gaps:
+        return ServiceHealth(key="storage", name=name, status="degraded", detail=f"Reachable; {', '.join(gaps)}.")
+    return ServiceHealth(key="storage", name=name, status="ok", detail="Bucket reachable; versioning enabled.")
 
 
 def _scanner(settings: Settings) -> ServiceHealth:

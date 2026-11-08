@@ -269,7 +269,10 @@ def student_download(
     if doc.status != DocumentStatus.AVAILABLE:
         raise ConflictError("This document is not available for download.")
     url = get_object_storage().download_url(
-        key=doc.object_key, filename=doc.original_filename, content_type=doc.detected_mime_type
+        key=doc.object_key,
+        filename=doc.original_filename,
+        content_type=doc.detected_mime_type,
+        version_id=doc.object_version_id,
     )
     audit.record(
         db,
@@ -298,7 +301,10 @@ def staff_download(
     if doc.status != DocumentStatus.AVAILABLE:
         raise ConflictError("This document is not available for download.")
     url = get_object_storage().download_url(
-        key=doc.object_key, filename=doc.original_filename, content_type=doc.detected_mime_type
+        key=doc.object_key,
+        filename=doc.original_filename,
+        content_type=doc.detected_mime_type,
+        version_id=doc.object_version_id,
     )
     audit.record(
         db,

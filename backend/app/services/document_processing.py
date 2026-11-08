@@ -174,13 +174,19 @@ def reconcile_document_scans() -> list[uuid.UUID]:
 
 
 def reconcile_document_cleanups() -> list[uuid.UUID]:
-    """Return due cleanup records; task claim logic makes duplicate scheduler delivery safe."""
+    """Return due cleanup records; task claim logic makes duplicate scheduler delivery safe.
+
+    A new intent is left alone for one lease period: until then its upload may still be in
+    flight, and the document that will reference the object may not exist yet.
+    """
     with SessionLocal() as db:
         now = utcnow()
+        settled = now - timedelta(seconds=get_settings().document_scan_lease_seconds)
         return list(
             db.scalars(
                 select(DocumentObjectCleanup.id).where(
                     DocumentObjectCleanup.status.in_(("pending_upload", "queued", "retry")),
+                    DocumentObjectCleanup.created_at <= settled,
                     (DocumentObjectCleanup.next_attempt_at.is_(None)) | (DocumentObjectCleanup.next_attempt_at <= now),
                 )
             )

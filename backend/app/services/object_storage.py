@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import base64
+import binascii
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -15,7 +18,7 @@ class ObjectStorage(Protocol):
     def delete(self, *, key: str, version_id: str | None = None) -> None: ...
     def inspect(self, *, key: str, version_id: str | None = None) -> StoredObject | None: ...
     def get(self, *, key: str, version_id: str | None = None) -> bytes: ...
-    def download_url(self, *, key: str, filename: str, content_type: str) -> str: ...
+    def download_url(self, *, key: str, filename: str, content_type: str, version_id: str | None = None) -> str: ...
 
 
 @dataclass(frozen=True)
@@ -32,10 +35,23 @@ def attachment_disposition(filename: str) -> str:
     return f'attachment; filename="{safe}"'
 
 
+def _hex_to_base64(checksum: str) -> str:
+    return base64.b64encode(bytes.fromhex(checksum)).decode()
+
+
+def _base64_to_hex(checksum: str) -> str | None:
+    try:
+        return base64.b64decode(checksum, validate=True).hex()
+    except (binascii.Error, ValueError):
+        return None
+
+
 @dataclass(frozen=True)
 class StorageHealth:
     reachable: bool
     versioning: str | None = None
+    public_access_blocked: bool | None = None
+    default_encryption: bool | None = None
 
 
 @dataclass(frozen=True)
@@ -57,6 +73,7 @@ class S3ObjectStorage:
             use_ssl=self.settings.s3_use_tls,
             config=Config(
                 s3={"addressing_style": self.settings.s3_addressing_style},
+                signature_version="s3v4",
                 connect_timeout=5,
                 read_timeout=30,
                 retries={"max_attempts": 2},
@@ -70,6 +87,8 @@ class S3ObjectStorage:
             Body=body,
             ContentType=content_type,
             Metadata={"sha256": checksum},
+            # S3 recomputes this on receipt and refuses the object if it differs.
+            ChecksumSHA256=_hex_to_base64(checksum),
             ServerSideEncryption="AES256",
         )
         return StoredObject(response.get("VersionId"), checksum)
@@ -85,10 +104,13 @@ class S3ObjectStorage:
         if version_id:
             params["VersionId"] = version_id
         try:
-            response = self._client().head_object(**params)
+            response = self._client().head_object(ChecksumMode="ENABLED", **params)
         except Exception:  # provider details must not leak through the API
             return None
-        return StoredObject(response.get("VersionId"), response.get("Metadata", {}).get("sha256"))
+        # Prefer the checksum the storage service computed; user metadata is only what was declared at upload.
+        computed = response.get("ChecksumSHA256")
+        checksum = _base64_to_hex(computed) if computed else response.get("Metadata", {}).get("sha256")
+        return StoredObject(response.get("VersionId"), checksum)
 
     def get(self, *, key: str, version_id: str | None = None) -> bytes:
         params = {"Bucket": self.settings.s3_bucket_name, "Key": key}
@@ -103,23 +125,36 @@ class S3ObjectStorage:
             client.head_bucket(Bucket=self.settings.s3_bucket_name)
         except Exception:  # noqa: BLE001 - provider details must not leak through the API
             return StorageHealth(reachable=False)
-        try:
-            versioning = client.get_bucket_versioning(Bucket=self.settings.s3_bucket_name).get("Status", "Disabled")
-        except Exception:  # noqa: BLE001 - some providers or restricted keys cannot report this
-            versioning = None
-        return StorageHealth(reachable=True, versioning=versioning)
-
-    def download_url(self, *, key: str, filename: str, content_type: str) -> str:
-        return self._client().generate_presigned_url(
-            "get_object",
-            Params={
-                "Bucket": self.settings.s3_bucket_name,
-                "Key": key,
-                "ResponseContentType": content_type,
-                "ResponseContentDisposition": attachment_disposition(filename),
-            },
-            ExpiresIn=self.settings.s3_presigned_url_ttl_seconds,
+        bucket = self.settings.s3_bucket_name
+        return StorageHealth(
+            reachable=True,
+            versioning=_optional(lambda: client.get_bucket_versioning(Bucket=bucket).get("Status", "Disabled")),
+            public_access_blocked=_optional(
+                lambda: all(client.get_public_access_block(Bucket=bucket)["PublicAccessBlockConfiguration"].values())
+            ),
+            default_encryption=_optional(lambda: bool(client.get_bucket_encryption(Bucket=bucket))),
         )
+
+    def download_url(self, *, key: str, filename: str, content_type: str, version_id: str | None = None) -> str:
+        params = {
+            "Bucket": self.settings.s3_bucket_name,
+            "Key": key,
+            "ResponseContentType": content_type,
+            "ResponseContentDisposition": attachment_disposition(filename),
+        }
+        if version_id:
+            params["VersionId"] = version_id  # the link serves only the exact object that was scanned
+        return self._client().generate_presigned_url(
+            "get_object", Params=params, ExpiresIn=self.settings.s3_presigned_url_ttl_seconds
+        )
+
+
+def _optional[T](read: Callable[[], T]) -> T | None:
+    """A bucket setting that some providers or restricted keys cannot report."""
+    try:
+        return read()
+    except Exception:  # noqa: BLE001 - absence of a report is not an outage
+        return None
 
 
 def get_object_storage(settings: Settings | None = None) -> ObjectStorage:
