@@ -12,6 +12,7 @@ import { errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { applicationStatusTone } from '@/lib/status';
 import { type Draft, useStudentApplication, useStudentApplicationActions } from './studentApplications';
+import { StudentDocumentPanel } from '@/features/documents/StudentDocumentPanel';
 
 export default function StudentApplicationPage() {
   const { id } = useParams(); const creating = id === 'new'; const { user } = useAuth(); const navigate = useNavigate();
@@ -36,6 +37,7 @@ export default function StudentApplicationPage() {
       {error && <p role="alert" className="sm:col-span-2 text-sm text-red-700">{error}</p>}
       {(creating || app?.is_editable) && <div className="sm:col-span-2 flex flex-wrap gap-3"><Button type="submit" loading={actions.create.isPending || actions.save.isPending}>Save draft</Button>{!creating && <Button type="button" variant="primary" loading={actions.submit.isPending} onClick={() => void submit()}>Submit application</Button>}</div>}
     </form></CardBody></Card>
+    {app && <StudentDocumentPanel applicationId={app.id} isEditable={app.is_editable} />}
     {app && <Card className="mt-6"><CardHeader title="Status history" /><CardBody><ol className="space-y-3">{app.history.map((event, index) => <li key={`${event.created_at}-${index}`} className="border-l-2 border-slate-200 pl-3 text-sm"><strong className="capitalize">{event.to_status.replaceAll('_', ' ')}</strong><p className="text-slate-500">{new Date(event.created_at).toLocaleString()} · {event.actor_role.replaceAll('_', ' ')}</p></li>)}</ol>{['draft', 'submitted', 'under_review', 'additional_information_required'].includes(app.status) && <Button variant="danger" className="mt-5" loading={actions.withdraw.isPending} onClick={() => void withdraw()}>Withdraw application</Button>}</CardBody></Card>}
   </main>;
 }

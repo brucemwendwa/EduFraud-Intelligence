@@ -28,6 +28,7 @@ import { useApplication } from './api';
 import { ReviewDialog } from './ReviewDialog';
 import { RiskPanel } from './RiskPanel';
 import { StudentIdentityCard } from './StudentIdentityCard';
+import { StaffDocumentPanel } from '@/features/documents/StaffDocumentPanel';
 
 export default function ApplicationDetailPage() {
   const { id = '' } = useParams();
@@ -102,6 +103,7 @@ function ApplicationView({ app }: { app: ApplicationDetail }) {
                   <TabsTrigger value="disbursements" count={app.disbursements.length}>Disbursements</TabsTrigger>
                   <TabsTrigger value="enrollment" count={app.enrollments.length}>Enrollment</TabsTrigger>
                   <TabsTrigger value="verification" count={app.verifications.length}>Verification</TabsTrigger>
+                  <TabsTrigger value="evidence">Evidence</TabsTrigger>
                   <TabsTrigger value="tokens">Identity tokens</TabsTrigger>
                 </TabsList>
               </div>
@@ -109,6 +111,7 @@ function ApplicationView({ app }: { app: ApplicationDetail }) {
               <TabsContent value="disbursements"><Disbursements app={app} /></TabsContent>
               <TabsContent value="enrollment"><Enrollment app={app} /></TabsContent>
               <TabsContent value="verification"><Verifications app={app} /></TabsContent>
+              <TabsContent value="evidence" className="p-5"><StaffDocumentPanel applicationId={app.id} canReview={can(P.applicationsReview)} /></TabsContent>
               <TabsContent value="tokens"><IdentityTokens app={app} /></TabsContent>
             </Tabs>
           </Card>

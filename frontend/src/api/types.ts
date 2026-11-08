@@ -45,6 +45,10 @@ export type DisbursementSummary = S['DisbursementSummary'];
 export type VerificationRow = S['VerificationRow'];
 export type StudentDetail = S['StudentDetail'];
 
+export type ApplicationDocument = S['DocumentOut'];
+export type DocumentReview = S['DocumentReview'];
+export type DocumentDownload = S['DownloadUrl'];
+
 export type FraudSignal = S['FraudSignalOut'];
 export type RiskAssessment = S['RiskAssessmentOut'];
 export type AssessmentHistoryItem = S['AssessmentHistoryItem'];
