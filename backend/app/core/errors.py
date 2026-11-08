@@ -83,5 +83,9 @@ def register_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def _unhandled(request: Request, exc: Exception) -> JSONResponse:
-        logger.exception("unhandled_error", extra={"path": request.url.path})
-        return _envelope(500, "internal_error", "An unexpected error occurred.")
+        request_id = getattr(request.state, "request_id", None)
+        logger.exception("unhandled_error", extra={"path": request.url.path, "request_id": request_id})
+        response = _envelope(500, "internal_error", "An unexpected error occurred.", {"request_id": request_id})
+        if request_id:
+            response.headers["X-Request-ID"] = request_id
+        return response

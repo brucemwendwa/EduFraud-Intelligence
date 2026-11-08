@@ -20,6 +20,8 @@ const data = {
   documents: { pending_scan: 4, scanning: 0, available: 2, rejected: 1, failed: 1, superseded: 0, awaiting_staff_review: 2 },
   jobs: { scan_queued: 0, scan_running: 0, scan_retrying: 4, scan_failed: 1, cleanup_failed: 0, stalled: 0, recent_failures: [{ kind: 'document_scan', status: 'failed', error_code: 'unavailable', attempts: 3, occurred_at: '2026-11-01T00:00:00Z' }] },
   email: { queued: 0, retrying: 1, sent_24h: 4, failed: 2, suppressed: 0 },
+  api_performance: { sample_size: 40, p50_ms: 12.4, p95_ms: 88.1, server_error_rate: 0 },
+  audit_signals: { events_24h: 9, denied_24h: 2, failed_logins_24h: 1 },
   recent_audit: [{ sequence: 9, occurred_at: '2026-11-01T00:00:00Z', category: 'application', action: 'application.submit', outcome: 'success', actor_role: 'student' }],
 };
 
@@ -39,6 +41,8 @@ describe('OperationsPage', () => {
     expect(screen.getByText('unavailable')).toBeInTheDocument();
     expect(screen.getByText(/Email: 4 sent in 24 h, 1 pending, 2 failed/)).toBeInTheDocument();
     expect(screen.getByText('application.submit')).toBeInTheDocument();
+    expect(screen.getByText('88 ms')).toBeInTheDocument();
+    expect(screen.getByText('2 / 1')).toBeInTheDocument();
   });
 
   it('hides the audit panel from viewers without audit access', () => {

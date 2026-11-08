@@ -24,6 +24,7 @@ from app.core.middleware import (
     RequestSizeLimitMiddleware,
     SecurityHeadersMiddleware,
 )
+from app.core.monitoring import init_error_monitoring
 from app.db.session import SessionLocal
 from app.services.rbac import sync_rbac
 
@@ -99,6 +100,7 @@ def mount_web_client(app: FastAPI, directory: str) -> None:
 def create_app() -> FastAPI:
     settings = get_settings()
     configure_logging("INFO" if settings.env != "test" else "WARNING")
+    init_error_monitoring(settings)
 
     app = FastAPI(
         title="EduShield AI API",

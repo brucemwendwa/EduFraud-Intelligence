@@ -8,6 +8,7 @@ scoped to the caller's institution.
 from __future__ import annotations
 
 from collections import Counter
+from dataclasses import asdict
 from datetime import datetime, timedelta
 from typing import Annotated, Any, Literal
 
@@ -16,6 +17,7 @@ from sqlalchemy import func, select
 
 from app.api.deps import DB, Principal, require, scoped
 from app.core.config import get_settings
+from app.core.monitoring import request_metrics
 from app.core.permissions import P
 from app.db.types import utcnow
 from app.models import (
@@ -29,7 +31,7 @@ from app.models import (
     FinancialAidApplication,
     RiskAssessment,
 )
-from app.models.enums import ApplicationStatus, DocumentReviewStatus, DocumentStatus, RunStatus
+from app.models.enums import ApplicationStatus, AuditOutcome, DocumentReviewStatus, DocumentStatus, RunStatus
 from app.schemas.common import Schema
 from app.services.application_lifecycle import AWAITING_REVIEW, OPEN_FOR_REVIEW
 from app.services.operations_health import ServiceHealth, overall_status, service_health
@@ -79,6 +81,19 @@ class EmailDelivery(Schema):
     suppressed: int
 
 
+class ApiPerformance(Schema):
+    sample_size: int
+    p50_ms: float | None
+    p95_ms: float | None
+    server_error_rate: float | None
+
+
+class AuditSignals(Schema):
+    events_24h: int
+    denied_24h: int
+    failed_logins_24h: int
+
+
 class JobFailure(Schema):
     kind: Literal["document_scan", "document_cleanup", "detection_run", "email"]
     status: str
@@ -117,6 +132,8 @@ class OperationsOverview(Schema):
     documents: DocumentProcessing
     jobs: JobSummary
     email: EmailDelivery
+    api_performance: ApiPerformance
+    audit_signals: AuditSignals | None
     recent_audit: list[AuditEntry] | None
 
 
@@ -262,8 +279,19 @@ def overview(db: DB, principal: Annotated[Principal, Depends(require(P.OPERATION
     ]
     failures.sort(key=lambda f: f.occurred_at, reverse=True)
 
-    recent_audit = None
+    recent_audit, audit_signals = None, None
     if principal.can(P.AUDIT_READ):
+        audited = select(func.count()).select_from(AuditEvent).where(AuditEvent.occurred_at >= day)
+        if principal.org_id is not None:
+            audited = audited.where(AuditEvent.organization_id == principal.org_id)
+        audit_signals = AuditSignals(
+            events_24h=db.scalar(audited) or 0,
+            denied_24h=db.scalar(audited.where(AuditEvent.outcome == AuditOutcome.DENIED)) or 0,
+            failed_logins_24h=db.scalar(
+                audited.where(AuditEvent.action == "auth.login", AuditEvent.outcome == AuditOutcome.FAILURE)
+            )
+            or 0,
+        )
         stmt = select(AuditEvent).order_by(AuditEvent.sequence.desc()).limit(_RECENT_LIMIT)
         if principal.org_id is not None:
             stmt = stmt.where(AuditEvent.organization_id == principal.org_id)
@@ -308,5 +336,7 @@ def overview(db: DB, principal: Annotated[Principal, Depends(require(P.OPERATION
             recent_failures=failures[:_RECENT_LIMIT],
         ),
         email=email,
+        api_performance=ApiPerformance(**asdict(request_metrics.snapshot())),
+        audit_signals=audit_signals,
         recent_audit=recent_audit,
     )

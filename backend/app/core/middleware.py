@@ -12,6 +12,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 from app.core.config import get_settings
+from app.core.monitoring import request_metrics
 
 access_log = logging.getLogger("edushield.access")
 
@@ -35,7 +36,15 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
         request_id = supplied if _SAFE_REQUEST_ID.match(supplied) else uuid.uuid4().hex[:16]
         request.state.request_id = request_id
         start = time.perf_counter()
-        response = await call_next(request)
+        measured = request.url.path.startswith("/api/v1")
+        try:
+            response = await call_next(request)
+        except Exception:
+            if measured:
+                request_metrics.record((time.perf_counter() - start) * 1000, 500)
+            raise
+        if measured:
+            request_metrics.record((time.perf_counter() - start) * 1000, response.status_code)
         response.headers["X-Request-ID"] = request_id
         if request.url.path.startswith("/api/") and request.url.path != "/api/health":
             access_log.info(

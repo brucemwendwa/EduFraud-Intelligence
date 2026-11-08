@@ -5,6 +5,7 @@ Results describe service state only. Hostnames, keys and provider error text are
 
 from __future__ import annotations
 
+import time
 from datetime import timedelta
 from pathlib import Path
 from typing import Literal
@@ -37,11 +38,13 @@ class ServiceHealth(Schema):
 
 
 def _database(db: Session) -> ServiceHealth:
+    started = time.perf_counter()
     try:
         db.execute(text("SELECT 1"))
     except Exception:  # noqa: BLE001 - reported as a state; details stay in server logs
         return ServiceHealth(key="database", name="Database", status="down", detail="The database did not respond.")
-    return ServiceHealth(key="database", name="Database", status="ok", detail="Responding to queries.")
+    elapsed = round((time.perf_counter() - started) * 1000, 1)
+    return ServiceHealth(key="database", name="Database", status="ok", detail=f"Responding in {elapsed} ms.")
 
 
 def _migrations(db: Session) -> ServiceHealth:
@@ -158,6 +161,13 @@ def _scanner(settings: Settings) -> ServiceHealth:
     )
 
 
+def _error_monitoring(settings: Settings) -> ServiceHealth:
+    name = "Error monitoring"
+    if settings.sentry_dsn:
+        return ServiceHealth(key="monitoring", name=name, status="ok", detail="Sentry configured; events are scrubbed.")
+    return ServiceHealth(key="monitoring", name=name, status="not_configured", detail="Errors go to application logs only.")
+
+
 def _email(settings: Settings) -> ServiceHealth:
     name = "Email delivery"
     if settings.email_provider != "smtp":
@@ -179,6 +189,7 @@ def service_health(db: Session) -> list[ServiceHealth]:
         _storage(settings),
         _scanner(settings),
         _email(settings),
+        _error_monitoring(settings),
         ServiceHealth(
             key="identity",
             name="Identity verification",

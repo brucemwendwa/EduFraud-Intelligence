@@ -156,6 +156,15 @@ Operations page. If email fails, the application and its status are unaffected, 
 portal. Messages carry only the application reference and a sign-in link. Activation and reset links are sent directly and
 never stored. Delivery webhooks are not integrated.
 
+## Monitoring
+
+- **Operations page:** service health, per-instance API latency and error rate, job failures, email delivery and audit signals.
+- **Logs:** JSON on stdout, with a request ID on each line and on every response (`X-Request-ID`). Passwords, tokens and
+  SSN-shaped values are redacted. Use the host's log view and retention.
+- **Error monitoring (optional):** set `SENTRY_DSN` on web and worker. Events keep the method, path and stack trace only.
+  Request bodies, cookies, headers, query strings, users and local variables are removed before anything leaves the process.
+- **Alerts:** configure the host and Sentry to alert on a failing `/api/ready`, worker restarts and new error issues.
+
 ## Release order
 
 1. Provision PostgreSQL, Redis, ClamAV and the bucket.

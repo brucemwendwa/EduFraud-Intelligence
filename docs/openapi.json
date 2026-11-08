@@ -8611,6 +8611,55 @@
         ],
         "title": "AlternativeVerificationIn"
       },
+      "ApiPerformance": {
+        "properties": {
+          "sample_size": {
+            "type": "integer",
+            "title": "Sample Size"
+          },
+          "p50_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P50 Ms"
+          },
+          "p95_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P95 Ms"
+          },
+          "server_error_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Server Error Rate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sample_size",
+          "p50_ms",
+          "p95_ms",
+          "server_error_rate"
+        ],
+        "title": "ApiPerformance"
+      },
       "ApplicationActivity": {
         "properties": {
           "application_id": {
@@ -9605,6 +9654,29 @@
           "denied"
         ],
         "title": "AuditOutcome"
+      },
+      "AuditSignals": {
+        "properties": {
+          "events_24h": {
+            "type": "integer",
+            "title": "Events 24H"
+          },
+          "denied_24h": {
+            "type": "integer",
+            "title": "Denied 24H"
+          },
+          "failed_logins_24h": {
+            "type": "integer",
+            "title": "Failed Logins 24H"
+          }
+        },
+        "type": "object",
+        "required": [
+          "events_24h",
+          "denied_24h",
+          "failed_logins_24h"
+        ],
+        "title": "AuditSignals"
       },
       "AuditSummary": {
         "properties": {
@@ -13355,6 +13427,19 @@
           "email": {
             "$ref": "#/components/schemas/EmailDelivery"
           },
+          "api_performance": {
+            "$ref": "#/components/schemas/ApiPerformance"
+          },
+          "audit_signals": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AuditSignals"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "recent_audit": {
             "anyOf": [
               {
@@ -13382,6 +13467,8 @@
           "documents",
           "jobs",
           "email",
+          "api_performance",
+          "audit_signals",
           "recent_audit"
         ],
         "title": "OperationsOverview"

@@ -2516,6 +2516,17 @@ export interface components {
             /** Notes */
             notes: string;
         };
+        /** ApiPerformance */
+        ApiPerformance: {
+            /** Sample Size */
+            sample_size: number;
+            /** P50 Ms */
+            p50_ms: number | null;
+            /** P95 Ms */
+            p95_ms: number | null;
+            /** Server Error Rate */
+            server_error_rate: number | null;
+        };
         /** ApplicationActivity */
         ApplicationActivity: {
             /** Application Id */
@@ -2860,6 +2871,15 @@ export interface components {
          * @enum {string}
          */
         AuditOutcome: "success" | "failure" | "denied";
+        /** AuditSignals */
+        AuditSignals: {
+            /** Events 24H */
+            events_24h: number;
+            /** Denied 24H */
+            denied_24h: number;
+            /** Failed Logins 24H */
+            failed_logins_24h: number;
+        };
         /** AuditSummary */
         AuditSummary: {
             /** Total Events */
@@ -4157,6 +4177,8 @@ export interface components {
             documents: components["schemas"]["DocumentProcessing"];
             jobs: components["schemas"]["JobSummary"];
             email: components["schemas"]["EmailDelivery"];
+            api_performance: components["schemas"]["ApiPerformance"];
+            audit_signals: components["schemas"]["AuditSignals"] | null;
             /** Recent Audit */
             recent_audit: components["schemas"]["AuditEntry"][] | null;
         };

@@ -41,6 +41,7 @@ export default function OperationsPage() {
       ) : (
         <div className="space-y-8">
           <Health data={data} loading={isLoading} />
+          <Performance data={data} loading={isLoading} />
           <Processing data={data} loading={isLoading} />
           <Jobs data={data} loading={isLoading} />
           {can(P.auditRead) && <AuditEvents data={data} loading={isLoading} />}
@@ -76,6 +77,26 @@ function Health({ data, loading }: { data?: OperationsOverview; loading: boolean
           </ul>
         )}
       </Card>
+    </section>
+  );
+}
+
+function Performance({ data, loading }: { data?: OperationsOverview; loading: boolean }) {
+  const api = data?.api_performance;
+  const audit = data?.audit_signals;
+  const milliseconds = (value: number | null | undefined) => (value == null ? '—' : `${Math.round(value)} ms`);
+  const tiles = [
+    { label: 'API response time, median', value: milliseconds(api?.p50_ms), footnote: 'This API instance only' },
+    { label: 'API response time, 95th percentile', value: milliseconds(api?.p95_ms), footnote: api ? `Last ${api.sample_size.toLocaleString()} requests` : undefined },
+    { label: 'API server errors', value: api?.server_error_rate == null ? '—' : `${(api.server_error_rate * 100).toFixed(1)}%` },
+    ...(audit ? [{ label: 'Permission denials / failed sign-ins (24 h)', value: `${audit.denied_24h} / ${audit.failed_logins_24h}`, to: '/app/audit?outcome=denied' }] : []),
+  ];
+  return (
+    <section aria-labelledby="api-performance">
+      <h2 id="api-performance" className="mb-3 text-sm font-semibold text-slate-900">Performance and security signals</h2>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {tiles.map((tile) => <StatCard key={tile.label} {...tile} loading={loading} />)}
+      </div>
     </section>
   );
 }

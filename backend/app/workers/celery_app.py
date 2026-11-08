@@ -5,8 +5,10 @@ from __future__ import annotations
 from celery import Celery
 
 from app.core.config import get_settings
+from app.core.monitoring import init_error_monitoring
 
 settings = get_settings()
+init_error_monitoring(settings)
 
 celery_app = Celery("edushield", broker=settings.celery_broker_url or "memory://", include=["app.workers.tasks"])
 celery_app.conf.update(

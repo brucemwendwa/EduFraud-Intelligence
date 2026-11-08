@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     # Optional JSON object overriding account-risk rule weights, e.g. {"NEW_DEVICE": 0.05}.
     account_risk_weights: str | None = None
 
+    # Optional error monitoring. Unset means no data leaves the application.
+    sentry_dsn: SecretStr | None = None
+
     cors_origins: str = "http://localhost:5173"
     # Set to the built web client's directory to serve it from the API's own origin.
     frontend_dist: str | None = None
@@ -94,6 +97,7 @@ class Settings(BaseSettings):
         "frontend_dist",
         "public_url",
         "rate_limit_redis_url",
+        "sentry_dsn",
         mode="before",
     )
     @classmethod
