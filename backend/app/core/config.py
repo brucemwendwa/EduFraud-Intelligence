@@ -18,7 +18,8 @@ class Settings(BaseSettings):
 
     app_name: str = "EduShield AI"
     app_version: str = "0.1.0"
-    env: Literal["development", "test", "production"] = "development"
+    # "demo" is a hosted synthetic-data environment: hardened like production, but demo sign-in is allowed.
+    env: Literal["development", "test", "demo", "production"] = "development"
     # Demo authentication is opt-in. Shared and production deployments must enable it
     # explicitly for an isolated synthetic-data demonstration.
     demo_mode: bool = False
@@ -99,10 +100,8 @@ class Settings(BaseSettings):
         return self
 
     @model_validator(mode="after")
-    def _require_real_secrets_in_production(self) -> Settings:
-        if self.env == "production":
-            if self.demo_mode:
-                raise ValueError("DEMO_MODE must be false in production")
+    def _require_real_secrets_when_hosted(self) -> Settings:
+        if self.env in ("demo", "production"):
             if self.jwt_secret.get_secret_value() == _DEV_JWT_SECRET:
                 raise ValueError("JWT_SECRET must be set to a unique value in production")
             if self.tokenization_key.get_secret_value() == _DEV_TOKENIZATION_KEY:
@@ -113,10 +112,17 @@ class Settings(BaseSettings):
                 raise ValueError("DATA_ENCRYPTION_KEY is required in production")
             if self.database_url.startswith("sqlite"):
                 raise ValueError("Production deployments must use PostgreSQL")
+            if "*" in self.cors_origin_list:
+                raise ValueError("CORS_ORIGINS must list exact origins")
+        if self.env == "production":
+            if self.demo_mode:
+                raise ValueError("DEMO_MODE must be false in production")
             if self.email_provider != "smtp" or not self.smtp_host or not self.smtp_username or not self.smtp_password:
                 raise ValueError("Production requires configured SMTP email delivery for student invitations")
             if not self.s3_bucket_name or not self.s3_access_key_id or not self.s3_secret_access_key:
                 raise ValueError("Production requires private S3 document storage configuration")
+            if not self.s3_use_tls:
+                raise ValueError("Production requires TLS for document storage")
         return self
 
     @property
@@ -126,6 +132,11 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.env == "production"
+
+    @property
+    def is_hardened(self) -> bool:
+        """Served over HTTPS to real browsers: secure cookies, HSTS and no public API docs."""
+        return self.env in ("demo", "production")
 
     @property
     def jobs_backend(self) -> Literal["celery", "inline"]:

@@ -105,9 +105,9 @@ def create_app() -> FastAPI:
         version=settings.app_version,
         description=DESCRIPTION,
         openapi_tags=TAGS,
-        docs_url=None if settings.is_production else "/api/docs",
+        docs_url=None if settings.is_hardened else "/api/docs",
         redoc_url=None,
-        openapi_url=None if settings.is_production else "/api/openapi.json",
+        openapi_url=None if settings.is_hardened else "/api/openapi.json",
         lifespan=lifespan,
     )
 

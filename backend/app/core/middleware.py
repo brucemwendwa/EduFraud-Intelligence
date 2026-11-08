@@ -79,7 +79,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         settings = get_settings()
         if settings.frontend_dist and not request.url.path.startswith("/api/"):
             headers.setdefault("Content-Security-Policy", _CONTENT_SECURITY_POLICY)
-        if settings.is_production:
+        if settings.is_hardened:
             headers.setdefault("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
         return response
 

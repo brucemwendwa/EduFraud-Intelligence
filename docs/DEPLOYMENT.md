@@ -1,0 +1,94 @@
+# Deploying EduShield AI
+
+Status: the configuration below has been rehearsed locally. **No hosted environment exists yet.** Run
+`scripts/verify_deployment.py` against the real URL before describing any environment as deployed.
+
+## Architecture
+
+One container image runs as two processes. The API serves the built web client from its own origin, because the session
+cookie is `SameSite=Strict` and the web client calls relative `/api` paths.
+
+| Component | Runs as | Reachable from | Minimum size |
+|---|---|---|---|
+| Web and API | Image default command | Public, HTTPS only | 1 GB RAM |
+| Worker and scheduler | `celery ... worker -B` from the same image | Private | 1 GB RAM (scoring retrains in memory) |
+| PostgreSQL 16 | Managed database | Private | 1 GB RAM, backups on |
+| Redis | Managed instance | Private | 256 MB |
+| ClamAV | `clamav/clamav` image | **Private only, never a public domain** | 4 GB RAM, 1 GB disk for signatures |
+| Evidence storage | AWS S3 bucket | Over TLS with presigned URLs | See below |
+
+Run exactly one scheduler. `worker -B` embeds it, so scale workers only after moving Beat to its own process.
+
+## Provider recommendation: Railway
+
+Railway fits because it runs every component above in one project with private networking, bills memory by use (ClamAV
+needs far more memory than CPU), has per-environment variables for the separate demo environment, and can deploy from the
+CLI. CLI deployment matters here: connecting a host through GitHub needs an app installed on the repository, which requires
+admin rights on `brucemwendwa/EduFraud-Intelligence`, while contributors have push access only.
+
+- **Render** is the closest alternative, with blueprints and private services, but fixed plan sizes make a 4 GB ClamAV
+  service costlier, and it deploys from a connected repository or a registry image.
+- **AWS ECS** is the most controllable and suits a later institutional deployment, but adds networking, IAM and load
+  balancer work that an MVP does not need.
+
+Evidence stays on AWS S3 whichever host runs the application. Budget roughly: Railway memory is $10 per GB-month, so the
+sizes above total about $70 a month if fully used, plus S3. Check current prices before committing.
+
+## Environments
+
+| `ENV` | Use | Secure cookies, HSTS, docs hidden | Requires real secrets and PostgreSQL | Demo sign-in | Requires SMTP and S3 |
+|---|---|---|---|---|---|
+| `development` | Local | No | No | Optional | No |
+| `demo` | Hosted synthetic-data demo | Yes | Yes | Optional | No |
+| `production` | Real students | Yes | Yes | Refused | Yes |
+
+Keep demo and production in separate projects with separate databases, buckets and secrets. Never point `ENV=demo` at
+real student data.
+
+## Variables
+
+Generate secrets; never reuse local values or commit them.
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(48))"                               # JWT_SECRET, TOKENIZATION_KEY, PROVIDER_WEBHOOK_SECRET
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"  # DATA_ENCRYPTION_KEY
+```
+
+Set these on both the web and worker services:
+
+| Variable | Value |
+|---|---|
+| `ENV` | `demo` or `production` |
+| `DATABASE_URL` | `postgresql+psycopg://...` (note the driver prefix) |
+| `CELERY_BROKER_URL` | Private Redis URL |
+| `JWT_SECRET`, `TOKENIZATION_KEY`, `PROVIDER_WEBHOOK_SECRET`, `DATA_ENCRYPTION_KEY` | Generated |
+| `CORS_ORIGINS` | Exact public origin, for example `https://aid.example.edu` |
+| `STUDENT_ACTIVATION_BASE_URL` | `https://<host>/activate` |
+| `FORWARDED_ALLOW_IPS` | `*` on the web service, only behind the platform proxy |
+| `DEMO_MODE` | `false`, or `true` only with `ENV=demo` |
+
+Storage, scanner and email variables are in their sections below.
+
+## Release order
+
+1. Provision PostgreSQL, Redis, ClamAV and the bucket.
+2. Set variables.
+3. Deploy the web service. `railway.json` runs `alembic upgrade head` before it starts and health-checks `/api/ready`.
+4. Deploy the worker with `deploy/railway.worker.json` as its config file.
+5. Add the domain, then run the verifier.
+
+Migrations run forward automatically only because each is reviewed before merge. Take a database backup before any release
+with a migration, and see [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md) for rollback.
+
+## Verification
+
+```bash
+BASE_URL=https://<host> \
+VERIFY_ADMIN_EMAIL=... VERIFY_ADMIN_PASSWORD=... \
+VERIFY_STAFF_EMAIL=... VERIFY_STAFF_PASSWORD=... \
+VERIFY_STUDENT_EMAIL=... VERIFY_STUDENT_PASSWORD=... \
+backend/.venv/bin/python scripts/verify_deployment.py
+```
+
+It checks HTTPS, the web client, health, database, Redis and worker, migrations, storage, scanner, cookie attributes, CORS,
+CSRF and role separation, and exits non-zero on any failure. It reads only and prints no secrets.

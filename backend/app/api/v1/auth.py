@@ -127,7 +127,7 @@ def login(body: LoginRequest, request: Request, response: Response, db: DB) -> M
         max_age=settings.access_token_ttl_minutes * 60,
         expires=expires,
         httponly=True,
-        secure=settings.is_production,
+        secure=settings.is_hardened,
         samesite="strict",
         path="/api",
     )
@@ -149,7 +149,7 @@ def demo_login(request: Request, response: Response, db: DB) -> Me:
     token, expires = create_access_token(user.id)
     response.set_cookie(
         settings.session_cookie_name, token, max_age=settings.access_token_ttl_minutes * 60,
-        expires=expires, httponly=True, secure=settings.is_production, samesite="strict", path="/api",
+        expires=expires, httponly=True, secure=settings.is_hardened, samesite="strict", path="/api",
     )
     return build_me(db, user)
 

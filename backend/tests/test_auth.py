@@ -192,3 +192,52 @@ def test_synthetic_student_can_only_access_own_portal(as_user) -> None:  # type:
     assert student.get("/api/v1/applications").status_code == 403
     with _client() as anonymous:
         assert anonymous.get("/api/v1/student-portal/me").status_code == 401
+
+
+def _hosted_settings(**overrides):  # type: ignore[no-untyped-def]
+    from cryptography.fernet import Fernet
+
+    from app.core.config import Settings
+
+    values = {
+        "database_url": "postgresql+psycopg://u:p@db/x",
+        "jwt_secret": "a-unique-jwt-secret-for-this-test-only-000000",
+        "tokenization_key": "a-unique-tokenization-key-for-this-test-only",
+        "provider_webhook_secret": "a-unique-webhook-secret-for-this-test-only",
+        "data_encryption_key": Fernet.generate_key().decode(),
+        "cors_origins": "https://app.example.edu",
+        "_env_file": None,
+        **overrides,
+    }
+    return Settings(**values)
+
+
+def test_demo_environment_is_hardened_but_allows_demo_sign_in() -> None:
+    settings = _hosted_settings(env="demo", demo_mode=True)
+    assert settings.is_hardened and not settings.is_production
+
+
+def test_demo_environment_still_requires_real_secrets_and_postgres() -> None:
+    with pytest.raises(ValueError, match="JWT_SECRET"):
+        _hosted_settings(env="demo", jwt_secret="change-me-jwt-secret-for-local-development-only")
+    with pytest.raises(ValueError, match="PostgreSQL"):
+        _hosted_settings(env="demo", database_url="sqlite:///x.db")
+
+
+def test_production_refuses_wildcard_cors_and_plain_storage_traffic() -> None:
+    complete = {
+        "env": "production",
+        "email_provider": "smtp",
+        "smtp_host": "smtp.example.edu",
+        "smtp_username": "u",
+        "smtp_password": "p",
+        "s3_bucket_name": "b",
+        "s3_access_key_id": "k",
+        "s3_secret_access_key": "s",
+        "demo_mode": False,
+    }
+    assert _hosted_settings(**complete).is_production
+    with pytest.raises(ValueError, match="exact origins"):
+        _hosted_settings(**complete, cors_origins="*")
+    with pytest.raises(ValueError, match="TLS"):
+        _hosted_settings(**complete, s3_use_tls=False)
