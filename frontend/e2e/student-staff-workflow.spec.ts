@@ -183,6 +183,44 @@ test('each role stays in its own area and institution', async ({ browser }) => {
   await Promise.all([student.context().close(), officer.context().close(), other.context().close()]);
 });
 
+test('an institution-issued invitation activates a student account', async ({ browser }) => {
+  const admin = await asUser(browser, ADMIN, '/app');
+  const queue = await (await admin.request.get('/api/v1/applications?page_size=100')).json();
+  const application = queue.items[Date.now() % queue.items.length];
+  const email = `invited.${Date.now()}@students.northbridge.demo`;
+
+  await admin.goto(`/app/applications/${application.id}`);
+  await admin.getByRole('button', { name: 'Invite to student portal' }).click();
+  const dialog = admin.getByRole('dialog');
+  await dialog.getByLabel("Student's email address").fill(email);
+  await dialog.getByRole('button', { name: 'Send invitation' }).click();
+  await expect(dialog.getByText('Development mode: no email was sent.')).toBeVisible();
+  const link = (await dialog.locator('code').textContent())!;
+
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const student = await context.newPage();
+  await student.goto(link);
+  await student.getByLabel('Create password').fill('Correct-Horse-2026!');
+  await student.getByLabel('Confirm password').fill('Correct-Horse-2026!');
+  await student.getByRole('button', { name: 'Activate account' }).click();
+  await expect(student.getByRole('heading', { name: 'Account activated' })).toBeVisible();
+
+  // The link is single use.
+  await student.goto(link);
+  await student.getByLabel('Create password').fill('Correct-Horse-2026!');
+  await student.getByLabel('Confirm password').fill('Correct-Horse-2026!');
+  await student.getByRole('button', { name: 'Activate account' }).click();
+  await expect(student.getByRole('alert')).toContainText('invalid or has expired');
+
+  await student.goto('/login');
+  await student.getByLabel('Email address').fill(email);
+  await student.getByLabel('Password').fill('Correct-Horse-2026!');
+  await student.getByRole('button', { name: /^Sign in/ }).click();
+  await student.waitForURL('**/student');
+  await expect(student.getByText(application.student.student_ref)).toBeVisible();
+  await Promise.all([admin.context().close(), context.close()]);
+});
+
 test('the operations page reports live service state to administrators', async ({ browser }) => {
   const admin = await asUser(browser, ADMIN, '/app');
   await admin.getByRole('link', { name: 'Operations' }).click();
