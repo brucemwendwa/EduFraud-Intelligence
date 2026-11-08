@@ -339,8 +339,25 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Signed-in student's own synthetic aid record */
+        /** Signed-in student's own aid record */
         get: operations["me_api_v1_student_portal_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/student-portal/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Signed-in student's dashboard */
+        get: operations["dashboard_api_v1_student_portal_dashboard_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1196,6 +1213,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/dashboard/applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Scoped aid application pipeline
+         * @description Application-processing figures only. Unsubmitted drafts belong to the student and are never counted.
+         */
+        get: operations["application_pipeline_api_v1_dashboard_applications_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/accounts": {
         parameters: {
             query?: never;
@@ -1928,6 +1965,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/operations/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Service health and processing activity */
+        get: operations["overview_api_v1_operations_overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2376,6 +2430,28 @@ export interface components {
             /** Notes */
             notes: string;
         };
+        /** ApplicationActivity */
+        ApplicationActivity: {
+            /** Application Id */
+            application_id: string;
+            /** Reference */
+            reference: string;
+            /** Student Ref */
+            student_ref: string;
+            /** From Status */
+            from_status: string | null;
+            /** To Status */
+            to_status: string;
+            /** Actor Role */
+            actor_role: string | null;
+            /** Risk Level */
+            risk_level: string | null;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+        };
         /**
          * ApplicationDetail
          * @description Application workspace: the record plus its explainable assessment, history and alerts.
@@ -2446,6 +2522,89 @@ export interface components {
             assessment_history: components["schemas"]["AssessmentHistoryItem"][];
             /** Alerts */
             alerts: components["schemas"]["AlertRow"][];
+            /** Status History */
+            status_history: components["schemas"]["ApplicationHistoryItem"][];
+            /**
+             * Allowed Status Changes
+             * @description Statuses a reviewer may move this application to next
+             */
+            allowed_status_changes: string[];
+        };
+        /**
+         * ApplicationHistoryItem
+         * @description Staff view of a lifecycle entry, including the staff-only note.
+         */
+        ApplicationHistoryItem: {
+            /** From Status */
+            from_status: string | null;
+            /** To Status */
+            to_status: string;
+            /** Actor Name */
+            actor_name: string | null;
+            /** Actor Role */
+            actor_role: string;
+            /** Note */
+            note: string | null;
+            /** Student Message */
+            student_message: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** ApplicationPipeline */
+        ApplicationPipeline: {
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Total */
+            total: number;
+            /** Awaiting Review */
+            awaiting_review: number;
+            /** In Review */
+            in_review: number;
+            /** Additional Information Required */
+            additional_information_required: number;
+            /** On Hold */
+            on_hold: number;
+            /** Approved */
+            approved: number;
+            /** Rejected */
+            rejected: number;
+            /** Withdrawn */
+            withdrawn: number;
+            /** Open Total */
+            open_total: number;
+            /** Open By Risk */
+            open_by_risk: components["schemas"]["RiskCount"][];
+            /** Open Unassessed */
+            open_unassessed: number;
+            /** Documents Awaiting Review */
+            documents_awaiting_review: number;
+            /** Recent Activity */
+            recent_activity: components["schemas"]["ApplicationActivity"][];
+        };
+        /** ApplicationProcessing */
+        ApplicationProcessing: {
+            /** Submitted 24H */
+            submitted_24h: number;
+            /** Submitted 7D */
+            submitted_7d: number;
+            /** Decisions 24H */
+            decisions_24h: number;
+            /** Decisions 7D */
+            decisions_7d: number;
+            /** Awaiting Review */
+            awaiting_review: number;
+            /** Additional Information Required */
+            additional_information_required: number;
+            /** Open Total */
+            open_total: number;
+            /** Oldest Waiting Since */
+            oldest_waiting_since: string | null;
         };
         /** ApplicationRow */
         ApplicationRow: {
@@ -2532,6 +2691,24 @@ export interface components {
          * @enum {string}
          */
         AuditCategory: "account" | "card" | "transaction" | "security" | "authentication" | "verification" | "investigation" | "permission" | "data_access" | "detection" | "disbursement" | "application" | "system";
+        /** AuditEntry */
+        AuditEntry: {
+            /** Sequence */
+            sequence: number;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Category */
+            category: string;
+            /** Action */
+            action: string;
+            /** Outcome */
+            outcome: string;
+            /** Actor Role */
+            actor_role: string | null;
+        };
         /** AuditEventOut */
         AuditEventOut: {
             /**
@@ -3471,6 +3648,23 @@ export interface components {
             /** Replaces Document Id */
             replaces_document_id: string | null;
         };
+        /** DocumentProcessing */
+        DocumentProcessing: {
+            /** Pending Scan */
+            pending_scan: number;
+            /** Scanning */
+            scanning: number;
+            /** Available */
+            available: number;
+            /** Rejected */
+            rejected: number;
+            /** Failed */
+            failed: number;
+            /** Superseded */
+            superseded: number;
+            /** Awaiting Staff Review */
+            awaiting_staff_review: number;
+        };
         /** DocumentReview */
         DocumentReview: {
             /**
@@ -3621,6 +3815,42 @@ export interface components {
              * @default sandbox
              */
             provider_mode: string;
+        };
+        /** JobFailure */
+        JobFailure: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "document_scan" | "document_cleanup" | "detection_run";
+            /** Status */
+            status: string;
+            /** Error Code */
+            error_code: string | null;
+            /** Attempts */
+            attempts: number | null;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+        };
+        /** JobSummary */
+        JobSummary: {
+            /** Scan Queued */
+            scan_queued: number;
+            /** Scan Running */
+            scan_running: number;
+            /** Scan Retrying */
+            scan_retrying: number;
+            /** Scan Failed */
+            scan_failed: number;
+            /** Cleanup Failed */
+            cleanup_failed: number;
+            /** Stalled */
+            stalled: number;
+            /** Recent Failures */
+            recent_failures: components["schemas"]["JobFailure"][];
         };
         /** LinkCardIn */
         LinkCardIn: {
@@ -3784,6 +4014,34 @@ export interface components {
             x: number;
             /** Y */
             y: number;
+        };
+        /** OperationsOverview */
+        OperationsOverview: {
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "institution" | "platform";
+            /** Environment */
+            environment: string;
+            /**
+             * Overall Health
+             * @enum {string}
+             */
+            overall_health: "ok" | "degraded" | "down";
+            /** Health */
+            health: components["schemas"]["ServiceHealth"][];
+            applications: components["schemas"]["ApplicationProcessing"];
+            risk: components["schemas"]["RiskActivity"];
+            documents: components["schemas"]["DocumentProcessing"];
+            jobs: components["schemas"]["JobSummary"];
+            /** Recent Audit */
+            recent_audit: components["schemas"]["AuditEntry"][] | null;
         };
         /** OrgRef */
         OrgRef: {
@@ -4174,8 +4432,33 @@ export interface components {
             review_status: "in_review" | "cleared" | "escalated";
             /** Application Status */
             application_status?: ("in_review" | "additional_information_required" | "on_hold" | "approved" | "rejected") | null;
-            /** Note */
+            /**
+             * Note
+             * @description Staff-only review note
+             */
             note: string;
+            /**
+             * Student Message
+             * @description Shown to the student. Required when requesting information or rejecting an application.
+             */
+            student_message?: string | null;
+        };
+        /** RiskActivity */
+        RiskActivity: {
+            /** Assessments 24H */
+            assessments_24h: number;
+            /** Assessments 7D */
+            assessments_7d: number;
+            /** Open Elevated */
+            open_elevated: number;
+            /** Open Unassessed */
+            open_unassessed: number;
+            /** Last Run Status */
+            last_run_status: string | null;
+            /** Last Run Finished At */
+            last_run_finished_at: string | null;
+            /** Failed Runs 7D */
+            failed_runs_7d: number;
         };
         /** RiskAssessmentOut */
         RiskAssessmentOut: {
@@ -4207,6 +4490,13 @@ export interface components {
             created_at: string;
             /** Signals */
             signals: components["schemas"]["FraudSignalOut"][];
+        };
+        /** RiskCount */
+        RiskCount: {
+            /** Level */
+            level: string;
+            /** Count */
+            count: number;
         };
         /**
          * RiskLevel
@@ -4367,6 +4657,20 @@ export interface components {
             /** Elevated Events */
             elevated_events: number;
         };
+        /** ServiceHealth */
+        ServiceHealth: {
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "degraded" | "down" | "not_configured" | "simulated";
+            /** Detail */
+            detail: string;
+        };
         /** SimulationResult */
         SimulationResult: {
             /** Scenario */
@@ -4423,6 +4727,49 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** StudentActivityItem */
+        StudentActivityItem: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "status_change" | "document_review";
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Reference */
+            reference: string;
+            /** Title */
+            title: string;
+            /** Detail */
+            detail: string | null;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+        };
+        /** StudentApplicationCounts */
+        StudentApplicationCounts: {
+            /** Total */
+            total: number;
+            /** Draft */
+            draft: number;
+            /** Submitted */
+            submitted: number;
+            /** Under Review */
+            under_review: number;
+            /** Additional Information */
+            additional_information: number;
+            /** Approved */
+            approved: number;
+            /** Rejected */
+            rejected: number;
+            /** Withdrawn */
+            withdrawn: number;
+        };
         /** StudentApplicationDraft */
         StudentApplicationDraft: {
             /** Award Year */
@@ -4438,14 +4785,22 @@ export interface components {
             /** Student Aid Index */
             student_aid_index?: number | null;
         };
-        /** StudentApplicationHistory */
+        /**
+         * StudentApplicationHistory
+         * @description Student-safe lifecycle entry. Staff-only review notes and staff roles are never included.
+         */
         StudentApplicationHistory: {
             /** From Status */
             from_status: string | null;
             /** To Status */
             to_status: string;
-            /** Actor Role */
-            actor_role: string;
+            /**
+             * Actor Role
+             * @enum {string}
+             */
+            actor_role: "student" | "financial_aid_office";
+            /** Student Message */
+            student_message: string | null;
             /**
              * Created At
              * Format: date-time
@@ -4477,14 +4832,45 @@ export interface components {
             requested_amount: string | null;
             /** Student Aid Index */
             student_aid_index: number | null;
-            /** Risk Level */
-            risk_level: string | null;
             /** Is Editable */
             is_editable: boolean;
+            /** Is Withdrawable */
+            is_withdrawable: boolean;
             /** Outstanding Requirements */
             outstanding_requirements: string[];
+            status_message: components["schemas"]["StudentStatusMessage"] | null;
             /** History */
             history: components["schemas"]["StudentApplicationHistory"][];
+        };
+        /**
+         * StudentApplicationSubmit
+         * @description Optional covering note, used when responding to a request for additional information.
+         */
+        StudentApplicationSubmit: {
+            /** Response Note */
+            response_note?: string | null;
+        };
+        /** StudentDashboardOut */
+        StudentDashboardOut: {
+            profile: components["schemas"]["StudentDashboardProfile"];
+            counts: components["schemas"]["StudentApplicationCounts"];
+            /** Information Requests */
+            information_requests: components["schemas"]["StudentInformationRequest"][];
+            /** Recent Activity */
+            recent_activity: components["schemas"]["StudentActivityItem"][];
+            /** Applications */
+            applications: components["schemas"]["StudentPortalApplication"][];
+        };
+        /** StudentDashboardProfile */
+        StudentDashboardProfile: {
+            /** Full Name */
+            full_name: string;
+            /** Email */
+            email: string;
+            /** Student Ref */
+            student_ref: string;
+            /** Institution */
+            institution: string;
         };
         /** StudentDetail */
         StudentDetail: {
@@ -4507,6 +4893,22 @@ export interface components {
             biometric_consent_at: string | null;
             /** Identity Tokens */
             identity_tokens: components["schemas"]["IdentityTokenOut"][];
+        };
+        /** StudentInformationRequest */
+        StudentInformationRequest: {
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** Reference */
+            reference: string;
+            /** Program */
+            program: string | null;
+            /** Message */
+            message: string | null;
+            /** Requested At */
+            requested_at: string | null;
         };
         /** StudentInvitationCreate */
         StudentInvitationCreate: {
@@ -4549,16 +4951,25 @@ export interface components {
         };
         /** StudentPortalApplication */
         StudentPortalApplication: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
             /** Reference */
             reference: string;
             /** Status */
             status: string;
+            /** Award Year */
+            award_year: string | null;
             /** Program */
-            program: string;
+            program: string | null;
             /** Requested Amount */
-            requested_amount: string;
-            /** Risk Level */
-            risk_level: string | null;
+            requested_amount: string | null;
+            /** Submitted At */
+            submitted_at: string | null;
+            /** Is Editable */
+            is_editable: boolean;
         };
         /** StudentPortalOut */
         StudentPortalOut: {
@@ -4606,6 +5017,21 @@ export interface components {
             student_ref: string;
             /** Masked Name */
             masked_name: string;
+        };
+        /**
+         * StudentStatusMessage
+         * @description What the financial aid office told the student about the application's current status.
+         */
+        StudentStatusMessage: {
+            /** Status */
+            status: string;
+            /** Message */
+            message: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /** SystemSettings */
         SystemSettings: {
@@ -5827,6 +6253,8 @@ export interface operations {
                 q?: string | null;
                 risk_level?: components["schemas"]["RiskLevel"][] | null;
                 status?: components["schemas"]["ApplicationStatus"] | null;
+                /** @description Named work queue */
+                queue?: ("awaiting_review" | "open") | null;
                 review_status?: components["schemas"]["ReviewStatus"] | null;
                 verification_status?: components["schemas"]["VerificationStatus"] | null;
                 /** @description Scenario key, 'any' or 'none' */
@@ -6011,6 +6439,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StudentPortalOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dashboard_api_v1_student_portal_dashboard_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentDashboardOut"];
                 };
             };
             /** @description Validation Error */
@@ -6322,7 +6779,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["StudentApplicationSubmit"] | null;
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -7886,6 +8347,35 @@ export interface operations {
             };
         };
     };
+    application_pipeline_api_v1_dashboard_applications_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationPipeline"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_accounts_api_v1_accounts_get: {
         parameters: {
             query?: {
@@ -9337,6 +9827,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SystemSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    overview_api_v1_operations_overview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OperationsOverview"];
                 };
             };
             /** @description Validation Error */

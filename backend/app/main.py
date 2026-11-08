@@ -56,6 +56,7 @@ TAGS = [
     {"name": "notifications", "description": "In-app notifications"},
     {"name": "search", "description": "Global search"},
     {"name": "system", "description": "Health, readiness and read-only system settings"},
+    {"name": "operations", "description": "Institution-scoped service health, background jobs and processing activity"},
 ]
 
 

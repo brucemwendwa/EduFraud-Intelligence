@@ -655,6 +655,28 @@
             }
           },
           {
+            "name": "queue",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "awaiting_review",
+                    "open"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Named work queue",
+              "title": "Queue"
+            },
+            "description": "Named work queue"
+          },
+          {
             "name": "review_status",
             "in": "query",
             "required": false,
@@ -998,7 +1020,7 @@
         "tags": [
           "student portal"
         ],
-        "summary": "Signed-in student's own synthetic aid record",
+        "summary": "Signed-in student's own aid record",
         "operationId": "me_api_v1_student_portal_me_get",
         "responses": {
           "200": {
@@ -1007,6 +1029,37 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/StudentPortalOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/student-portal/dashboard": {
+      "get": {
+        "tags": [
+          "student portal"
+        ],
+        "summary": "Signed-in student's dashboard",
+        "operationId": "dashboard_api_v1_student_portal_dashboard_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudentDashboardOut"
                 }
               }
             }
@@ -1418,6 +1471,23 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/StudentApplicationSubmit"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -4100,6 +4170,38 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DashboardOverview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/dashboard/applications": {
+      "get": {
+        "tags": [
+          "dashboard"
+        ],
+        "summary": "Scoped aid application pipeline",
+        "description": "Application-processing figures only. Unsubmitted drafts belong to the student and are never counted.",
+        "operationId": "application_pipeline_api_v1_dashboard_applications_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationPipeline"
                 }
               }
             }
@@ -6804,6 +6906,37 @@
           }
         }
       }
+    },
+    "/api/v1/operations/overview": {
+      "get": {
+        "tags": [
+          "operations"
+        ],
+        "summary": "Service health and processing activity",
+        "operationId": "overview_api_v1_operations_overview_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationsOverview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -8225,6 +8358,76 @@
         ],
         "title": "AlternativeVerificationIn"
       },
+      "ApplicationActivity": {
+        "properties": {
+          "application_id": {
+            "type": "string",
+            "title": "Application Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "student_ref": {
+            "type": "string",
+            "title": "Student Ref"
+          },
+          "from_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Status"
+          },
+          "to_status": {
+            "type": "string",
+            "title": "To Status"
+          },
+          "actor_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor Role"
+          },
+          "risk_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Level"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "application_id",
+          "reference",
+          "student_ref",
+          "from_status",
+          "to_status",
+          "actor_role",
+          "risk_level",
+          "occurred_at"
+        ],
+        "title": "ApplicationActivity"
+      },
       "ApplicationDetail": {
         "properties": {
           "id": {
@@ -8413,6 +8616,21 @@
             },
             "type": "array",
             "title": "Alerts"
+          },
+          "status_history": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicationHistoryItem"
+            },
+            "type": "array",
+            "title": "Status History"
+          },
+          "allowed_status_changes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Allowed Status Changes",
+            "description": "Statuses a reviewer may move this application to next"
           }
         },
         "type": "object",
@@ -8445,10 +8663,226 @@
           "related",
           "assessment",
           "assessment_history",
-          "alerts"
+          "alerts",
+          "status_history",
+          "allowed_status_changes"
         ],
         "title": "ApplicationDetail",
         "description": "Application workspace: the record plus its explainable assessment, history and alerts."
+      },
+      "ApplicationHistoryItem": {
+        "properties": {
+          "from_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Status"
+          },
+          "to_status": {
+            "type": "string",
+            "title": "To Status"
+          },
+          "actor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor Name"
+          },
+          "actor_role": {
+            "type": "string",
+            "title": "Actor Role"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "student_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Student Message"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "from_status",
+          "to_status",
+          "actor_name",
+          "actor_role",
+          "note",
+          "student_message",
+          "created_at"
+        ],
+        "title": "ApplicationHistoryItem",
+        "description": "Staff view of a lifecycle entry, including the staff-only note."
+      },
+      "ApplicationPipeline": {
+        "properties": {
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "awaiting_review": {
+            "type": "integer",
+            "title": "Awaiting Review"
+          },
+          "in_review": {
+            "type": "integer",
+            "title": "In Review"
+          },
+          "additional_information_required": {
+            "type": "integer",
+            "title": "Additional Information Required"
+          },
+          "on_hold": {
+            "type": "integer",
+            "title": "On Hold"
+          },
+          "approved": {
+            "type": "integer",
+            "title": "Approved"
+          },
+          "rejected": {
+            "type": "integer",
+            "title": "Rejected"
+          },
+          "withdrawn": {
+            "type": "integer",
+            "title": "Withdrawn"
+          },
+          "open_total": {
+            "type": "integer",
+            "title": "Open Total"
+          },
+          "open_by_risk": {
+            "items": {
+              "$ref": "#/components/schemas/RiskCount"
+            },
+            "type": "array",
+            "title": "Open By Risk"
+          },
+          "open_unassessed": {
+            "type": "integer",
+            "title": "Open Unassessed"
+          },
+          "documents_awaiting_review": {
+            "type": "integer",
+            "title": "Documents Awaiting Review"
+          },
+          "recent_activity": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicationActivity"
+            },
+            "type": "array",
+            "title": "Recent Activity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "generated_at",
+          "total",
+          "awaiting_review",
+          "in_review",
+          "additional_information_required",
+          "on_hold",
+          "approved",
+          "rejected",
+          "withdrawn",
+          "open_total",
+          "open_by_risk",
+          "open_unassessed",
+          "documents_awaiting_review",
+          "recent_activity"
+        ],
+        "title": "ApplicationPipeline"
+      },
+      "ApplicationProcessing": {
+        "properties": {
+          "submitted_24h": {
+            "type": "integer",
+            "title": "Submitted 24H"
+          },
+          "submitted_7d": {
+            "type": "integer",
+            "title": "Submitted 7D"
+          },
+          "decisions_24h": {
+            "type": "integer",
+            "title": "Decisions 24H"
+          },
+          "decisions_7d": {
+            "type": "integer",
+            "title": "Decisions 7D"
+          },
+          "awaiting_review": {
+            "type": "integer",
+            "title": "Awaiting Review"
+          },
+          "additional_information_required": {
+            "type": "integer",
+            "title": "Additional Information Required"
+          },
+          "open_total": {
+            "type": "integer",
+            "title": "Open Total"
+          },
+          "oldest_waiting_since": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oldest Waiting Since"
+          }
+        },
+        "type": "object",
+        "required": [
+          "submitted_24h",
+          "submitted_7d",
+          "decisions_24h",
+          "decisions_7d",
+          "awaiting_review",
+          "additional_information_required",
+          "open_total",
+          "oldest_waiting_since"
+        ],
+        "title": "ApplicationProcessing"
       },
       "ApplicationRow": {
         "properties": {
@@ -8671,6 +9105,52 @@
           "system"
         ],
         "title": "AuditCategory"
+      },
+      "AuditEntry": {
+        "properties": {
+          "sequence": {
+            "type": "integer",
+            "title": "Sequence"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "outcome": {
+            "type": "string",
+            "title": "Outcome"
+          },
+          "actor_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sequence",
+          "occurred_at",
+          "category",
+          "action",
+          "outcome",
+          "actor_role"
+        ],
+        "title": "AuditEntry"
       },
       "AuditEventOut": {
         "properties": {
@@ -11504,6 +11984,49 @@
         ],
         "title": "DocumentOut"
       },
+      "DocumentProcessing": {
+        "properties": {
+          "pending_scan": {
+            "type": "integer",
+            "title": "Pending Scan"
+          },
+          "scanning": {
+            "type": "integer",
+            "title": "Scanning"
+          },
+          "available": {
+            "type": "integer",
+            "title": "Available"
+          },
+          "rejected": {
+            "type": "integer",
+            "title": "Rejected"
+          },
+          "failed": {
+            "type": "integer",
+            "title": "Failed"
+          },
+          "superseded": {
+            "type": "integer",
+            "title": "Superseded"
+          },
+          "awaiting_staff_review": {
+            "type": "integer",
+            "title": "Awaiting Staff Review"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pending_scan",
+          "scanning",
+          "available",
+          "rejected",
+          "failed",
+          "superseded",
+          "awaiting_staff_review"
+        ],
+        "title": "DocumentProcessing"
+      },
       "DocumentReview": {
         "properties": {
           "decision": {
@@ -11876,6 +12399,105 @@
           "account_risk_level"
         ],
         "title": "IngestResult"
+      },
+      "JobFailure": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "document_scan",
+              "document_cleanup",
+              "detection_run"
+            ],
+            "title": "Kind"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "attempts": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attempts"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "status",
+          "error_code",
+          "attempts",
+          "occurred_at"
+        ],
+        "title": "JobFailure"
+      },
+      "JobSummary": {
+        "properties": {
+          "scan_queued": {
+            "type": "integer",
+            "title": "Scan Queued"
+          },
+          "scan_running": {
+            "type": "integer",
+            "title": "Scan Running"
+          },
+          "scan_retrying": {
+            "type": "integer",
+            "title": "Scan Retrying"
+          },
+          "scan_failed": {
+            "type": "integer",
+            "title": "Scan Failed"
+          },
+          "cleanup_failed": {
+            "type": "integer",
+            "title": "Cleanup Failed"
+          },
+          "stalled": {
+            "type": "integer",
+            "title": "Stalled"
+          },
+          "recent_failures": {
+            "items": {
+              "$ref": "#/components/schemas/JobFailure"
+            },
+            "type": "array",
+            "title": "Recent Failures"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scan_queued",
+          "scan_running",
+          "scan_retrying",
+          "scan_failed",
+          "cleanup_failed",
+          "stalled",
+          "recent_failures"
+        ],
+        "title": "JobSummary"
       },
       "LinkCardIn": {
         "properties": {
@@ -12345,6 +12967,83 @@
           "y"
         ],
         "title": "NetworkNode"
+      },
+      "OperationsOverview": {
+        "properties": {
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "institution",
+              "platform"
+            ],
+            "title": "Scope"
+          },
+          "environment": {
+            "type": "string",
+            "title": "Environment"
+          },
+          "overall_health": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "degraded",
+              "down"
+            ],
+            "title": "Overall Health"
+          },
+          "health": {
+            "items": {
+              "$ref": "#/components/schemas/ServiceHealth"
+            },
+            "type": "array",
+            "title": "Health"
+          },
+          "applications": {
+            "$ref": "#/components/schemas/ApplicationProcessing"
+          },
+          "risk": {
+            "$ref": "#/components/schemas/RiskActivity"
+          },
+          "documents": {
+            "$ref": "#/components/schemas/DocumentProcessing"
+          },
+          "jobs": {
+            "$ref": "#/components/schemas/JobSummary"
+          },
+          "recent_audit": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/AuditEntry"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recent Audit"
+          }
+        },
+        "type": "object",
+        "required": [
+          "generated_at",
+          "scope",
+          "environment",
+          "overall_health",
+          "health",
+          "applications",
+          "risk",
+          "documents",
+          "jobs",
+          "recent_audit"
+        ],
+        "title": "OperationsOverview"
       },
       "OrgRef": {
         "properties": {
@@ -13369,7 +14068,22 @@
             "type": "string",
             "maxLength": 1000,
             "minLength": 5,
-            "title": "Note"
+            "title": "Note",
+            "description": "Staff-only review note"
+          },
+          "student_message": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000,
+                "minLength": 5
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Student Message",
+            "description": "Shown to the student. Required when requesting information or rejecting an application."
           }
         },
         "type": "object",
@@ -13379,6 +14093,64 @@
         ],
         "title": "ReviewUpdate",
         "description": "A human review decision. The platform never changes status on its own."
+      },
+      "RiskActivity": {
+        "properties": {
+          "assessments_24h": {
+            "type": "integer",
+            "title": "Assessments 24H"
+          },
+          "assessments_7d": {
+            "type": "integer",
+            "title": "Assessments 7D"
+          },
+          "open_elevated": {
+            "type": "integer",
+            "title": "Open Elevated"
+          },
+          "open_unassessed": {
+            "type": "integer",
+            "title": "Open Unassessed"
+          },
+          "last_run_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Run Status"
+          },
+          "last_run_finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Run Finished At"
+          },
+          "failed_runs_7d": {
+            "type": "integer",
+            "title": "Failed Runs 7D"
+          }
+        },
+        "type": "object",
+        "required": [
+          "assessments_24h",
+          "assessments_7d",
+          "open_elevated",
+          "open_unassessed",
+          "last_run_status",
+          "last_run_finished_at",
+          "failed_runs_7d"
+        ],
+        "title": "RiskActivity"
       },
       "RiskAssessmentOut": {
         "properties": {
@@ -13454,6 +14226,24 @@
           "signals"
         ],
         "title": "RiskAssessmentOut"
+      },
+      "RiskCount": {
+        "properties": {
+          "level": {
+            "type": "string",
+            "title": "Level"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "level",
+          "count"
+        ],
+        "title": "RiskCount"
       },
       "RiskLevel": {
         "type": "string",
@@ -13933,6 +14723,41 @@
         ],
         "title": "SecuritySummary"
       },
+      "ServiceHealth": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "degraded",
+              "down",
+              "not_configured",
+              "simulated"
+            ],
+            "title": "Status"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "name",
+          "status",
+          "detail"
+        ],
+        "title": "ServiceHealth"
+      },
       "SimulationResult": {
         "properties": {
           "scenario": {
@@ -14078,6 +14903,105 @@
         ],
         "title": "StudentActivationRequest"
       },
+      "StudentActivityItem": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "status_change",
+              "document_review"
+            ],
+            "title": "Kind"
+          },
+          "application_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Application Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "application_id",
+          "reference",
+          "title",
+          "detail",
+          "occurred_at"
+        ],
+        "title": "StudentActivityItem"
+      },
+      "StudentApplicationCounts": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "draft": {
+            "type": "integer",
+            "title": "Draft"
+          },
+          "submitted": {
+            "type": "integer",
+            "title": "Submitted"
+          },
+          "under_review": {
+            "type": "integer",
+            "title": "Under Review"
+          },
+          "additional_information": {
+            "type": "integer",
+            "title": "Additional Information"
+          },
+          "approved": {
+            "type": "integer",
+            "title": "Approved"
+          },
+          "rejected": {
+            "type": "integer",
+            "title": "Rejected"
+          },
+          "withdrawn": {
+            "type": "integer",
+            "title": "Withdrawn"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "draft",
+          "submitted",
+          "under_review",
+          "additional_information",
+          "approved",
+          "rejected",
+          "withdrawn"
+        ],
+        "title": "StudentApplicationCounts"
+      },
       "StudentApplicationDraft": {
         "properties": {
           "award_year": {
@@ -14187,7 +15111,22 @@
           },
           "actor_role": {
             "type": "string",
+            "enum": [
+              "student",
+              "financial_aid_office"
+            ],
             "title": "Actor Role"
+          },
+          "student_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Student Message"
           },
           "created_at": {
             "type": "string",
@@ -14200,9 +15139,11 @@
           "from_status",
           "to_status",
           "actor_role",
+          "student_message",
           "created_at"
         ],
-        "title": "StudentApplicationHistory"
+        "title": "StudentApplicationHistory",
+        "description": "Student-safe lifecycle entry. Staff-only review notes and staff roles are never included."
       },
       "StudentApplicationOut": {
         "properties": {
@@ -14297,20 +15238,13 @@
             ],
             "title": "Student Aid Index"
           },
-          "risk_level": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Risk Level"
-          },
           "is_editable": {
             "type": "boolean",
             "title": "Is Editable"
+          },
+          "is_withdrawable": {
+            "type": "boolean",
+            "title": "Is Withdrawable"
           },
           "outstanding_requirements": {
             "items": {
@@ -14318,6 +15252,16 @@
             },
             "type": "array",
             "title": "Outstanding Requirements"
+          },
+          "status_message": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StudentStatusMessage"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "history": {
             "items": {
@@ -14339,12 +15283,100 @@
           "program",
           "requested_amount",
           "student_aid_index",
-          "risk_level",
           "is_editable",
+          "is_withdrawable",
           "outstanding_requirements",
+          "status_message",
           "history"
         ],
         "title": "StudentApplicationOut"
+      },
+      "StudentApplicationSubmit": {
+        "properties": {
+          "response_note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response Note"
+          }
+        },
+        "type": "object",
+        "title": "StudentApplicationSubmit",
+        "description": "Optional covering note, used when responding to a request for additional information."
+      },
+      "StudentDashboardOut": {
+        "properties": {
+          "profile": {
+            "$ref": "#/components/schemas/StudentDashboardProfile"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/StudentApplicationCounts"
+          },
+          "information_requests": {
+            "items": {
+              "$ref": "#/components/schemas/StudentInformationRequest"
+            },
+            "type": "array",
+            "title": "Information Requests"
+          },
+          "recent_activity": {
+            "items": {
+              "$ref": "#/components/schemas/StudentActivityItem"
+            },
+            "type": "array",
+            "title": "Recent Activity"
+          },
+          "applications": {
+            "items": {
+              "$ref": "#/components/schemas/StudentPortalApplication"
+            },
+            "type": "array",
+            "title": "Applications"
+          }
+        },
+        "type": "object",
+        "required": [
+          "profile",
+          "counts",
+          "information_requests",
+          "recent_activity",
+          "applications"
+        ],
+        "title": "StudentDashboardOut"
+      },
+      "StudentDashboardProfile": {
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "student_ref": {
+            "type": "string",
+            "title": "Student Ref"
+          },
+          "institution": {
+            "type": "string",
+            "title": "Institution"
+          }
+        },
+        "type": "object",
+        "required": [
+          "full_name",
+          "email",
+          "student_ref",
+          "institution"
+        ],
+        "title": "StudentDashboardProfile"
       },
       "StudentDetail": {
         "properties": {
@@ -14405,6 +15437,62 @@
           "identity_tokens"
         ],
         "title": "StudentDetail"
+      },
+      "StudentInformationRequest": {
+        "properties": {
+          "application_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Application Id"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference"
+          },
+          "program": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Program"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "requested_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "application_id",
+          "reference",
+          "program",
+          "message",
+          "requested_at"
+        ],
+        "title": "StudentInformationRequest"
       },
       "StudentInvitationCreate": {
         "properties": {
@@ -14496,6 +15584,11 @@
       },
       "StudentPortalApplication": {
         "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
           "reference": {
             "type": "string",
             "title": "Reference"
@@ -14504,15 +15597,7 @@
             "type": "string",
             "title": "Status"
           },
-          "program": {
-            "type": "string",
-            "title": "Program"
-          },
-          "requested_amount": {
-            "type": "string",
-            "title": "Requested Amount"
-          },
-          "risk_level": {
+          "award_year": {
             "anyOf": [
               {
                 "type": "string"
@@ -14521,16 +15606,57 @@
                 "type": "null"
               }
             ],
-            "title": "Risk Level"
+            "title": "Award Year"
+          },
+          "program": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Program"
+          },
+          "requested_amount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested Amount"
+          },
+          "submitted_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted At"
+          },
+          "is_editable": {
+            "type": "boolean",
+            "title": "Is Editable"
           }
         },
         "type": "object",
         "required": [
+          "id",
           "reference",
           "status",
+          "award_year",
           "program",
           "requested_amount",
-          "risk_level"
+          "submitted_at",
+          "is_editable"
         ],
         "title": "StudentPortalApplication"
       },
@@ -14668,6 +15794,38 @@
           "masked_name"
         ],
         "title": "StudentRef"
+      },
+      "StudentStatusMessage": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message",
+          "created_at"
+        ],
+        "title": "StudentStatusMessage",
+        "description": "What the financial aid office told the student about the application's current status."
       },
       "SystemSettings": {
         "properties": {
@@ -17115,6 +18273,10 @@
     {
       "name": "system",
       "description": "Health, readiness and read-only system settings"
+    },
+    {
+      "name": "operations",
+      "description": "Institution-scoped service health, background jobs and processing activity"
     }
   ]
 }

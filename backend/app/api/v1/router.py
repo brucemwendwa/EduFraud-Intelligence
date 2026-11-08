@@ -15,6 +15,7 @@ from app.api.v1 import (
     disbursements,
     documents,
     network,
+    operations,
     organizations,
     provider_events,
     security,
@@ -57,3 +58,4 @@ api_router.include_router(verification_requests.router)
 api_router.include_router(provider_events.router)
 api_router.include_router(simulations.router)
 api_router.include_router(system.router)
+api_router.include_router(operations.router)

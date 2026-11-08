@@ -33,6 +33,7 @@ export const P = {
   locationRead: 'location:read',
   verificationsDecide: 'verifications:decide',
   simulationsRun: 'simulations:run',
+  operationsRead: 'operations:read',
 } as const;
 
 export type Permission = (typeof P)[keyof typeof P];

@@ -45,6 +45,18 @@ export type DisbursementSummary = S['DisbursementSummary'];
 export type VerificationRow = S['VerificationRow'];
 export type StudentDetail = S['StudentDetail'];
 
+export type StudentApplication = S['StudentApplicationOut'];
+export type StudentApplicationDraft = S['StudentApplicationDraft'];
+export type StudentDashboard = S['StudentDashboardOut'];
+export type StudentActivityItem = S['StudentActivityItem'];
+export type StudentPortalApplication = S['StudentPortalApplication'];
+export type ApplicationPipeline = S['ApplicationPipeline'];
+export type ApplicationActivity = S['ApplicationActivity'];
+export type ApplicationHistoryItem = S['ApplicationHistoryItem'];
+export type OperationsOverview = S['OperationsOverview'];
+export type ServiceHealth = S['ServiceHealth'];
+export type JobFailure = S['JobFailure'];
+
 export type ApplicationDocument = S['DocumentOut'];
 export type DocumentReview = S['DocumentReview'];
 export type DocumentDownload = S['DownloadUrl'];

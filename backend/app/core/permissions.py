@@ -43,6 +43,7 @@ class P(StrEnum):
     LOCATION_READ = "location:read"
     VERIFICATIONS_DECIDE = "verifications:decide"
     SIMULATIONS_RUN = "simulations:run"
+    OPERATIONS_READ = "operations:read"
 
 
 PERMISSION_DESCRIPTIONS: dict[P, tuple[str, str]] = {
@@ -79,6 +80,7 @@ PERMISSION_DESCRIPTIONS: dict[P, tuple[str, str]] = {
     P.LOCATION_READ: ("privacy", "View coarse transaction and sign-in locations (city/country only)"),
     P.VERIFICATIONS_DECIDE: ("verification", "Conduct verification requests and record their outcome"),
     P.SIMULATIONS_RUN: ("detection", "Play synthetic demonstration scenarios (demo mode only)"),
+    P.OPERATIONS_READ: ("governance", "View service health, background jobs and processing activity"),
 }
 
 
@@ -183,7 +185,7 @@ ROLES: tuple[RoleDef, ...] = (
         key="auditor",
         name="Read-only Auditor",
         description="Reviews activity and the audit trail without changing data or seeing unmasked PII.",
-        permissions=_READ_ONLY | {P.AUDIT_READ, P.USERS_READ},
+        permissions=_READ_ONLY | {P.AUDIT_READ, P.USERS_READ, P.OPERATIONS_READ},
     ),
 )
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Annotated, Any
 
@@ -15,7 +15,10 @@ from app.core.permissions import P
 from app.db.types import utcnow
 from app.models import (
     Alert,
+    ApplicationDocument,
+    ApplicationStatusHistory,
     Disbursement,
+    FinancialAidApplication,
     InvestigationCase,
     SecurityEvent,
     Student,
@@ -24,13 +27,23 @@ from app.models import (
     Transaction,
     VerificationRequest,
 )
-from app.models.enums import AccountStatus, CaseStatus, DisbursementStatus, SecurityEventType
+from app.models.enums import (
+    AccountStatus,
+    ApplicationStatus,
+    CaseStatus,
+    DisbursementStatus,
+    DocumentReviewStatus,
+    DocumentStatus,
+    SecurityEventType,
+)
 from app.schemas.common import Schema
 from app.services.alerts import LIVE_STATUSES
+from app.services.application_lifecycle import AWAITING_REVIEW, OPEN_FOR_REVIEW
 from app.services.verification_requests import OPEN_STATUSES
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
+_RECENT_APPLICATION_EVENTS = 12
 _E = SecurityEventType
 _ELEVATED = ("medium", "high", "critical")
 NOTABLE_EVENTS = {
@@ -78,6 +91,39 @@ class DashboardOverview(Schema):
     investigation_status: list[dict[str, Any]]
     alert_status: list[dict[str, Any]]
     recent_activity: list[ActivityItem]
+
+
+class RiskCount(Schema):
+    level: str
+    count: int
+
+
+class ApplicationActivity(Schema):
+    application_id: str
+    reference: str
+    student_ref: str
+    from_status: str | None
+    to_status: str
+    actor_role: str | None
+    risk_level: str | None
+    occurred_at: datetime
+
+
+class ApplicationPipeline(Schema):
+    generated_at: datetime
+    total: int
+    awaiting_review: int
+    in_review: int
+    additional_information_required: int
+    on_hold: int
+    approved: int
+    rejected: int
+    withdrawn: int
+    open_total: int
+    open_by_risk: list[RiskCount]
+    open_unassessed: int
+    documents_awaiting_review: int
+    recent_activity: list[ApplicationActivity]
 
 
 def _count(db: DB, principal: Principal, model: type, *where: Any) -> int:
@@ -284,4 +330,119 @@ def overview(db: DB, principal: Annotated[Principal, Depends(require(P.DASHBOARD
         investigation_status=[{"status": k, "count": v} for k, v in sorted(cases.items())],
         alert_status=[{"status": k, "count": v} for k, v in sorted(alerts.items())],
         recent_activity=activity[:14],
+    )
+
+
+@router.get("/applications", response_model=ApplicationPipeline, summary="Scoped aid application pipeline")
+def application_pipeline(
+    db: DB, principal: Annotated[Principal, Depends(require(P.APPLICATIONS_READ))]
+) -> ApplicationPipeline:
+    """Application-processing figures only. Unsubmitted drafts belong to the student and are never counted."""
+    app = FinancialAidApplication
+    submitted = app.submitted_at.is_not(None)
+    by_status: Counter[str] = Counter(
+        dict(
+            db.execute(
+                scoped(select(app.status, func.count()).where(submitted).group_by(app.status), app, principal)
+            ).all()
+        )
+    )
+    open_values = [s.value for s in OPEN_FOR_REVIEW]
+    open_risk: Counter[str | None] = Counter(
+        dict(
+            db.execute(
+                scoped(
+                    select(app.risk_level, func.count())
+                    .where(submitted, app.status.in_(open_values))
+                    .group_by(app.risk_level),
+                    app,
+                    principal,
+                )
+            ).all()
+        )
+    )
+    documents_awaiting_review = (
+        db.scalar(
+            scoped(
+                select(func.count())
+                .select_from(ApplicationDocument)
+                .join(app, app.id == ApplicationDocument.application_id)
+                .where(
+                    submitted,
+                    ApplicationDocument.status == DocumentStatus.AVAILABLE,
+                    ApplicationDocument.review_status == DocumentReviewStatus.PENDING,
+                ),
+                ApplicationDocument,
+                principal,
+            )
+        )
+        or 0
+    )
+
+    # Status changes first; records that predate lifecycle history fill the list by submission time.
+    history = ApplicationStatusHistory
+    rows = db.execute(
+        scoped(
+            select(history, app)
+            .join(app, app.id == history.application_id)
+            .where(
+                submitted,
+                history.from_status.is_distinct_from(history.to_status),
+                history.to_status != ApplicationStatus.DRAFT,
+            )
+            .order_by(history.created_at.desc())
+            .limit(_RECENT_APPLICATION_EVENTS),
+            history,
+            principal,
+        )
+    ).all()
+    activity = [
+        ApplicationActivity(
+            application_id=str(a.id),
+            reference=a.reference,
+            student_ref=a.student.student_ref,
+            from_status=h.from_status,
+            to_status=h.to_status,
+            actor_role=h.actor_role,
+            risk_level=a.risk_level,
+            occurred_at=h.created_at,
+        )
+        for h, a in rows
+    ]
+    if len(activity) < _RECENT_APPLICATION_EVENTS:
+        seen = {item.application_id for item in activity}
+        for a in db.scalars(
+            scoped(select(app).where(submitted), app, principal)
+            .order_by(app.submitted_at.desc())
+            .limit(_RECENT_APPLICATION_EVENTS)
+        ):
+            if str(a.id) not in seen and len(activity) < _RECENT_APPLICATION_EVENTS:
+                activity.append(
+                    ApplicationActivity(
+                        application_id=str(a.id),
+                        reference=a.reference,
+                        student_ref=a.student.student_ref,
+                        from_status=None,
+                        to_status=a.status,
+                        actor_role=None,
+                        risk_level=a.risk_level,
+                        occurred_at=a.submitted_at,
+                    )
+                )
+
+    return ApplicationPipeline(
+        generated_at=utcnow(),
+        total=sum(by_status.values()),
+        awaiting_review=sum(by_status[s.value] for s in AWAITING_REVIEW),
+        in_review=by_status[ApplicationStatus.IN_REVIEW.value],
+        additional_information_required=by_status[ApplicationStatus.ADDITIONAL_INFORMATION_REQUIRED.value],
+        on_hold=by_status[ApplicationStatus.ON_HOLD.value],
+        approved=by_status[ApplicationStatus.APPROVED.value],
+        rejected=by_status[ApplicationStatus.REJECTED.value],
+        withdrawn=by_status[ApplicationStatus.WITHDRAWN.value],
+        open_total=sum(by_status[v] for v in open_values),
+        open_by_risk=[RiskCount(level=lvl, count=open_risk[lvl]) for lvl in ("critical", "high", "medium", "low")],
+        open_unassessed=open_risk[None],
+        documents_awaiting_review=documents_awaiting_review,
+        recent_activity=activity,
     )
