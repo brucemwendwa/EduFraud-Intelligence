@@ -14,6 +14,7 @@ from sqlalchemy import func, select
 
 from app.api.deps import DB, Principal, get_scoped_or_404, require, scoped
 from app.api.v1.users import assignable_role
+from app.core.client import client_address
 from app.core.config import get_settings
 from app.core.errors import ConflictError, ForbiddenError, UnauthorizedError, ValidationFailedError
 from app.core.permissions import P
@@ -178,8 +179,7 @@ def revoke_invitation(
 
 @router.post("/staff-activation", response_model=StaffActivationOut, summary="Activate an invited staff account")
 def activate_staff(body: StaffActivationRequest, request: Request, db: DB) -> StaffActivationOut:
-    client = request.client.host if request.client else "unknown"
-    if not activation_limiter.allow(client):
+    if not activation_limiter.allow(client_address(request)):
         raise UnauthorizedError(_INVALID_LINK)
     problems = password_problems(body.password)
     if problems:

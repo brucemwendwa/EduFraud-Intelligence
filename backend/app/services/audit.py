@@ -17,6 +17,7 @@ from fastapi import Request
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from app.core.client import client_address
 from app.core.logging import redact_value
 from app.core.tokenization import hash_ip
 from app.db.types import utcnow
@@ -90,7 +91,7 @@ def record(
         target_type=target_type,
         target_id=str(target_id) if target_id else None,
         target_ref=target_ref,
-        ip_hash=hash_ip(request.client.host) if request and request.client else None,
+        ip_hash=hash_ip(client_address(request)) if request else None,
         user_agent=(request.headers.get("user-agent") or "")[:200] if request else None,
         details=json.loads(json.dumps(redact_value("details", details or {}), default=str)),
         prev_hash=last[1] if last else GENESIS_HASH,

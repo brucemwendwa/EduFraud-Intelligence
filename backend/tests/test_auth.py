@@ -36,6 +36,8 @@ _PRODUCTION_SETTINGS = {
     "s3_bucket_name": "edushield-private-test",
     "s3_access_key_id": "test-access-key",
     "s3_secret_access_key": "not-a-real-storage-secret",
+    "email_from": "EduShield AI <no-reply@mail.example.edu>",
+    "student_activation_base_url": "https://aid.example.edu/activate",
 }
 
 
@@ -235,9 +237,37 @@ def test_production_refuses_wildcard_cors_and_plain_storage_traffic() -> None:
         "s3_access_key_id": "k",
         "s3_secret_access_key": "s",
         "demo_mode": False,
+        "email_from": "EduShield AI <no-reply@mail.example.edu>",
+        "student_activation_base_url": "https://aid.example.edu/activate",
     }
     assert _hosted_settings(**complete).is_production
     with pytest.raises(ValueError, match="exact origins"):
         _hosted_settings(**complete, cors_origins="*")
     with pytest.raises(ValueError, match="TLS"):
         _hosted_settings(**complete, s3_use_tls=False)
+
+
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        ("postgresql://u:p@db.internal:5432/x", "postgresql+psycopg://u:p@db.internal:5432/x"),
+        ("postgres://u:p@db.internal:5432/x", "postgresql+psycopg://u:p@db.internal:5432/x"),
+        ("postgresql+psycopg://u:p@db/x", "postgresql+psycopg://u:p@db/x"),
+        ("sqlite:///./var/x.db", "sqlite:///./var/x.db"),
+    ],
+)
+def test_platform_database_urls_use_the_installed_driver(url: str, expected: str) -> None:
+    assert Settings(_env_file=None, database_url=url).database_url == expected
+
+
+@pytest.mark.parametrize(
+    ("override", "message"),
+    [
+        ({"student_activation_base_url": "http://localhost:5173/activate"}, "STUDENT_ACTIVATION_BASE_URL"),
+        ({"public_url": "http://aid.example.edu"}, "PUBLIC_URL"),
+        ({"email_from": "no-reply@edushield.local"}, "EMAIL_FROM"),
+    ],
+)
+def test_production_refuses_links_and_senders_that_cannot_work(override: dict, message: str) -> None:
+    with pytest.raises(ValidationError, match=message):
+        Settings(_env_file=None, demo_mode=False, **{**_PRODUCTION_SETTINGS, **override})

@@ -1,5 +1,5 @@
 # One image for the API and web client, so the SameSite=Strict session cookie stays same-origin.
-# Run the same image three ways; see "Deploying" in README.md.
+# Runs as the web, worker and scheduler services; see docs/DEPLOYMENT.md.
 FROM node:24-slim AS web
 WORKDIR /web
 COPY frontend/package.json frontend/package-lock.json ./
@@ -19,4 +19,4 @@ COPY --from=web /web/dist /app/frontend/dist
 RUN useradd --create-home --uid 10001 edushield && chown -R edushield /app
 USER edushield
 EXPOSE 8000
-CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers"]
+CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --no-proxy-headers"]

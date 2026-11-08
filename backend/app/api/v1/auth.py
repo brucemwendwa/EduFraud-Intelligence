@@ -12,6 +12,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func, select
 
 from app.api.deps import DB, CurrentPrincipal, _extract_token, get_current_user
+from app.core.client import client_address
 from app.core.config import get_settings
 from app.core.errors import AppError, LockedError, UnauthorizedError, ValidationFailedError
 from app.core.ratelimit import login_limiter, password_reset_limiter
@@ -76,7 +77,7 @@ def build_me(db: DB, user: User) -> Me:
 
 def _authenticate(db: DB, request: Request, email: str, password: str) -> User:
     settings = get_settings()
-    client = request.client.host if request.client else "unknown"
+    client = client_address(request)
     if not login_limiter.allow(client):
         raise TooManyRequestsError("Too many sign-in attempts. Please wait a minute and try again.")
 
@@ -244,7 +245,7 @@ def _reset_token_hash(token: str) -> str:
 
 
 def _client_key(request: Request) -> str:
-    return request.client.host if request.client else "unknown"
+    return client_address(request)
 
 
 def _send_password_reset(recipient: str, token: str) -> None:

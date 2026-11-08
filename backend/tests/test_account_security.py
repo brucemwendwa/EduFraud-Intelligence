@@ -345,3 +345,50 @@ class TestBoundaries:
         assert invitation.status_code == 201, invitation.text
         lakeshore = as_user(LS_INVESTIGATOR)
         assert lakeshore.post(f"/api/v1/student-invitations/{invitation.json()['id']}/revoke").status_code == 403
+
+
+class TestClientAddress:
+    def _request(self, headers: dict[str, str], peer: str = "10.0.0.9"):  # type: ignore[no-untyped-def]
+        from starlette.requests import Request
+
+        scope = {
+            "type": "http",
+            "headers": [(k.lower().encode(), v.encode()) for k, v in headers.items()],
+            "client": (peer, 1234),
+        }
+        return Request(scope)
+
+    def _with_header(self, monkeypatch: pytest.MonkeyPatch, header: str | None) -> None:
+        from app.core import client
+
+        settings = get_settings().model_copy(update={"client_ip_header": header})
+        monkeypatch.setattr(client, "get_settings", lambda: settings)
+
+    def test_forwarded_headers_are_ignored_by_default(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        from app.core.client import client_address
+
+        self._with_header(monkeypatch, None)
+        request = self._request({"X-Forwarded-For": "203.0.113.5", "X-Real-IP": "203.0.113.6"})
+        assert client_address(request) == "10.0.0.9"
+
+    def test_only_the_configured_header_is_read(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        from app.core.client import client_address
+
+        self._with_header(monkeypatch, "X-Real-IP")
+        request = self._request({"X-Forwarded-For": "203.0.113.5", "X-Real-IP": "198.51.100.7"})
+        assert client_address(request) == "198.51.100.7"
+
+    @pytest.mark.parametrize("value", ["", "not-an-address", "1.2.3.4.5"])
+    def test_unusable_values_fall_back_to_the_connection(self, monkeypatch: pytest.MonkeyPatch, value: str) -> None:
+        from app.core.client import client_address
+
+        self._with_header(monkeypatch, "X-Real-IP")
+        assert client_address(self._request({"X-Real-IP": value})) == "10.0.0.9"
+
+    def test_rotating_a_forged_header_cannot_escape_the_login_limit(self, client: TestClient) -> None:
+        body = {"email": "nobody@northbridge.example", "password": "wrong-password"}
+        codes = [
+            client.post("/api/v1/auth/login", json=body, headers={"X-Forwarded-For": f"203.0.113.{i}"}).status_code
+            for i in range(22)
+        ]
+        assert codes[-1] == 429

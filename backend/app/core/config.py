@@ -44,6 +44,8 @@ class Settings(BaseSettings):
     sentry_dsn: SecretStr | None = None
 
     cors_origins: str = "http://localhost:5173"
+    # A header the hosting platform itself sets to the caller's address. Unset means the socket address is used.
+    client_ip_header: str | None = None
     # Set to the built web client's directory to serve it from the API's own origin.
     frontend_dist: str | None = None
     login_max_attempts: int = 5
@@ -82,6 +84,16 @@ class Settings(BaseSettings):
     document_scan_lease_seconds: int = Field(default=15 * 60, ge=60, le=24 * 60 * 60)
     document_scan_retry_base_seconds: int = Field(default=60, ge=10, le=60 * 60)
 
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def _use_the_installed_postgres_driver(cls, v: object) -> object:
+        """Hosting platforms hand out postgres:// or postgresql:// URLs; this application ships psycopg 3."""
+        if isinstance(v, str):
+            for prefix in ("postgres://", "postgresql://"):
+                if v.startswith(prefix):
+                    return "postgresql+psycopg://" + v[len(prefix) :]
+        return v
+
     @field_validator(
         "celery_broker_url",
         "data_encryption_key",
@@ -98,6 +110,7 @@ class Settings(BaseSettings):
         "public_url",
         "rate_limit_redis_url",
         "sentry_dsn",
+        "client_ip_header",
         mode="before",
     )
     @classmethod
@@ -134,6 +147,12 @@ class Settings(BaseSettings):
                 raise ValueError("Production requires private S3 document storage configuration")
             if not self.s3_use_tls:
                 raise ValueError("Production requires TLS for document storage")
+            if not self.student_activation_base_url.startswith("https://"):
+                raise ValueError("STUDENT_ACTIVATION_BASE_URL must be an https:// address in production")
+            if self.public_url and not self.public_url.startswith("https://"):
+                raise ValueError("PUBLIC_URL must be an https:// address in production")
+            if self.email_from.rstrip("> ").endswith(".local"):
+                raise ValueError("EMAIL_FROM must use a verified sending domain in production")
         return self
 
     @property
