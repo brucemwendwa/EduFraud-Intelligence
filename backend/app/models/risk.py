@@ -42,6 +42,9 @@ class RiskAssessment(UUIDPrimaryKey, TenantScoped, Base):
     triggered_by_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     is_current: Mapped[bool] = mapped_column(default=True)
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
+    # What produced this result: versions, training population, and a hash of its inputs.
+    provenance: Mapped[dict[str, Any] | None]
+    input_fingerprint: Mapped[str | None] = mapped_column(String(64))
 
     signals: Mapped[list[FraudSignal]] = relationship(
         back_populates="assessment",

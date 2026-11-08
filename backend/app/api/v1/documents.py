@@ -152,6 +152,7 @@ async def _create_document(
         review_status=DocumentReviewStatus.PENDING,
         scan_token=secrets.token_hex(32),
         replaces_document_id=replaces_document_id,
+        is_synthetic=app.is_synthetic,
     )
     try:
         db.add(doc)

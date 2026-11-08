@@ -9299,6 +9299,56 @@
         ],
         "title": "AssessmentHistoryItem"
       },
+      "AssessmentProvenance": {
+        "properties": {
+          "engine": {
+            "type": "string",
+            "title": "Engine"
+          },
+          "rules_version": {
+            "type": "string",
+            "title": "Rules Version"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version"
+          },
+          "graph_version": {
+            "type": "string",
+            "title": "Graph Version"
+          },
+          "model_applied": {
+            "type": "boolean",
+            "title": "Model Applied"
+          },
+          "population_size": {
+            "type": "integer",
+            "title": "Population Size"
+          },
+          "real_records_in_population": {
+            "type": "integer",
+            "title": "Real Records In Population"
+          }
+        },
+        "type": "object",
+        "required": [
+          "engine",
+          "rules_version",
+          "model_version",
+          "graph_version",
+          "model_applied",
+          "population_size",
+          "real_records_in_population"
+        ],
+        "title": "AssessmentProvenance"
+      },
       "AssigneeOut": {
         "properties": {
           "id": {
@@ -14553,6 +14603,41 @@
             },
             "type": "array",
             "title": "Signals"
+          },
+          "provenance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AssessmentProvenance"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "input_fingerprint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Fingerprint"
+          },
+          "score_reproducible": {
+            "type": "boolean",
+            "title": "Score Reproducible",
+            "description": "Stored signals recompute to the stored score",
+            "default": false
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Limitations",
+            "default": []
           }
         },
         "type": "object",

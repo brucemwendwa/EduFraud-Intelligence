@@ -174,6 +174,7 @@ def create_student_application(
         reference=_reference(db),
         status=ApplicationStatus.DRAFT,
         submission_channel="student_portal",
+        is_synthetic=student.is_synthetic,
         verification_status=VerificationStatus.NOT_REQUIRED,
         review_status=ReviewStatus.UNREVIEWED,
         **body.model_dump(exclude_none=True),

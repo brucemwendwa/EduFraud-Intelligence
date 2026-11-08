@@ -2756,6 +2756,23 @@ export interface components {
              */
             created_at: string;
         };
+        /** AssessmentProvenance */
+        AssessmentProvenance: {
+            /** Engine */
+            engine: string;
+            /** Rules Version */
+            rules_version: string;
+            /** Model Version */
+            model_version: string | null;
+            /** Graph Version */
+            graph_version: string;
+            /** Model Applied */
+            model_applied: boolean;
+            /** Population Size */
+            population_size: number;
+            /** Real Records In Population */
+            real_records_in_population: number;
+        };
         /** AssigneeOut */
         AssigneeOut: {
             /**
@@ -4619,6 +4636,20 @@ export interface components {
             created_at: string;
             /** Signals */
             signals: components["schemas"]["FraudSignalOut"][];
+            provenance?: components["schemas"]["AssessmentProvenance"] | null;
+            /** Input Fingerprint */
+            input_fingerprint?: string | null;
+            /**
+             * Score Reproducible
+             * @description Stored signals recompute to the stored score
+             * @default false
+             */
+            score_reproducible: boolean;
+            /**
+             * Limitations
+             * @default []
+             */
+            limitations: string[];
         };
         /** RiskCount */
         RiskCount: {

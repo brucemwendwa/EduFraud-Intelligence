@@ -8,6 +8,8 @@ Usage:
 
 from __future__ import annotations
 
+import hashlib
+import json
 import uuid
 from dataclasses import dataclass
 from datetime import datetime
@@ -21,7 +23,7 @@ from app.detection.anomaly import FEATURES, AnomalyModel
 from app.detection.context import DetectionContext, build_context
 from app.detection.rules import application, biometric, disbursement, enrollment, identity
 from app.detection.signals import RECOMMENDATIONS, Signal, combine, dedupe, explain, level_for
-from app.detection.versions import ENGINE_METHOD, MODEL_VERSION, RULES_VERSION
+from app.detection.versions import ENGINE_METHOD, GRAPH_VERSION, MODEL_VERSION, RULES_VERSION
 from app.models import Disbursement, FinancialAidApplication, FraudSignal, RiskAssessment, User
 from app.models.enums import RiskLevel, VerificationOutcome
 from app.services import alerts as alert_service
@@ -107,6 +109,7 @@ class DetectionEngine:
         else:
             if current is not None:
                 current.is_current = False
+            provenance = self._provenance()
             assessment = RiskAssessment(
                 organization_id=app.organization_id,
                 subject_type="application",
@@ -119,6 +122,8 @@ class DetectionEngine:
                 explanation=result.explanation,
                 recommended_action=result.recommendation,
                 feature_snapshot=result.features,
+                provenance=provenance,
+                input_fingerprint=self._fingerprint(provenance, result),
                 triggered_by=triggered_by,
                 triggered_by_user_id=user.id if user else None,
                 is_current=True,
@@ -160,6 +165,28 @@ class DetectionEngine:
             verification_id=failed[-1].id if failed else None,
         )
         return assessment, changed, created
+
+    def _provenance(self) -> dict[str, object]:
+        applications = self.ctx.applications
+        return {
+            "engine": ENGINE_METHOD,
+            "rules_version": RULES_VERSION,
+            "model_version": MODEL_VERSION if self.model.model is not None else None,
+            "graph_version": GRAPH_VERSION,
+            "model_applied": self.model.model is not None,
+            "population_size": len(applications),
+            "real_records_in_population": sum(not a.is_synthetic for a in applications),
+        }
+
+    @staticmethod
+    def _fingerprint(provenance: dict[str, object], result: Evaluation) -> str:
+        """A hash of everything that determined this result, so a later change to it can be detected."""
+        payload = {
+            "provenance": provenance,
+            "features": result.features,
+            "signals": sorted((s.code, s.weight) for s in result.signals),
+        }
+        return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
 
     def _score_disbursements(self, app: FinancialAidApplication) -> Disbursement | None:
         riskiest, best = None, 0.0

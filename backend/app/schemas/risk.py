@@ -25,6 +25,16 @@ class FraudSignalOut(Schema):
     version: str
 
 
+class AssessmentProvenance(Schema):
+    engine: str
+    rules_version: str
+    model_version: str | None
+    graph_version: str
+    model_applied: bool
+    population_size: int
+    real_records_in_population: int
+
+
 class RiskAssessmentOut(Schema):
     id: uuid.UUID
     score: float
@@ -37,6 +47,10 @@ class RiskAssessmentOut(Schema):
     triggered_by: str
     created_at: datetime
     signals: list[FraudSignalOut]
+    provenance: AssessmentProvenance | None = None
+    input_fingerprint: str | None = None
+    score_reproducible: bool = Field(default=False, description="Stored signals recompute to the stored score")
+    limitations: list[str] = []
 
 
 class AssessmentHistoryItem(Schema):

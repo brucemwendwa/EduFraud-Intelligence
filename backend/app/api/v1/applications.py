@@ -18,6 +18,7 @@ from app.models import (
     EnrollmentRecord,
     FinancialAidApplication,
     IdentityVerification,
+    RiskAssessment,
     Student,
     User,
 )
@@ -188,6 +189,22 @@ def build_detail(db: DB, app: FinancialAidApplication, principal: Principal) -> 
     )
 
 
+def _assessment_reference(db: DB, app: FinancialAidApplication) -> dict[str, object] | None:
+    """Records which advisory result was in front of the reviewer when the decision was made."""
+    current = db.scalar(
+        select(RiskAssessment).where(RiskAssessment.application_id == app.id, RiskAssessment.is_current)
+    )
+    if current is None:
+        return None
+    return {
+        "id": str(current.id),
+        "score": current.score,
+        "level": current.level,
+        "rules_version": current.rules_version,
+        "model_version": current.model_version,
+    }
+
+
 @router.patch("/{application_id}/review", response_model=ApplicationRow, summary="Record a human review decision")
 def review_application(
     application_id: uuid.UUID,
@@ -249,6 +266,7 @@ def review_application(
             "status": app.status,
             "note": body.note,
             "student_message": body.student_message,
+            "assessment_seen": _assessment_reference(db, app),
         },
         request=request,
     )

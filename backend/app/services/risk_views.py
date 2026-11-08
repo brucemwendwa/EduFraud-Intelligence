@@ -7,6 +7,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.detection.signals import score_from_weights
 from app.models import (
     Alert,
     AlertNote,
@@ -37,11 +38,42 @@ from app.schemas.risk import (
 from app.services import records
 
 
+def assessment_limitations(assessment: RiskAssessment, submission_channel: str | None) -> list[str]:
+    """What a reviewer should keep in mind about this particular result."""
+    items = [
+        "This score prioritises human review. It is not a finding of fraud and cannot approve or deny aid.",
+        "No accuracy, precision or recall has been established on real, labelled data.",
+        "Rule weights and thresholds were tuned on synthetic data.",
+        "Only records held in EduShield were considered. No external fraud database or government identity system "
+        "was consulted.",
+    ]
+    provenance = assessment.provenance or {}
+    if provenance.get("model_applied"):
+        items.append("The anomaly model retrains on current records, so a later re-run can give a different result.")
+        if provenance.get("real_records_in_population") == 0:
+            items.append("The anomaly model was trained only on synthetic records.")
+    elif provenance:
+        items.append("The anomaly model was not applied because there were too few records to train it.")
+    if submission_channel == "student_portal":
+        items.append("Device and network signals are not captured for student portal submissions.")
+    return items
+
+
 def current_assessment(db: Session, application_id: uuid.UUID) -> RiskAssessmentOut | None:
     a = db.scalar(
         select(RiskAssessment).where(RiskAssessment.application_id == application_id, RiskAssessment.is_current)
     )
-    return RiskAssessmentOut.model_validate(a) if a else None
+    if a is None:
+        return None
+    channel = db.scalar(
+        select(FinancialAidApplication.submission_channel).where(FinancialAidApplication.id == application_id)
+    )
+    return RiskAssessmentOut.model_validate(a).model_copy(
+        update={
+            "score_reproducible": abs(score_from_weights([s.weight for s in a.signals]) - a.score) < 0.05,
+            "limitations": assessment_limitations(a, channel),
+        }
+    )
 
 
 def assessment_history(db: Session, application_id: uuid.UUID, limit: int = 20) -> list[AssessmentHistoryItem]:
