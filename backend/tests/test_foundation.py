@@ -205,3 +205,13 @@ def test_web_client_is_served_without_shadowing_the_api(tmp_path) -> None:  # ty
     assert client.get("/assets/app.js").status_code == 200
     assert client.get("/api/v1/does-not-exist").status_code == 404
     assert "private" not in client.get("/%2e%2e/secret.txt").text
+
+
+def test_every_setting_is_in_the_configuration_inventory() -> None:
+    from pathlib import Path
+
+    from app.core.config import Settings
+
+    inventory = (Path(__file__).resolve().parents[2] / "docs" / "SECRETS.md").read_text()
+    missing = [name.upper() for name in Settings.model_fields if f"`{name.upper()}`" not in inventory]
+    assert not missing, f"Add to docs/SECRETS.md: {missing}"

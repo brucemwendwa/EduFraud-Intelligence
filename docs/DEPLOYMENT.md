@@ -1,38 +1,49 @@
 # Deploying EduShield AI
 
-Status: the configuration below has been rehearsed locally. **No hosted environment exists yet.** Run
-`scripts/verify_deployment.py` against the real URL before describing any environment as deployed.
+Status: **no hosted environment exists yet.** The configuration has been rehearsed locally. Run the verifiers below against the real
+URL before describing any environment as deployed. The application is FastAPI with a built React client, not separate web and API sites.
 
 ## Architecture
 
-One container image runs as two processes. The API serves the built web client from its own origin, because the session
-cookie is `SameSite=Strict` and the web client calls relative `/api` paths.
+One image runs as three processes. The API serves the built web client from its own origin, because the session cookie is
+`SameSite=Strict` and the client calls relative `/api` paths.
 
-| Component | Runs as | Reachable from | Minimum size |
+| Component | Runs as | Reachable from | Limit | Measured use |
+|---|---|---|---|---|
+| Web and API | Image default command | Public, HTTPS only | 2 GB | 270 MB after scoring |
+| Worker | `celery ... worker --concurrency=2` | Private | 2 GB | 750 MB |
+| Scheduler | `celery ... beat`, **exactly one** | Private | 1 GB | 210 MB |
+| PostgreSQL 16 | Platform database | Private | Platform | 190 MB |
+| Redis | Platform database | Private | Platform | 13 MB |
+| ClamAV | `clamav/clamav:1.5` | **Private only, never a public domain** | 3 GB | 660 MB with the `daily` set alone; the full set is larger |
+| Evidence storage | AWS S3 bucket | TLS and presigned URLs | | |
+
+Measured locally with synthetic data.
+
+## Hosting assessment
+
+| | Railway (recommended) | Render | AWS ECS |
 |---|---|---|---|
-| Web and API | Image default command | Public, HTTPS only | 1 GB RAM |
-| Worker and scheduler | `celery ... worker -B` from the same image | Private | 1 GB RAM (scoring retrains in memory) |
-| PostgreSQL 16 | Managed database | Private | 1 GB RAM, backups on |
-| Redis | Managed instance | Private | 256 MB |
-| ClamAV | `clamav/clamav` image | **Private only, never a public domain** | 4 GB RAM, 1 GB disk for signatures |
-| Evidence storage | AWS S3 bucket | Over TLS with presigned URLs | See below |
+| Runs the current Dockerfile | Yes | Yes | Yes, through a registry and task definitions |
+| Separate worker and scheduler | Yes | Yes | Yes |
+| PostgreSQL and Redis | Platform containers on volumes, with backup schedules | Managed | RDS and ElastiCache |
+| Private ClamAV | Private DNS, public image | Private service, public image | Service discovery and security groups |
+| Secrets | Per-environment variables | Environment groups | Secrets Manager |
+| Deploy and migrate | CLI upload, pre-deploy command | Git or image, pre-deploy command | CI pipeline and a migration task |
+| Estimated monthly cost | About $35 to $45 at measured memory; limits cap it near $85 plus CPU | About $110 to $170 | About $150 or more |
+| Operational complexity | Low | Low | High |
 
-Run exactly one scheduler. `worker -B` embeds it, so scale workers only after moving Beat to its own process.
+**Railway is recommended for staging.** It bills memory by use, which suits ClamAV's large idle footprint, whereas fixed plans charge for a
+4 GB tier. It runs every component in one project, and the CLI can deploy without installing an app on the repository, which needs admin
+rights contributors do not have. Render can also deploy this public repository from its URL, but without automatic deploys, and its docs
+intend that route for repositories you do not belong to.
 
-## Provider recommendation: Railway
+Costs: Railway uses its published $10 per GB and $20 per vCPU a month. Render's figures come from third-party listings because its pricing page
+would not load for checking. AWS uses the published Fargate rate for compute, with an estimate for RDS, ElastiCache, a load balancer and
+networking. Confirm prices before committing.
 
-Railway fits because it runs every component above in one project with private networking, bills memory by use (ClamAV
-needs far more memory than CPU), has per-environment variables for the separate demo environment, and can deploy from the
-CLI. CLI deployment matters here: connecting a host through GitHub needs an app installed on the repository, which requires
-admin rights on `brucemwendwa/EduFraud-Intelligence`, while contributors have push access only.
-
-- **Render** is the closest alternative, with blueprints and private services, but fixed plan sizes make a 4 GB ClamAV
-  service costlier, and it deploys from a connected repository or a registry image.
-- **AWS ECS** is the most controllable and suits a later institutional deployment, but adds networking, IAM and load
-  balancer work that an MVP does not need.
-
-Evidence stays on AWS S3 whichever host runs the application. Budget roughly: Railway memory is $10 per GB-month, so the
-sizes above total about $70 a month if fully used, plus S3. Check current prices before committing.
+Before production, reconsider the database: Railway's PostgreSQL is a container on a volume, and a managed service with failover may be
+required. Evidence stays on AWS S3 whichever host runs the application.
 
 ## Environments
 
@@ -47,29 +58,8 @@ real student data.
 
 ## Variables
 
-Generate secrets; never reuse local values or commit them.
-
-```bash
-python -c "import secrets; print(secrets.token_urlsafe(48))"                               # JWT_SECRET, TOKENIZATION_KEY, PROVIDER_WEBHOOK_SECRET
-python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"  # DATA_ENCRYPTION_KEY
-```
-
-Set these on both the web and worker services:
-
-| Variable | Value |
-|---|---|
-| `ENV` | `demo` or `production` |
-| `DATABASE_URL` | `postgresql+psycopg://...` (note the driver prefix) |
-| `CELERY_BROKER_URL` | Private Redis URL |
-| `JWT_SECRET`, `TOKENIZATION_KEY`, `PROVIDER_WEBHOOK_SECRET`, `DATA_ENCRYPTION_KEY` | Generated |
-| `CORS_ORIGINS` | Exact public origin, for example `https://aid.example.edu` |
-| `STUDENT_ACTIVATION_BASE_URL` | `https://<host>/activate` |
-| `FORWARDED_ALLOW_IPS` | `*` on the web service, only behind the platform proxy |
-| `DEMO_MODE` | `false`, or `true` only with `ENV=demo` |
-
-Sign-in limits are shared through the Redis in `CELERY_BROKER_URL`. Set `RATE_LIMIT_REDIS_URL` only to use a separate instance.
-
-Storage, scanner and email variables are in their sections below.
+[SECRETS.md](SECRETS.md) lists every setting, its source and how to rotate it. Sign-in limits are shared through the Redis in
+`CELERY_BROKER_URL`. PostgreSQL URLs from the platform are converted to the installed driver automatically.
 
 ## Evidence storage on AWS S3
 
@@ -109,25 +99,25 @@ Leave `S3_ENDPOINT_URL` unset for AWS. To verify, from `backend/` with those var
 
 ## Malware scanning with ClamAV
 
-Status: the adapter has passed against a real clamd loading the official `daily` database (341,254 signatures). The `main`
-database has not been loaded in testing, so a hosted run with the full official set is still required.
+Status: the adapter has passed against a real clamd loading the official `daily` database (341,254 signatures). The `main` database has not
+been loaded in testing, so a hosted run with the full official set is still required.
 
-Run the official `clamav/clamav:stable` image as a separate service. It ships with signatures and runs `freshclam` to keep
-them current.
+The official image ships with signatures and runs `freshclam` to keep them current, so no volume is needed and a restart does not depend on
+the signature CDN, which rate-limits heavily. Its limits are set through `CLAMD_CONF_*` variables in `.railway/railway.ts`, and a real clamd
+1.5.4 accepted each one.
 
 | Setting | Value |
 |---|---|
-| Network | Private only. **Never add a public domain:** clamd's TCP port has no authentication. |
-| Memory | 4 GB (the official guidance is a 3 GiB minimum, with extra while definitions reload) |
-| Volume | 1 GB mounted at `/var/lib/clamav` |
+| Network | Private only. **Never add a public domain or TCP proxy:** clamd's port has no authentication. |
+| Memory limit | 3 GB |
+| Concurrency and queue | 4 threads, 32 queued |
+| Stream limit and timeouts | 12 MB, 60 seconds to read, 90 seconds for the application's scan |
+| Reloads | `ConcurrentDatabaseReload no`: scanning pauses during an update instead of holding two signature sets |
 | Health check | Operations page, "Malware scanner"; it turns degraded when definitions are over 3 days old |
 
-Set on the web and worker services: `DOCUMENT_SCANNER_PROVIDER=clamav`, `CLAMAV_HOST` (the private hostname), `CLAMAV_PORT=3310`,
-`CLAMAV_TIMEOUT_SECONDS=60`. Keep clamd's `StreamMaxLength` above `DOCUMENT_MAX_UPLOAD_BYTES`.
-
 Behaviour: only clamd's exact clean reply releases a document. Infected files are rejected. Errors, timeouts and outages retry
-`DOCUMENT_SCAN_MAX_ATTEMPTS` times with backoff, then mark the document failed, and it stays unavailable throughout. A scanner or
-queue outage never blocks submitting an application.
+`DOCUMENT_SCAN_MAX_ATTEMPTS` times with backoff, then mark the document failed, and it stays unavailable throughout. A scanner or queue outage
+never blocks submitting an application.
 
 ## Email with Resend
 
@@ -151,6 +141,9 @@ The existing SMTP sender works with Resend's relay, so there is no second email 
 | `EMAIL_FROM` | `EduShield AI <no-reply@mail.example.edu>` |
 | `PUBLIC_URL` | `https://<host>`, used in email links |
 
+To test delivery without exposing the key, from `backend/`: `VERIFY_EMAIL_TO=<your inbox> railway run .venv/bin/python ../scripts/verify_email.py`.
+A server accepting the message is not delivery: confirm it reached the inbox and check the SPF, DKIM and DMARC results in its headers.
+
 Status-change messages go through a durable outbox: one per event, retried with backoff up to five times, visible on the
 Operations page. If email fails, the application and its status are unaffected, and students still see everything in the
 portal. Messages carry only the application reference and a sign-in link. Activation and reset links are sent directly and
@@ -165,16 +158,44 @@ never stored. Delivery webhooks are not integrated.
   Request bodies, cookies, headers, query strings, users and local variables are removed before anything leaves the process.
 - **Alerts:** configure the host and Sentry to alert on a failing `/api/ready`, worker restarts and new error issues.
 
-## Release order
+## Staging on Railway
 
-1. Provision PostgreSQL, Redis, ClamAV and the bucket.
-2. Set variables.
-3. Deploy the web service. `railway.json` runs `alembic upgrade head` before it starts and health-checks `/api/ready`.
-4. Deploy the worker with `deploy/railway.worker.json` as its config file.
-5. Add the domain, then run the verifier.
+`.railway/railway.ts` defines the project. `railway.json` is no longer supported for new services. Run these from the repository root, in your
+own terminal, after approving the cost:
 
-Migrations run forward automatically only because each is reviewed before merge. Take a database backup before any release
-with a migration, and see [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md) for rollback.
+```bash
+npm install --no-save railway@3                    # the SDK that reads .railway/railway.ts
+railway login
+railway init --name edushield-staging              # a new project; never reuse another product's
+railway config plan                                # review: PostgreSQL, Redis, clamav, web, worker, scheduler
+railway config apply
+```
+
+Generate the application secrets and store them in Railway without printing them. Web, worker and scheduler need identical values:
+
+```bash
+jwt=$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))')
+token=$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))')
+webhook=$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')
+fernet=$(backend/.venv/bin/python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')
+for service in web worker scheduler; do
+  railway variable set "JWT_SECRET=$jwt" "TOKENIZATION_KEY=$token" "PROVIDER_WEBHOOK_SECRET=$webhook" "DATA_ENCRYPTION_KEY=$fernet" \
+    --service "$service" --skip-deploys
+done
+```
+
+Add the AWS and Resend values through the same variables screen. Then deploy and create the address:
+
+```bash
+railway domain --service web
+for service in web worker scheduler; do railway up --service "$service" --detach -m "staging release"; done
+railway ssh --service web -- python -m app.seed    # synthetic demo records, once
+```
+
+`alembic upgrade head` runs before each web release. Review new migrations first and take a backup before any release that has one. See
+[PRODUCTION_READINESS.md](PRODUCTION_READINESS.md) for rollback.
+
+The published demo password works on any `DEMO_MODE=true` environment, so keep staging synthetic and its URL unadvertised.
 
 ## Verification
 
@@ -183,8 +204,15 @@ BASE_URL=https://<host> \
 VERIFY_ADMIN_EMAIL=... VERIFY_ADMIN_PASSWORD=... \
 VERIFY_STAFF_EMAIL=... VERIFY_STAFF_PASSWORD=... \
 VERIFY_STUDENT_EMAIL=... VERIFY_STUDENT_PASSWORD=... \
-backend/.venv/bin/python scripts/verify_deployment.py
+backend/.venv/bin/python scripts/verify_deployment.py --check-rate-limit
 ```
 
-It checks HTTPS, the web client, health, database, Redis and worker, migrations, storage, scanner, cookie attributes, CORS,
-CSRF and role separation, and exits non-zero on any failure. It reads only and prints no secrets.
+It checks HTTPS, the web client, health, database, Redis, worker, scheduler, migrations, storage, scanner, cookie attributes, CORS, CSRF and
+role separation, and exits non-zero on any failure. It changes no records and prints no secrets. `--check-rate-limit` sends 45 failed
+sign-ins with forged client headers, so run it on staging only: it proves the platform header cannot be spoofed.
+
+Then run the acceptance suite against staging from `frontend/`:
+
+```bash
+E2E_BASE_URL=https://<host> E2E_DOCUMENTS=1 EICAR_STRING='<EICAR test string>' npx playwright test
+```

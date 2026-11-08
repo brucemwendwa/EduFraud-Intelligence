@@ -467,13 +467,8 @@ Backend tests run against real Alembic migrations on throwaway SQLite files, so 
 ## Deploying
 
 One image serves the API and web client from the same origin, which the `SameSite=Strict` session cookie requires.
-Run it as three processes against shared PostgreSQL, Redis, S3-compatible storage and ClamAV:
-
-| Process | Command |
-|---|---|
-| Migration, before each release | `alembic upgrade head` |
-| Web | the image's default command (set `FORWARDED_ALLOW_IPS=*` only behind a trusted platform proxy) |
-| Worker and scheduler | `celery -A app.workers.celery_app:celery_app worker -B --loglevel=INFO --concurrency=2` |
+It runs as a web service, a Celery worker and exactly one Celery Beat scheduler, against shared PostgreSQL, Redis,
+S3-compatible storage and ClamAV. `.railway/railway.ts` defines a staging project.
 
 See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the full guide, and [docs/DEMO.md](docs/DEMO.md) for the demonstration.
 Use `/api/ready` as the health check. `ENV=production` refuses to start without `JWT_SECRET`, `TOKENIZATION_KEY`,
