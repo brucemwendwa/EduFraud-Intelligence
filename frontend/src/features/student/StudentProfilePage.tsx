@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, UserRound } from 'lucide-react';
 import type { FormEvent } from 'react';
-import { Link, Navigate } from 'react-router';
+import { Link } from 'react-router';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
@@ -10,12 +10,10 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { ErrorState } from '@/components/ui/States';
 import { Spinner } from '@/components/ui/Spinner';
 import { api, errorMessage } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
 
 type Profile = { email: string; full_name: string; student_ref: string; organization: { name: string }; state_of_residence: string; biometric_consent: boolean; account_status: 'active' | 'inactive' };
 
 export default function StudentProfilePage() {
-  const { user } = useAuth();
   const qc = useQueryClient();
   const profile = useQuery({ queryKey: ['student-profile'], queryFn: async () => (await api.get<Profile>('/student-profile/me')).data });
   const update = useMutation({
@@ -23,9 +21,8 @@ export default function StudentProfilePage() {
       (await api.patch<Profile>('/student-profile/me', body)).data,
     onSuccess: (data) => { qc.setQueryData(['student-profile'], data); toast.success('Profile updated'); },
   });
-  if (user?.role.key !== 'student') return <Navigate to="/app" replace />;
-  if (profile.isLoading) return <div className="flex min-h-dvh items-center justify-center"><Spinner label="Loading profile" /></div>;
-  if (!profile.data) return <ErrorState error={profile.error} onRetry={() => void profile.refetch()} />;
+  if (profile.isLoading) return <main className="flex justify-center py-16"><Spinner label="Loading profile" /></main>;
+  if (!profile.data) return <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6"><ErrorState error={profile.error} onRetry={() => void profile.refetch()} /></main>;
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const fields = new FormData(event.currentTarget);

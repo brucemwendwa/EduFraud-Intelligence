@@ -123,3 +123,17 @@ export function RequireAuth() {
   if (!user) return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
   return <Outlet />;
 }
+
+/**
+ * Keeps each audience in its own area. These only choose what to render:
+ * the API enforces permissions and record ownership on every request.
+ */
+export function RequireStudent() {
+  const { user } = useAuth();
+  return user?.role.key === 'student' ? <Outlet /> : <Navigate to="/app" replace />;
+}
+
+export function RequireStaff() {
+  const { user } = useAuth();
+  return user?.role.key === 'student' ? <Navigate to="/student" replace /> : <Outlet />;
+}
