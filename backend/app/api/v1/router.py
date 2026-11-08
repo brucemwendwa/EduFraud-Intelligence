@@ -20,6 +20,7 @@ from app.api.v1 import (
     provider_events,
     security,
     simulations,
+    staff_invitations,
     student_applications,
     student_onboarding,
     student_portal,
@@ -35,6 +36,7 @@ api_router = APIRouter()
 api_router.include_router(auth.router)
 api_router.include_router(organizations.router)
 api_router.include_router(users.router)
+api_router.include_router(staff_invitations.router)
 api_router.include_router(applications.router)
 api_router.include_router(students.router)
 api_router.include_router(student_portal.router)

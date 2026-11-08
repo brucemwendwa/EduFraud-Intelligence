@@ -130,6 +130,7 @@ def test_every_route_needs_a_session_unless_deliberately_public() -> None:
         "/auth/demo-login",  # refused unless DEMO_MODE is on
         "/auth/demo-accounts",  # empty unless DEMO_MODE is on
         "/student-activation",  # one-time hashed token, rate limited
+        "/staff-activation",  # one-time hashed token, rate limited
         "/provider-events/transactions",  # HMAC signature
         "/provider-events/security",  # HMAC signature
     }

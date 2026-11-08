@@ -67,6 +67,44 @@ class PasswordResetConfirm(Schema):
     password: str = Field(min_length=12, max_length=256)
 
 
+class StaffInvitationCreate(Schema):
+    email: EmailStr
+    full_name: str = Field(min_length=2, max_length=120)
+    title: str | None = Field(default=None, max_length=120)
+    role_key: str = Field(max_length=40)
+
+    @field_validator("email")
+    @classmethod
+    def _lower(cls, v: str) -> str:
+        return v.lower()
+
+
+class StaffInvitationOut(Schema):
+    id: uuid.UUID
+    email: str
+    full_name: str
+    title: str | None
+    role_key: str
+    role_name: str
+    expires_at: datetime
+    used_at: datetime | None
+    revoked_at: datetime | None
+    created_at: datetime
+    # Returned only outside production, for local and demo use.
+    activation_url: str | None = None
+
+
+class StaffActivationRequest(Schema):
+    token: str = Field(min_length=32, max_length=512)
+    password: str = Field(min_length=12, max_length=256)
+
+
+class StaffActivationOut(Schema):
+    email: str
+    full_name: str
+    activated: bool = True
+
+
 class StudentInvitationCreate(Schema):
     email: EmailStr
 

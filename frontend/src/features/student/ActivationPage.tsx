@@ -5,7 +5,14 @@ import { Button } from '@/components/ui/Button';
 import { Field, Input } from '@/components/ui/Field';
 import { errorMessage, api } from '@/lib/api';
 
-export default function ActivationPage() {
+interface ActivationFormProps {
+  endpoint: string;
+  heading: string;
+  intro: string;
+  welcome: string;
+}
+
+export function ActivationForm({ endpoint, heading, intro, welcome }: ActivationFormProps) {
   const [params] = useSearchParams();
   const token = params.get('token') ?? '';
   const [password, setPassword] = useState('');
@@ -24,7 +31,7 @@ export default function ActivationPage() {
     setPending(true);
     setError(null);
     try {
-      const result = (await api.post<{ full_name: string }>('/student-activation', { token, password })).data;
+      const result = (await api.post<{ full_name: string }>(endpoint, { token, password })).data;
       setName(result.full_name);
     } catch (err) {
       setError(errorMessage(err));
@@ -40,14 +47,14 @@ export default function ActivationPage() {
           <div className="text-center">
             <CheckCircle2 className="mx-auto size-12 text-emerald-600" aria-hidden />
             <h1 className="mt-4 text-2xl font-semibold text-slate-900">Account activated</h1>
-            <p className="mt-2 text-sm text-slate-600">Welcome, {name}. Your student portal is ready.</p>
+            <p className="mt-2 text-sm text-slate-600">Welcome, {name}. {welcome}</p>
             <Link to="/login"><Button size="lg" className="mt-6 w-full">Sign in</Button></Link>
           </div>
         ) : (
           <>
             <KeyRound className="size-8 text-navy-800" aria-hidden />
-            <h1 className="mt-4 text-2xl font-semibold text-slate-900">Activate your student account</h1>
-            <p className="mt-2 text-sm text-slate-600">Create a password to access your institution's EduShield student portal.</p>
+            <h1 className="mt-4 text-2xl font-semibold text-slate-900">{heading}</h1>
+            <p className="mt-2 text-sm text-slate-600">{intro}</p>
             <form className="mt-7 space-y-4" onSubmit={submit} noValidate>
               <Field label="Create password" hint="At least 12 characters and three of: uppercase, lowercase, number, symbol.">
                 {(id) => <Input id={id} type="password" autoComplete="new-password" icon={<Lock className="size-4" />} value={password} onChange={(e) => setPassword(e.target.value)} disabled={!token} />}
@@ -63,5 +70,16 @@ export default function ActivationPage() {
         )}
       </section>
     </main>
+  );
+}
+
+export default function ActivationPage() {
+  return (
+    <ActivationForm
+      endpoint="/student-activation"
+      heading="Activate your student account"
+      intro="Create a password to access your institution's EduShield student portal."
+      welcome="Your student portal is ready."
+    />
   );
 }

@@ -18,6 +18,7 @@ from app.models.identity import (
     Permission,
     RevokedSession,
     Role,
+    StaffInvitation,
     User,
     role_permissions,
 )
@@ -55,6 +56,7 @@ __all__ = [
     "Notification",
     "PasswordResetToken",
     "RevokedSession",
+    "StaffInvitation",
     "Organization",
     "PaymentDestinationToken",
     "Permission",

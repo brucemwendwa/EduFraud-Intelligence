@@ -102,3 +102,22 @@ class PasswordResetToken(UUIDPrimaryKey, Timestamps, Base):
     token_hash: Mapped[str] = mapped_column(String(64), unique=True)
     expires_at: Mapped[datetime]
     used_at: Mapped[datetime | None]
+
+
+class StaffInvitation(UUIDPrimaryKey, Timestamps, Base):
+    """Single-use invitation to join one institution with one role. The administrator never handles a password."""
+
+    __tablename__ = "staff_invitations"
+
+    organization_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("organizations.id", ondelete="RESTRICT"), index=True)
+    role_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("roles.id", ondelete="RESTRICT"))
+    email: Mapped[str] = mapped_column(String(254), index=True)
+    full_name: Mapped[str] = mapped_column(String(120))
+    title: Mapped[str | None] = mapped_column(String(120))
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    expires_at: Mapped[datetime]
+    used_at: Mapped[datetime | None]
+    revoked_at: Mapped[datetime | None]
+    invited_by_user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+
+    role: Mapped[Role] = relationship(lazy="joined")

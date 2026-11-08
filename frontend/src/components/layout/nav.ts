@@ -62,7 +62,7 @@ export const navSections: { title: string; items: NavItem[] }[] = [
   {
     title: 'Administration',
     items: [
-      { label: 'Institutions & users', to: '/app/institutions', icon: Building2, permission: P.usersRead, planned: true },
+      { label: 'Institutions & users', to: '/app/institutions', icon: Building2, permission: P.usersRead },
       { label: 'Audit logs', to: '/app/audit', icon: ScrollText, permission: P.auditRead },
       { label: 'Operations', to: '/app/operations', icon: Activity, permission: P.operationsRead },
       { label: 'System settings', to: '/app/settings', icon: Settings, permission: P.dashboardRead },
