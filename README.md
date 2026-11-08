@@ -88,7 +88,9 @@ The full reasoning is in [docs/HUMAN_IMPACT_AND_TRUST.md](docs/HUMAN_IMPACT_AND_
 | Operations monitoring | **Operational** | Service health, processing counts, scan states, failed jobs and recent audit actions, for administrators and auditors; counts and codes only |
 | Student, application and payment data | **Synthetic** | Generated; no real students, FSA or FAFSA data |
 | Investigation cases | **Operational** | Open from an alert or application with its supporting records attached; assign, add evidence and notes, and record justified decisions (escalate, resolve, reopen, close) that keep suspicion, suspected fraud and confirmed findings distinct. Timeline built from the audit trail. |
-| Institution and user administration screens | **Planned** | Shown as "Planned" in the app; the APIs exist |
+| Institution and user administration | **Operational** | Institution-scoped users, roles and staff invitations; every change is audited |
+| Account recovery and session control | **Operational, email needs a provider** | Single-use reset links, server-side sign-out, limits shared through Redis |
+| Notification email | **Built, not proven live** | Durable outbox for lifecycle messages. No real message has been delivered yet. |
 | Commercial identity-verification vendor, SIS / aid-system integrations, trained ML models | **Planned** | See [Roadmap](#roadmap) |
 
 ## Architecture and technology
@@ -433,7 +435,7 @@ make frontend-test    # Vitest component tests
 make lint             # ruff + ESLint
 cd frontend && npm run typecheck   # TypeScript
 make build            # production build of the web client (frontend/dist)
-make e2e              # Playwright in Chrome (needs a freshly seeded database, DEMO_MODE=true and `make dev` running)
+make e2e              # Playwright in Chrome, including acceptance and accessibility suites (needs a freshly seeded database, DEMO_MODE=true and `make dev` running)
 ```
 
 The evidence journey also needs storage and a scanner, so it runs only with `E2E_DOCUMENTS=1`. Set `EICAR_STRING` to
@@ -473,6 +475,7 @@ Run it as three processes against shared PostgreSQL, Redis, S3-compatible storag
 | Web | the image's default command (set `FORWARDED_ALLOW_IPS=*` only behind a trusted platform proxy) |
 | Worker and scheduler | `celery -A app.workers.celery_app:celery_app worker -B --loglevel=INFO --concurrency=2` |
 
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the full guide, and [docs/DEMO.md](docs/DEMO.md) for the demonstration.
 Use `/api/ready` as the health check. `ENV=production` refuses to start without `JWT_SECRET`, `TOKENIZATION_KEY`,
 `PROVIDER_WEBHOOK_SECRET`, `DATA_ENCRYPTION_KEY`, PostgreSQL, SMTP (`SMTP_HOST`, `SMTP_USERNAME`, `SMTP_PASSWORD`)
 and S3 settings (`S3_BUCKET_NAME`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`). Also set `EMAIL_FROM`, `CORS_ORIGINS`,
@@ -487,16 +490,13 @@ and S3 settings (`S3_BUCKET_NAME`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`). 
   recall is claimed**; the scenario coverage check proves only that planted scenarios fire their expected signals.
 - **Database coverage.** The browser journeys and all migrations run on PostgreSQL, but the backend unit suite runs
   on SQLite, which does not enforce column lengths.
-- **Container image not built here.** The `Dockerfile` steps were run by hand from a clean copy; Docker was not
-  available to build the image itself.
-- **Screens not built yet:** institution and user administration, global search and in-app notifications. The
-  institution and user **APIs** exist.
-- **No status emails.** Students see decisions and information requests in the portal; only activation is emailed.
+- **No hosted environment.** The `Dockerfile` steps were run by hand from a clean copy; Docker was not available to
+  build the image itself, and nothing has been deployed. See [docs/PRODUCTION_READINESS.md](docs/PRODUCTION_READINESS.md).
+- **External services unproven.** AWS S3 has only been exercised against an emulator, and no real email has been sent.
+- **Screens not built yet:** global search and in-app notifications.
 - **Risk inputs.** Scores use records held in EduShield. No external fraud database or government identity system is
   connected, and device and network signals are not captured for student portal submissions.
 - **Test coverage gaps.** The verification wizard has no component test.
-- **Single-process rate limiting.** The login limiter is in-process; a multi-instance deployment would need a shared
-  store such as Redis.
 - **Development secrets.** `.env.example` and the defaults contain development placeholders, and the demo password is
   published. Both are refused or must be changed for production.
 

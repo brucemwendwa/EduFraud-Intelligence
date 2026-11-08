@@ -90,7 +90,7 @@ test('a student application moves through staff review to an audited decision', 
   await officer.goto(`/app/applications?queue=awaiting_review&q=${reference}`);
   await officer.getByRole('link', { name: reference }).click();
   await expect(officer.getByText('Explainable risk assessment')).toBeVisible();
-  await expect(officer.getByText(/no external fraud database or government identity system was consulted/)).toBeVisible();
+  await expect(officer.getByText(/No external fraud database or government identity system was consulted/)).toBeVisible();
   await snap(officer, 'staff-application');
 
   // Staff: an information request needs a message for the student, separate from the internal note.
