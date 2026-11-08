@@ -5,6 +5,7 @@ Results describe service state only. Hostnames, keys and provider error text are
 
 from __future__ import annotations
 
+from datetime import timedelta
 from pathlib import Path
 from typing import Literal
 
@@ -15,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.biometrics.simulated import get_provider
 from app.core.config import Settings, get_settings
+from app.db.types import utcnow
 from app.integrations.payment_provider import get_payment_provider
 from app.schemas.common import Schema
 from app.services.document_scanner import get_clamav_scanner
@@ -22,6 +24,7 @@ from app.services.object_storage import S3ObjectStorage
 
 HealthStatus = Literal["ok", "degraded", "down", "not_configured", "simulated"]
 _BACKEND_DIR = Path(__file__).resolve().parents[2]
+_MAX_SIGNATURE_AGE_DAYS = 3
 
 
 class ServiceHealth(Schema):
@@ -116,9 +119,21 @@ def _scanner(settings: Settings) -> ServiceHealth:
             status="not_configured",
             detail="No scanner configured. Uploaded evidence stays quarantined and cannot be downloaded or reviewed.",
         )
-    if scanner.ping():
-        return ServiceHealth(key="scanner", name=name, status="ok", detail="ClamAV responded.")
-    return ServiceHealth(key="scanner", name=name, status="down", detail="ClamAV did not respond.")
+    if not scanner.ping():
+        return ServiceHealth(key="scanner", name=name, status="down", detail="ClamAV did not respond.")
+    published = scanner.signatures_published_at()
+    if published is None:
+        return ServiceHealth(
+            key="scanner", name=name, status="degraded", detail="Running without dated virus definitions."
+        )
+    age = utcnow() - published
+    if age > timedelta(days=_MAX_SIGNATURE_AGE_DAYS):
+        return ServiceHealth(
+            key="scanner", name=name, status="degraded", detail=f"Virus definitions are {age.days} days old."
+        )
+    return ServiceHealth(
+        key="scanner", name=name, status="ok", detail=f"ClamAV responded; definitions {age.days} day(s) old."
+    )
 
 
 def _email(settings: Settings) -> ServiceHealth:

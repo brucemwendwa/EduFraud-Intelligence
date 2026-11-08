@@ -105,6 +105,28 @@ retention period before real use.
 
 Leave `S3_ENDPOINT_URL` unset for AWS. To verify, from `backend/` with those variables set: `.venv/bin/python ../scripts/verify_s3.py`.
 
+## Malware scanning with ClamAV
+
+Status: the adapter has passed against a real clamd loading the official `daily` database (341,254 signatures). The `main`
+database has not been loaded in testing, so a hosted run with the full official set is still required.
+
+Run the official `clamav/clamav:stable` image as a separate service. It ships with signatures and runs `freshclam` to keep
+them current.
+
+| Setting | Value |
+|---|---|
+| Network | Private only. **Never add a public domain:** clamd's TCP port has no authentication. |
+| Memory | 4 GB (the official guidance is a 3 GiB minimum, with extra while definitions reload) |
+| Volume | 1 GB mounted at `/var/lib/clamav` |
+| Health check | Operations page, "Malware scanner"; it turns degraded when definitions are over 3 days old |
+
+Set on the web and worker services: `DOCUMENT_SCANNER_PROVIDER=clamav`, `CLAMAV_HOST` (the private hostname), `CLAMAV_PORT=3310`,
+`CLAMAV_TIMEOUT_SECONDS=60`. Keep clamd's `StreamMaxLength` above `DOCUMENT_MAX_UPLOAD_BYTES`.
+
+Behaviour: only clamd's exact clean reply releases a document. Infected files are rejected. Errors, timeouts and outages retry
+`DOCUMENT_SCAN_MAX_ATTEMPTS` times with backoff, then mark the document failed, and it stays unavailable throughout. A scanner or
+queue outage never blocks submitting an application.
+
 ## Release order
 
 1. Provision PostgreSQL, Redis, ClamAV and the bucket.

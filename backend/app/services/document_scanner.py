@@ -7,6 +7,7 @@ import logging
 import socket
 import struct
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Protocol
 
@@ -58,13 +59,27 @@ class ClamAVScanner:
     port: int
     timeout: int
 
-    def ping(self) -> bool:
+    def _command(self, command: bytes) -> bytes | None:
         try:
             with socket.create_connection((self.host, self.port), timeout=min(self.timeout, 3)) as sock:
-                sock.sendall(b"zPING\0")
-                return _read_reply(sock) == b"PONG"
+                sock.sendall(command)
+                return _read_reply(sock)
         except OSError:
-            return False
+            return None
+
+    def ping(self) -> bool:
+        return self._command(b"zPING\0") == b"PONG"
+
+    def signatures_published_at(self) -> datetime | None:
+        """Publication time of the loaded virus definitions, from clamd's VERSION reply."""
+        reply = self._command(b"zVERSION\0") or b""
+        parts = reply.decode("ascii", "ignore").split("/")
+        if len(parts) < 3:
+            return None
+        try:
+            return datetime.strptime(" ".join(parts[2].split()), "%a %b %d %H:%M:%S %Y").replace(tzinfo=UTC)
+        except ValueError:
+            return None
 
     def _instream(self, body: bytes) -> bytes:
         with socket.create_connection((self.host, self.port), timeout=self.timeout) as sock:

@@ -10,6 +10,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.db.types import utcnow
 from app.models import (
     ApplicationDocument,
@@ -323,3 +324,132 @@ def test_cleanup_leaves_an_upload_in_flight_alone_until_it_has_settled(as_user, 
     intent.created_at = utcnow() - timedelta(hours=1)
     db.commit()
     assert intent.id in reconcile_document_cleanups()
+
+
+def _queued_job(student, app, db: Session):  # type: ignore[no-untyped-def]
+    document = _upload(student, app["id"]).json()
+    doc = db.get(ApplicationDocument, uuid.UUID(document["id"]))
+    assert doc is not None
+    job = db.scalar(select(DocumentScanJob).where(DocumentScanJob.document_id == doc.id))
+    assert job is not None
+    return doc, job
+
+
+class CountingScanner:
+    def __init__(self, outcome: ScanOutcome = ScanOutcome.CLEAN, on_scan=None) -> None:  # type: ignore[no-untyped-def]
+        self.outcome = outcome
+        self.on_scan = on_scan
+        self.calls = 0
+
+    def scan(self, *, object_key: str, object_version_id: str | None, checksum: str, scan_token: str) -> ScanResult:
+        del object_key, object_version_id, checksum, scan_token
+        self.calls += 1
+        if self.on_scan:
+            self.on_scan()
+        return ScanResult(self.outcome, "test-scanner")
+
+
+def test_duplicate_delivery_scans_only_once(  # type: ignore[no-untyped-def]
+    as_user, db: Session, storage: MemoryStorage, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.services import document_processing
+
+    scanner = CountingScanner()
+    monkeypatch.setattr(document_processing, "get_document_scanner", lambda: scanner)
+    student, app = _draft(as_user)
+    doc, job = _queued_job(student, app, db)
+    execute_scan(job.id)
+    execute_scan(job.id)
+    db.refresh(doc)
+    assert scanner.calls == 1 and doc.status == DocumentStatus.AVAILABLE
+
+
+def test_a_stale_scan_result_is_discarded(  # type: ignore[no-untyped-def]
+    as_user, db: Session, storage: MemoryStorage, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.db.session import SessionLocal
+    from app.services import document_processing
+
+    student, app = _draft(as_user)
+    doc, job = _queued_job(student, app, db)
+
+    def supersede_while_scanning() -> None:
+        with SessionLocal() as other:
+            current = other.get(ApplicationDocument, doc.id)
+            assert current is not None
+            current.scan_token = "b" * 64
+            other.commit()
+
+    scanner = CountingScanner(on_scan=supersede_while_scanning)
+    monkeypatch.setattr(document_processing, "get_document_scanner", lambda: scanner)
+    execute_scan(job.id)
+    db.refresh(doc)
+    assert scanner.calls == 1 and doc.status != DocumentStatus.AVAILABLE
+
+
+@pytest.mark.parametrize("outcome", [ScanOutcome.ERROR, ScanOutcome.UNAVAILABLE])
+def test_failed_scans_retry_a_bounded_number_of_times_and_never_release(  # type: ignore[no-untyped-def]
+    as_user, db: Session, storage: MemoryStorage, monkeypatch: pytest.MonkeyPatch, outcome: ScanOutcome
+) -> None:
+    from app.services import document_processing
+
+    monkeypatch.setattr(document_processing, "get_document_scanner", lambda: CountingScanner(outcome))
+    student, app = _draft(as_user)
+    doc, job = _queued_job(student, app, db)
+    for _ in range(get_settings().document_scan_max_attempts):
+        job.next_attempt_at = None
+        db.commit()
+        execute_scan(job.id)
+        db.refresh(job)
+        db.refresh(doc)
+        assert doc.status != DocumentStatus.AVAILABLE
+    assert doc.status == DocumentStatus.FAILED and job.status == "failed"
+    assert student.post(f"/api/v1/student-documents/{doc.id}/download").status_code == 409
+
+
+def test_scanner_exception_fails_closed(  # type: ignore[no-untyped-def]
+    as_user, db: Session, storage: MemoryStorage, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.services import document_processing
+
+    def explode() -> None:
+        raise TimeoutError("scanner hung")
+
+    monkeypatch.setattr(document_processing, "get_document_scanner", lambda: CountingScanner(on_scan=explode))
+    student, app = _draft(as_user)
+    doc, job = _queued_job(student, app, db)
+    execute_scan(job.id)
+    db.refresh(doc)
+    db.refresh(job)
+    assert doc.status == DocumentStatus.PENDING_SCAN and job.status == "retry" and job.error_code == "error"
+
+
+def test_scanner_outage_does_not_block_application_submission(as_user, storage: MemoryStorage) -> None:  # type: ignore[no-untyped-def]
+    student, app = _draft(as_user)
+    assert _upload(student, app["id"]).status_code == 201
+    complete = {
+        "award_year": "2026-2027",
+        "dependency_status": "independent",
+        "enrollment_intensity": "full_time",
+        "program": "Biology",
+        "requested_amount": "1000.00",
+        "student_aid_index": 100,
+    }
+    assert student.patch(f"/api/v1/student-applications/{app['id']}", json=complete).status_code == 200
+    assert student.post(f"/api/v1/student-applications/{app['id']}/submit").status_code == 200
+    listed = student.get(f"/api/v1/student-applications/{app['id']}/documents").json()
+    assert listed[0]["status"] == "pending_scan"
+
+
+def test_queue_outage_defers_the_scan_without_failing_the_upload(monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.workers import document_jobs, tasks
+
+    class Settings:
+        jobs_backend = "celery"
+
+    def refuse(*_args: object, **_kwargs: object) -> None:
+        raise ConnectionError("broker down")
+
+    monkeypatch.setattr(document_jobs, "get_settings", lambda: Settings())
+    monkeypatch.setattr(tasks.run_document_scan, "apply_async", refuse)
+    assert document_jobs.enqueue_document_scan(uuid.uuid4(), None) == "deferred"  # type: ignore[arg-type]

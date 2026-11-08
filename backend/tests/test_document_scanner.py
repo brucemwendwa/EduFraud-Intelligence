@@ -127,3 +127,55 @@ def test_scanner_is_unavailable_until_configured() -> None:
 )
 def test_download_disposition_cannot_be_broken_by_a_file_name(filename: str, expected: str) -> None:
     assert attachment_disposition(filename) == expected
+
+
+class SilentClamd:
+    """Accepts a connection and then never answers."""
+
+    def __init__(self) -> None:
+        self._server = socket.create_server(("127.0.0.1", 0))
+        self.port = self._server.getsockname()[1]
+        self._conns: list[socket.socket] = []
+        threading.Thread(target=self._serve, daemon=True).start()
+
+    def _serve(self) -> None:
+        while True:
+            try:
+                self._conns.append(self._server.accept()[0])
+            except OSError:
+                return
+
+    def close(self) -> None:
+        self._server.close()
+
+
+def test_a_hung_scanner_times_out_instead_of_reporting_a_result(monkeypatch: pytest.MonkeyPatch) -> None:
+    silent = SilentClamd()
+    monkeypatch.setattr(document_scanner, "get_object_storage", lambda: OneObjectStorage(BODY[:100]))
+    checksum = hashlib.sha256(BODY[:100]).hexdigest()
+    with pytest.raises(TimeoutError):
+        ClamAVScanner("127.0.0.1", silent.port, 1).scan(
+            object_key="quarantine/doc.pdf", object_version_id="v1", checksum=checksum, scan_token="t"
+        )
+    silent.close()
+
+
+def test_unreachable_scanner_raises_rather_than_reporting_clean(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(document_scanner, "get_object_storage", lambda: OneObjectStorage(BODY))
+    with socket.create_server(("127.0.0.1", 0)) as probe:
+        closed_port = probe.getsockname()[1]
+    with pytest.raises(OSError):
+        ClamAVScanner("127.0.0.1", closed_port, 1).scan(
+            object_key="quarantine/doc.pdf", object_version_id="v1", checksum=CHECKSUM, scan_token="t"
+        )
+    assert ClamAVScanner("127.0.0.1", closed_port, 1).ping() is False
+
+
+@pytest.mark.parametrize(
+    ("stub", "expected"),
+    [(b"ClamAV 1.5.4/27812/Sun Nov  8 08:23:14 2026", True), (b"ClamAV 1.5.4", False)],
+    indirect=["stub"],
+)
+def test_signature_date_is_read_from_clamd(stub: ClamdStub, expected: bool) -> None:
+    published = ClamAVScanner("127.0.0.1", stub.port, 2).signatures_published_at()
+    assert (published is not None) is expected

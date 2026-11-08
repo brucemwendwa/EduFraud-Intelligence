@@ -16,6 +16,10 @@ celery_app.conf.update(
     worker_prefetch_multiplier=1,
     task_ignore_result=True,
     broker_connection_retry_on_startup=True,
+    # A queue outage must fail a dispatch quickly rather than hold a web request open.
+    broker_connection_timeout=3,
+    broker_transport_options={"socket_connect_timeout": 3, "socket_timeout": 5},
+    redis_socket_connect_timeout=3,
     beat_schedule={
         "reconcile-document-scans": {"task": "document.reconcile", "schedule": 60.0},
     },
