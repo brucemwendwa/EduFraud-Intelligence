@@ -25,6 +25,8 @@ import { RunDetectionButton } from '@/features/engine/RunDetectionButton';
 import { useAuth } from '@/lib/auth';
 import { dateTime, label, money, timeAgo } from '@/lib/format';
 import { alertStatusLabel } from '@/lib/status';
+import { P } from '@/lib/permissions';
+import { ApplicationPipeline } from './ApplicationPipeline';
 import { useDashboardOverview } from './api';
 import { ScenarioLab } from './ScenarioLab';
 
@@ -48,14 +50,14 @@ const tooltipStyle = {
 const shortDate = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, can } = useAuth();
   const { data, isLoading, error, refetch } = useDashboardOverview();
 
   return (
     <>
       <PageHeader
         title="Financial aid protection overview"
-        description="Student ID-linked aid accounts, transactions, security events and investigations in your scope. Figures come from live records; the AI never decides an outcome, people do."
+        description="Aid applications, student ID-linked accounts, transactions, security events and investigations in your scope. Figures come from live records; the AI never decides an outcome, people do."
         meta={
           <>
             <Badge tone="blue" icon={<FlaskConical className="size-3" />}>Synthetic demonstration data</Badge>
@@ -66,10 +68,13 @@ export default function DashboardPage() {
         actions={<RunDetectionButton size="sm" />}
       />
 
+      {can(P.applicationsRead) && <ApplicationPipeline />}
+
       {error ? (
         <Card><ErrorState error={error} onRetry={() => refetch()} /></Card>
       ) : (
         <>
+          <h2 className="mb-3 text-sm font-semibold text-slate-900">Accounts and security</h2>
           <Metrics data={data} loading={isLoading} />
           <Charts data={data} loading={isLoading} />
           <div className="mt-6 grid gap-6 xl:grid-cols-5">

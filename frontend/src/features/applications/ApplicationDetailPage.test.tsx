@@ -7,7 +7,7 @@ const can = vi.fn((permission: string) => permission === 'applications:review');
 const panel = vi.fn(({ applicationId }: { applicationId: string }) => <div data-testid="evidence-panel">Evidence for {applicationId}</div>);
 vi.mock('./api', () => ({ useApplication: () => ({ isLoading: false, error: null, refetch: vi.fn(), data: {
   id: 'application-42', reference: 'FA-42', organization: { name: 'Northbridge' }, award_year: '2026-27', submitted_at: '2026-01-01T00:00:00Z', status: 'received', review_status: 'unreviewed', verification_status: 'not_required', scenario_key: null,
-  alerts: [], related: [], disbursements: [], enrollments: [], verifications: [], program: 'Science', requested_amount: '1000', student_aid_index: 0, dependency_status: 'dependent', enrollment_intensity: 'full_time', submission_channel: 'web', device_handle: null,
+  alerts: [], status_history: [], allowed_status_changes: [], related: [], disbursements: [], enrollments: [], verifications: [], program: 'Science', requested_amount: '1000', student_aid_index: 0, dependency_status: 'dependent', enrollment_intensity: 'full_time', submission_channel: 'web', device_handle: null,
   student_detail: { identity_tokens: [] },
 } }) }));
 vi.mock('@/lib/auth', () => ({ useAuth: () => ({ can }) }));

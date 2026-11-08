@@ -1,11 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { AccountScenarioCheck, DashboardOverview, ScenarioInfo, SimulationResult } from '@/api/types';
+import type { AccountScenarioCheck, ApplicationPipeline, DashboardOverview, ScenarioInfo, SimulationResult } from '@/api/types';
 import { api } from '@/lib/api';
 
 export function useDashboardOverview() {
   return useQuery({
     queryKey: ['dashboard', 'overview'],
     queryFn: async () => (await api.get<DashboardOverview>('/dashboard/overview')).data,
+    refetchInterval: 60_000,
+  });
+}
+
+export function useApplicationPipeline() {
+  return useQuery({
+    queryKey: ['dashboard', 'applications'],
+    queryFn: async () => (await api.get<ApplicationPipeline>('/dashboard/applications')).data,
     refetchInterval: 60_000,
   });
 }

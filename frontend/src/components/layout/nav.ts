@@ -1,4 +1,5 @@
 import {
+  Activity,
   ArrowLeftRight,
   Banknote,
   Bell,
@@ -63,6 +64,7 @@ export const navSections: { title: string; items: NavItem[] }[] = [
     items: [
       { label: 'Institutions & users', to: '/app/institutions', icon: Building2, permission: P.usersRead, planned: true },
       { label: 'Audit logs', to: '/app/audit', icon: ScrollText, permission: P.auditRead },
+      { label: 'Operations', to: '/app/operations', icon: Activity, permission: P.operationsRead },
       { label: 'System settings', to: '/app/settings', icon: Settings, permission: P.dashboardRead },
     ],
   },

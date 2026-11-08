@@ -104,6 +104,13 @@ export function RiskPanel({ app }: { app: ApplicationDetail }) {
           </div>
         </dl>
 
+        <p className="text-xs leading-relaxed text-slate-500">
+          Decision support only. This score reflects records held in EduShield; no external fraud database or government
+          identity system was consulted, and nothing is approved or denied automatically.
+          {app.submission_channel === 'student_portal' &&
+            ' Device and network signals are not captured for student portal submissions, so those checks did not contribute.'}
+        </p>
+
         {app.assessment_history.length > 1 && (
           <div>
             <Button variant="ghost" size="sm" icon={<History className="size-3.5" />} onClick={() => setShowHistory((v) => !v)}>

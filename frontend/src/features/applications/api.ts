@@ -28,7 +28,11 @@ export function useReviewApplication(id: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (body: ReviewUpdate) => (await api.patch<ApplicationRow>(`/applications/${id}/review`, body)).data,
-    onSuccess: () => qc.invalidateQueries({ queryKey: applicationKeys.all }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: applicationKeys.all });
+      void qc.invalidateQueries({ queryKey: ['dashboard'] });
+      void qc.invalidateQueries({ queryKey: ['operations'] });
+    },
   });
 }
 

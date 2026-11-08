@@ -11,6 +11,7 @@ import { CardSkeleton, EmptyState, ErrorState, Skeleton } from '@/components/ui/
 import { TD, TH, THead, TR, Table } from '@/components/ui/Table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { useAuth } from '@/lib/auth';
+import { useAuditEvents } from '@/features/audit/api';
 import { date, dateTime, label, money } from '@/lib/format';
 import { P } from '@/lib/permissions';
 import {
@@ -104,6 +105,7 @@ function ApplicationView({ app }: { app: ApplicationDetail }) {
                   <TabsTrigger value="enrollment" count={app.enrollments.length}>Enrollment</TabsTrigger>
                   <TabsTrigger value="verification" count={app.verifications.length}>Verification</TabsTrigger>
                   <TabsTrigger value="evidence">Evidence</TabsTrigger>
+                  <TabsTrigger value="history" count={app.status_history.length}>History</TabsTrigger>
                   <TabsTrigger value="tokens">Identity tokens</TabsTrigger>
                 </TabsList>
               </div>
@@ -112,6 +114,7 @@ function ApplicationView({ app }: { app: ApplicationDetail }) {
               <TabsContent value="enrollment"><Enrollment app={app} /></TabsContent>
               <TabsContent value="verification"><Verifications app={app} /></TabsContent>
               <TabsContent value="evidence" className="p-5"><StaffDocumentPanel applicationId={app.id} canReview={can(P.applicationsReview)} /></TabsContent>
+              <TabsContent value="history" className="p-5"><ApplicationHistory app={app} /></TabsContent>
               <TabsContent value="tokens"><IdentityTokens app={app} /></TabsContent>
             </Tabs>
           </Card>
@@ -135,9 +138,69 @@ function ApplicationView({ app }: { app: ApplicationDetail }) {
           </Card>
         </div>
       </div>
-      <ReviewDialog applicationId={app.id} reference={app.reference} open={reviewOpen} onOpenChange={setReviewOpen} />
+      <ReviewDialog
+        applicationId={app.id}
+        reference={app.reference}
+        currentStatus={app.status}
+        allowedStatusChanges={app.allowed_status_changes}
+        open={reviewOpen}
+        onOpenChange={setReviewOpen}
+      />
       <VerificationWizard open={verifyOpen} onOpenChange={setVerifyOpen} applicationId={app.id} />
     </>
+  );
+}
+
+function ApplicationHistory({ app }: { app: ApplicationDetail }) {
+  const { can } = useAuth();
+  return (
+    <div className="space-y-6">
+      {app.status_history.length === 0 ? (
+        <EmptyState title="No recorded lifecycle changes" description="This record predates lifecycle history, or no decision has been recorded yet." />
+      ) : (
+        <ol className="space-y-4">
+          {app.status_history.map((event) => (
+            <li key={`${event.created_at}-${event.to_status}`} className="border-l-2 border-slate-200 pl-3 text-sm">
+              <div className="flex flex-wrap items-center gap-2">
+                {event.from_status === event.to_status ? (
+                  <span className="font-medium text-slate-900">Review note</span>
+                ) : (
+                  <StatusBadge value={event.to_status} map={applicationStatusTone} />
+                )}
+                <span className="text-xs text-slate-500">{dateTime(event.created_at)} · {event.actor_name ?? label(event.actor_role)}</span>
+              </div>
+              {event.note && <p className="mt-1 text-slate-700"><span className="font-medium">Note:</span> {event.note}</p>}
+              {event.student_message && event.actor_role !== 'student' && (
+                <p className="mt-1 text-slate-700"><span className="font-medium">Sent to student:</span> {event.student_message}</p>
+              )}
+            </li>
+          ))}
+        </ol>
+      )}
+      {can(P.auditRead) && <ApplicationAudit applicationId={app.id} />}
+    </div>
+  );
+}
+
+function ApplicationAudit({ applicationId }: { applicationId: string }) {
+  const { data, isLoading, error } = useAuditEvents({ target_id: applicationId, page_size: '20' });
+  return (
+    <div>
+      <h3 className="mb-2 text-xs font-semibold tracking-wider text-slate-500 uppercase">Audit trail</h3>
+      {isLoading && <Skeleton className="h-16" />}
+      {error ? <p className="text-sm text-red-700">Audit events could not be loaded.</p> : null}
+      {data && data.items.length === 0 && <p className="text-sm text-slate-500">No audit events for this application.</p>}
+      {data && data.items.length > 0 && (
+        <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200">
+          {data.items.map((event) => (
+            <li key={event.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-xs">
+              <code>{event.action}</code>
+              <span className="text-slate-500">{event.actor_email ?? 'System'} · {dateTime(event.occurred_at)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
