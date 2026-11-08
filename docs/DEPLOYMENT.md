@@ -67,6 +67,8 @@ Set these on both the web and worker services:
 | `FORWARDED_ALLOW_IPS` | `*` on the web service, only behind the platform proxy |
 | `DEMO_MODE` | `false`, or `true` only with `ENV=demo` |
 
+Sign-in limits are shared through the Redis in `CELERY_BROKER_URL`. Set `RATE_LIMIT_REDIS_URL` only to use a separate instance.
+
 Storage, scanner and email variables are in their sections below.
 
 ## Evidence storage on AWS S3

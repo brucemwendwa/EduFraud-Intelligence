@@ -23,6 +23,8 @@ const StudentApplicationsPage = lazy(() => import('@/features/student/StudentApp
 const StudentApplicationPage = lazy(() => import('@/features/student/StudentApplicationPage'));
 const StudentProfilePage = lazy(() => import('@/features/student/StudentProfilePage'));
 const ActivationPage = lazy(() => import('@/features/student/ActivationPage'));
+const ForgotPasswordPage = lazy(() => import('@/features/auth/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('@/features/auth/ResetPasswordPage'));
 const AccountsPage = lazy(() => import('@/features/accounts/AccountsPage'));
 const AccountDetailPage = lazy(() => import('@/features/accounts/AccountDetailPage'));
 const CardsPage = lazy(() => import('@/features/cards/CardsPage'));
@@ -39,6 +41,8 @@ export function App() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/activate" element={<ActivationPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route element={<RequireAuth />}>
         <Route element={<RequireStudent />}>
           <Route path="/student" element={<StudentShell />}>

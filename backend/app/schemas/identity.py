@@ -53,6 +53,20 @@ class ChangePasswordRequest(Schema):
     new_password: str = Field(min_length=12, max_length=256)
 
 
+class PasswordResetRequest(Schema):
+    email: EmailStr
+
+
+class PasswordResetAccepted(Schema):
+    status: Literal["accepted"] = "accepted"
+    message: str = "If that address has an account, a reset link is on its way."
+
+
+class PasswordResetConfirm(Schema):
+    token: str = Field(min_length=32, max_length=512)
+    password: str = Field(min_length=12, max_length=256)
+
+
 class StudentInvitationCreate(Schema):
     email: EmailStr
 

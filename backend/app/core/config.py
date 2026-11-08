@@ -47,6 +47,9 @@ class Settings(BaseSettings):
     lockout_minutes: int = 15
     student_invitation_ttl_hours: int = Field(default=72, ge=1, le=24 * 14)
     student_activation_base_url: str = "http://localhost:5173/activate"
+    password_reset_ttl_minutes: int = Field(default=30, ge=5, le=240)
+    # Defaults to the Redis broker. Set explicitly to keep rate-limit counters on a separate instance.
+    rate_limit_redis_url: str | None = None
     # Public address used in notification emails. Defaults to the host of the activation link.
     public_url: str | None = None
 
@@ -90,6 +93,7 @@ class Settings(BaseSettings):
         "clamav_host",
         "frontend_dist",
         "public_url",
+        "rate_limit_redis_url",
         mode="before",
     )
     @classmethod
@@ -127,6 +131,13 @@ class Settings(BaseSettings):
             if not self.s3_use_tls:
                 raise ValueError("Production requires TLS for document storage")
         return self
+
+    @property
+    def rate_limit_store_url(self) -> str | None:
+        if self.rate_limit_redis_url:
+            return self.rate_limit_redis_url
+        broker = self.celery_broker_url or ""
+        return broker if broker.startswith(("redis://", "rediss://")) else None
 
     @property
     def public_app_url(self) -> str:

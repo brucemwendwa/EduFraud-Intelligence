@@ -23,5 +23,6 @@ celery_app.conf.update(
     beat_schedule={
         "reconcile-document-scans": {"task": "document.reconcile", "schedule": 60.0},
         "reconcile-email": {"task": "email.reconcile", "schedule": 60.0},
+        "purge-expired-credentials": {"task": "auth.purge_expired", "schedule": 3600.0},
     },
 )

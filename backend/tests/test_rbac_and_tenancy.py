@@ -125,6 +125,8 @@ def test_every_route_needs_a_session_unless_deliberately_public() -> None:
         "/auth/login",
         "/auth/logout",
         "/auth/token",
+        "/auth/password-reset/request",  # same response for every address, rate limited
+        "/auth/password-reset/confirm",  # one-time hashed token, rate limited
         "/auth/demo-login",  # refused unless DEMO_MODE is on
         "/auth/demo-accounts",  # empty unless DEMO_MODE is on
         "/student-activation",  # one-time hashed token, rate limited

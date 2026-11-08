@@ -9,6 +9,7 @@ from datetime import timedelta
 from pathlib import Path
 from typing import Literal
 
+import redis
 from alembic.config import Config
 from alembic.script import ScriptDirectory
 from sqlalchemy import text
@@ -16,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.biometrics.simulated import get_provider
 from app.core.config import Settings, get_settings
+from app.core.ratelimit import shared_store
 from app.db.types import utcnow
 from app.integrations.payment_provider import get_payment_provider
 from app.schemas.common import Schema
@@ -80,6 +82,26 @@ def _jobs(settings: Settings) -> ServiceHealth:
     return ServiceHealth(
         key="jobs", name=name, status="ok", detail=f"Queue reachable; {len(workers)} worker(s) replied."
     )
+
+
+def _rate_limit(settings: Settings) -> ServiceHealth:
+    name = "Shared rate limiting"
+    if not settings.rate_limit_store_url:
+        return ServiceHealth(
+            key="rate_limit",
+            name=name,
+            status="not_configured",
+            detail="Limits apply per process, not across instances.",
+        )
+    store = shared_store()
+    try:
+        assert store is not None
+        store.ping()
+    except (redis.RedisError, AssertionError):
+        return ServiceHealth(
+            key="rate_limit", name=name, status="degraded", detail="Redis unreachable; limits fall back to per process."
+        )
+    return ServiceHealth(key="rate_limit", name=name, status="ok", detail="Limits are shared through Redis.")
 
 
 def _storage(settings: Settings) -> ServiceHealth:
@@ -153,6 +175,7 @@ def service_health(db: Session) -> list[ServiceHealth]:
         _database(db),
         _migrations(db),
         _jobs(settings),
+        _rate_limit(settings),
         _storage(settings),
         _scanner(settings),
         _email(settings),

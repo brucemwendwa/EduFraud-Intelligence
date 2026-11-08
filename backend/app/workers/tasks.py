@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import uuid
 
+from app.services.account_maintenance import purge_expired_credentials
 from app.services.detection_runs import execute_run
 from app.services.document_processing import (
     execute_cleanup,
@@ -45,3 +46,8 @@ def deliver_email(outbox_id: str) -> None:
 def reconcile_email() -> None:
     for outbox_id in due_messages():
         deliver_email.delay(str(outbox_id))
+
+
+@celery_app.task(name="auth.purge_expired")
+def purge_expired() -> None:
+    purge_expired_credentials()
