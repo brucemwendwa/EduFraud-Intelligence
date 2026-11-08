@@ -24,10 +24,12 @@ from app.integrations.payment_provider import get_payment_provider
 from app.schemas.common import Schema
 from app.services.document_scanner import get_clamav_scanner
 from app.services.object_storage import S3ObjectStorage
+from app.services.scheduler_heartbeat import seconds_since_last_tick
 
 HealthStatus = Literal["ok", "degraded", "down", "not_configured", "simulated"]
 _BACKEND_DIR = Path(__file__).resolve().parents[2]
 _MAX_SIGNATURE_AGE_DAYS = 3
+_MAX_TICK_AGE_SECONDS = 180
 
 
 class ServiceHealth(Schema):
@@ -85,6 +87,23 @@ def _jobs(settings: Settings) -> ServiceHealth:
     return ServiceHealth(
         key="jobs", name=name, status="ok", detail=f"Queue reachable; {len(workers)} worker(s) replied."
     )
+
+
+def _scheduler(settings: Settings) -> ServiceHealth:
+    name = "Scheduler"
+    if settings.jobs_backend == "inline" or not settings.rate_limit_store_url:
+        detail = "No scheduler configured. Retries and cleanup do not run."
+        return ServiceHealth(key="scheduler", name=name, status="not_configured", detail=detail)
+    try:
+        age = seconds_since_last_tick()
+    except redis.RedisError:
+        return ServiceHealth(key="scheduler", name=name, status="down", detail="Scheduler state is unreadable.")
+    if age is None:
+        return ServiceHealth(key="scheduler", name=name, status="down", detail="No scheduled task has run yet.")
+    if age > _MAX_TICK_AGE_SECONDS:
+        detail = f"The last scheduled task ran {age} seconds ago."
+        return ServiceHealth(key="scheduler", name=name, status="down", detail=detail)
+    return ServiceHealth(key="scheduler", name=name, status="ok", detail=f"Last scheduled task ran {age} seconds ago.")
 
 
 def _rate_limit(settings: Settings) -> ServiceHealth:
@@ -186,6 +205,7 @@ def service_health(db: Session) -> list[ServiceHealth]:
         _database(db),
         _migrations(db),
         _jobs(settings),
+        _scheduler(settings),
         _rate_limit(settings),
         _storage(settings),
         _scanner(settings),

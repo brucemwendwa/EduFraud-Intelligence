@@ -175,3 +175,40 @@ class TestObservability:
         assert response.status_code == 500
         assert "sensitive internal detail" not in response.text
         assert response.json()["error"]["details"]["request_id"]
+
+
+class TestSchedulerHealth:
+    def _settings(self):  # type: ignore[no-untyped-def]
+        from app.core.config import Settings
+
+        return Settings(_env_file=None, celery_broker_url="redis://cache.internal:6379/0")
+
+    @pytest.mark.parametrize(
+        ("age", "status"),
+        [(None, "down"), (20, "ok"), (179, "ok"), (181, "down")],
+    )
+    def test_reports_the_age_of_the_last_tick(
+        self, monkeypatch: pytest.MonkeyPatch, age: int | None, status: str
+    ) -> None:
+        from app.services import operations_health
+
+        monkeypatch.setattr(operations_health, "seconds_since_last_tick", lambda: age)
+        assert operations_health._scheduler(self._settings()).status == status
+
+    def test_unconfigured_without_a_queue(self) -> None:
+        from app.core.config import Settings
+        from app.services import operations_health
+
+        check = operations_health._scheduler(Settings(_env_file=None, celery_broker_url=None))
+        assert check.status == "not_configured"
+
+    def test_unreadable_redis_is_reported_as_down(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        import redis
+
+        from app.services import operations_health
+
+        def fail() -> None:
+            raise redis.ConnectionError("down")
+
+        monkeypatch.setattr(operations_health, "seconds_since_last_tick", fail)
+        assert operations_health._scheduler(self._settings()).status == "down"

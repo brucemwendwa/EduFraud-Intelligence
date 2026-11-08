@@ -11,6 +11,7 @@ from app.services.document_processing import (
     reconcile_document_scans,
 )
 from app.services.email_outbox import deliver, due_messages
+from app.services.scheduler_heartbeat import record_tick
 from app.workers.celery_app import celery_app
 
 
@@ -51,3 +52,8 @@ def reconcile_email() -> None:
 @celery_app.task(name="auth.purge_expired")
 def purge_expired() -> None:
     purge_expired_credentials()
+
+
+@celery_app.task(name="scheduler.heartbeat")
+def scheduler_heartbeat() -> None:
+    record_tick()

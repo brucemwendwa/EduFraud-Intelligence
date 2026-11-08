@@ -134,6 +134,7 @@ class Verifier:
             ("database", "database connection"),
             ("migrations", "migrations current"),
             ("jobs", "Redis and worker running"),
+            ("scheduler", "scheduler running"),
             ("rate_limit", "shared rate limiting"),
             ("storage", "evidence storage"),
             ("scanner", "malware scanner"),
@@ -161,7 +162,28 @@ class Verifier:
             refused = self.http.get("/api/v1/applications", headers=student)
             self.check("student refused staff records", refused.status_code == 403)
 
-    def run(self) -> int:
+    def login_rate_limit(self) -> None:
+        """Sends failed sign-ins for an address that does not exist, forging every common client-address header.
+
+        45 attempts exceed two fixed windows of 20, so a window boundary cannot hide a working limit.
+        """
+        codes = [
+            self.http.post(
+                "/api/v1/auth/login",
+                json={"email": "verify.rate.limit@northbridge.example", "password": "not-a-real-password"},
+                headers={
+                    **CLIENT_HEADER,
+                    "X-Forwarded-For": f"203.0.113.{attempt}",
+                    "X-Real-IP": f"203.0.113.{attempt}",
+                    "True-Client-IP": f"203.0.113.{attempt}",
+                },
+            ).status_code
+            for attempt in range(1, 46)
+        ]
+        limited = codes.count(429)
+        self.check("sign-in limit holds against a spoofed client address", limited > 0, f"{limited} of 45 limited")
+
+    def run(self, check_rate_limit: bool = False) -> int:
         self.transport()
         self.frontend()
         self.api()
@@ -171,6 +193,8 @@ class Verifier:
         if admin:
             self.infrastructure(admin)
         self.roles(staff, student)
+        if check_rate_limit:
+            self.login_rate_limit()
         for result in self.results:
             print(f"{result.status:5} {result.name}{f' ({result.detail})' if result.detail else ''}")
         failed = sum(result.status == "FAIL" for result in self.results)
@@ -182,12 +206,13 @@ class Verifier:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--allow-http", action="store_true", help="rehearse against a local stack without TLS")
+    parser.add_argument("--check-rate-limit", action="store_true", help="also send 45 failed sign-ins")
     args = parser.parse_args()
     base_url = os.environ.get("BASE_URL")
     if not base_url:
         print("Set BASE_URL to the deployed application's address.", file=sys.stderr)
         return 2
-    return Verifier(base_url, args.allow_http).run()
+    return Verifier(base_url, args.allow_http).run(args.check_rate_limit)
 
 
 if __name__ == "__main__":
