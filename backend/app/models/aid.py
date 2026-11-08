@@ -29,7 +29,7 @@ class FinancialAidApplication(UUIDPrimaryKey, Timestamps, TenantScoped, Syntheti
     reference: Mapped[str] = mapped_column(String(24), unique=True)
     award_year: Mapped[str | None] = mapped_column(String(9))
     submitted_at: Mapped[datetime | None]
-    status: Mapped[str] = mapped_column(String(20), default=ApplicationStatus.RECEIVED)
+    status: Mapped[str] = mapped_column(String(40), default=ApplicationStatus.RECEIVED)
     dependency_status: Mapped[str | None] = mapped_column(String(16))
     enrollment_intensity: Mapped[str | None] = mapped_column(String(24))
     program: Mapped[str | None] = mapped_column(String(120))
@@ -63,6 +63,8 @@ class ApplicationStatusHistory(UUIDPrimaryKey, Timestamps, TenantScoped, Synthet
     actor_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     actor_role: Mapped[str] = mapped_column(String(40))
     note: Mapped[str | None] = mapped_column(String(1000))
+    # Written for the student and shown in the portal; `note` stays staff-only.
+    student_message: Mapped[str | None] = mapped_column(String(1000))
 
 
 class EnrollmentRecord(UUIDPrimaryKey, Timestamps, TenantScoped, Synthetic, Base):

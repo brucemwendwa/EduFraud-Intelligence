@@ -7,7 +7,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from app.models.enums import ApplicationStatus, ReviewStatus
 from app.schemas.common import OrgRef, ReasonText, Schema
@@ -190,4 +190,29 @@ class ReviewUpdate(Schema):
         ]
         | None
     ) = None
-    note: str = Field(min_length=5, max_length=1000)
+    note: str = Field(min_length=5, max_length=1000, description="Staff-only review note")
+    student_message: str | None = Field(
+        default=None,
+        min_length=5,
+        max_length=1000,
+        description="Shown to the student. Required when requesting information or rejecting an application.",
+    )
+
+    @field_validator("student_message", mode="before")
+    @classmethod
+    def _blank_message_is_none(cls, value: object) -> object:
+        if isinstance(value, str):
+            return value.strip() or None
+        return value
+
+
+class ApplicationHistoryItem(Schema):
+    """Staff view of a lifecycle entry, including the staff-only note."""
+
+    from_status: str | None
+    to_status: str
+    actor_name: str | None
+    actor_role: str
+    note: str | None
+    student_message: str | None
+    created_at: datetime

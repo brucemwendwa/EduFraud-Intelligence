@@ -8,7 +8,7 @@ from typing import Any, Literal
 
 from pydantic import Field
 
-from app.schemas.aid import ApplicationRecord, StudentRef
+from app.schemas.aid import ApplicationHistoryItem, ApplicationRecord, StudentRef
 from app.schemas.common import OrgRef, Schema, UserRef
 
 
@@ -206,3 +206,5 @@ class ApplicationDetail(ApplicationRecord):
     assessment: RiskAssessmentOut | None
     assessment_history: list[AssessmentHistoryItem]
     alerts: list[AlertRow]
+    status_history: list[ApplicationHistoryItem]
+    allowed_status_changes: list[str] = Field(description="Statuses a reviewer may move this application to next")

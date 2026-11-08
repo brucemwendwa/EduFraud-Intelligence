@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import uuid
+
 from fastapi import Request
 from sqlalchemy.orm import Session
 
-from app.core.errors import ConflictError
+from app.api.deps import Principal, get_scoped_or_404
+from app.core.errors import ConflictError, NotFoundError
 from app.models import ApplicationStatusHistory, FinancialAidApplication, User
 from app.models.enums import ApplicationStatus, AuditCategory
 from app.services import audit
@@ -25,6 +28,14 @@ STAFF_TARGETS = {
     ApplicationStatus.REJECTED,
     ApplicationStatus.ON_HOLD,  # compatibility with established staff review records
 }
+# The student has to be told why: these decisions cannot be recorded without an explanation for them.
+REQUIRES_STUDENT_MESSAGE = {ApplicationStatus.ADDITIONAL_INFORMATION_REQUIRED, ApplicationStatus.REJECTED}
+AWAITING_REVIEW = {ApplicationStatus.SUBMITTED, ApplicationStatus.RECEIVED}
+OPEN_FOR_REVIEW = AWAITING_REVIEW | {
+    ApplicationStatus.IN_REVIEW,
+    ApplicationStatus.ADDITIONAL_INFORMATION_REQUIRED,
+    ApplicationStatus.ON_HOLD,
+}
 
 _STAFF_TRANSITIONS = {
     ApplicationStatus.SUBMITTED: STAFF_TARGETS,
@@ -39,6 +50,22 @@ _STAFF_TRANSITIONS = {
 }
 
 
+def staff_application_or_404(
+    db: Session, application_id: uuid.UUID, principal: Principal
+) -> FinancialAidApplication:
+    """An application staff may act on: in the caller's institution and actually submitted by the student."""
+    app = get_scoped_or_404(db, FinancialAidApplication, application_id, principal, "Application")
+    if app.submitted_at is None:
+        raise NotFoundError("Application not found.")
+    return app
+
+
+def staff_targets(current: str) -> list[ApplicationStatus]:
+    """Statuses staff may move this application to next, excluding the status it already has."""
+    status = ApplicationStatus(current)
+    return sorted(_STAFF_TRANSITIONS.get(status, set()) - {status}, key=lambda s: s.value)
+
+
 def change_status(
     db: Session,
     app: FinancialAidApplication,
@@ -48,6 +75,7 @@ def change_status(
     request: Request | None,
     action: str,
     note: str | None = None,
+    student_message: str | None = None,
 ) -> None:
     """Record a deliberate lifecycle movement and its audit event in one transaction."""
     before = app.status
@@ -63,6 +91,7 @@ def change_status(
             actor_user_id=actor.id,
             actor_role=actor.role.key,
             note=note,
+            student_message=student_message,
         )
     )
     audit.record(

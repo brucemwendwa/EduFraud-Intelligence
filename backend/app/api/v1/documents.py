@@ -20,7 +20,7 @@ from app.models import ApplicationDocument, DocumentObjectCleanup, DocumentScanJ
 from app.models.enums import AuditCategory, DocumentReviewStatus, DocumentStatus
 from app.schemas.documents import DocumentCategory, DocumentOut, DocumentReview, DownloadUrl
 from app.services import audit
-from app.services.application_lifecycle import STUDENT_EDITABLE
+from app.services.application_lifecycle import STUDENT_EDITABLE, staff_application_or_404
 from app.services.object_storage import get_object_storage
 from app.workers.document_jobs import enqueue_document_scan
 
@@ -50,6 +50,13 @@ def _owned_app(db: DB, app_id: uuid.UUID, principal: Principal) -> FinancialAidA
     return app
 
 
+def _staff_document(db: DB, document_id: uuid.UUID, principal: Principal) -> ApplicationDocument:
+    """A document on an application staff can see; evidence attached to an unsubmitted draft stays private."""
+    doc = get_scoped_or_404(db, ApplicationDocument, document_id, principal, "Document")
+    staff_application_or_404(db, doc.application_id, principal)
+    return doc
+
+
 def _out(doc: ApplicationDocument, *, staff: bool = False) -> DocumentOut:
     return DocumentOut(
         id=doc.id,
@@ -70,7 +77,13 @@ def _out(doc: ApplicationDocument, *, staff: bool = False) -> DocumentOut:
 
 
 def _validate(filename: str | None, body: bytes) -> tuple[str, str]:
-    if not filename or len(filename) > 160 or PurePath(filename).name != filename:
+    if (
+        not filename
+        or len(filename) > 160
+        or PurePath(filename).name != filename
+        or "\\" in filename
+        or any(ord(char) < 32 or ord(char) == 127 for char in filename)
+    ):
         raise ValidationFailedError("File name is invalid.")
     if not body:
         raise ValidationFailedError("The uploaded file is empty.")
@@ -281,7 +294,7 @@ def staff_download(
     principal: Annotated[Principal, Depends(require(P.APPLICATIONS_READ))],
 ) -> DownloadUrl:
     """Issue an attachment URL only after a tenant-scoped staff authorization check."""
-    doc = get_scoped_or_404(db, ApplicationDocument, document_id, principal, "Document")
+    doc = _staff_document(db, document_id, principal)
     if doc.status != DocumentStatus.AVAILABLE:
         raise ConflictError("This document is not available for download.")
     url = get_object_storage().download_url(
@@ -305,7 +318,7 @@ def staff_download(
 def list_staff_documents(
     application_id: uuid.UUID, db: DB, principal: Annotated[Principal, Depends(require(P.APPLICATIONS_READ))]
 ) -> list[DocumentOut]:
-    app = get_scoped_or_404(db, FinancialAidApplication, application_id, principal, "Application")
+    app = staff_application_or_404(db, application_id, principal)
     return [
         _out(d, staff=True)
         for d in db.scalars(
@@ -324,7 +337,7 @@ def review_document(
     db: DB,
     principal: Annotated[Principal, Depends(require(P.APPLICATIONS_REVIEW))],
 ) -> DocumentOut:
-    doc = get_scoped_or_404(db, ApplicationDocument, document_id, principal, "Document")
+    doc = _staff_document(db, document_id, principal)
     if doc.status != DocumentStatus.AVAILABLE:
         raise ConflictError("Only scan-cleared documents can be reviewed.")
     doc.review_status, doc.review_reason, doc.reviewer_id, doc.reviewed_at = (
@@ -341,6 +354,7 @@ def review_document(
         organization_id=doc.organization_id,
         target_type="document",
         target_id=doc.id,
+        details={"decision": body.decision, "reason": body.reason, "category": doc.category},
         request=request,
     )
     db.commit()

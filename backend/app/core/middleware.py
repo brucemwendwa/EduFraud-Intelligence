@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import time
 import uuid
 
@@ -16,13 +17,16 @@ access_log = logging.getLogger("edushield.access")
 
 UNSAFE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 CLIENT_HEADER = "x-edushield-client"
+_SAFE_REQUEST_ID = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 
 
 class RequestContextMiddleware(BaseHTTPMiddleware):
     """Assigns a request ID and logs method/path/status/duration — never bodies or query strings."""
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        request_id = request.headers.get("x-request-id") or uuid.uuid4().hex[:16]
+        supplied = request.headers.get("x-request-id", "")
+        # Client-supplied IDs reach logs and response headers, so only simple tokens are accepted.
+        request_id = supplied if _SAFE_REQUEST_ID.match(supplied) else uuid.uuid4().hex[:16]
         request.state.request_id = request_id
         start = time.perf_counter()
         response = await call_next(request)

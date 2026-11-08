@@ -19,10 +19,27 @@ class StudentApplicationDraft(Schema):
     student_aid_index: int | None = Field(default=None, ge=-1500, le=999999)
 
 
+class StudentApplicationSubmit(Schema):
+    """Optional covering note, used when responding to a request for additional information."""
+
+    response_note: str | None = Field(default=None, max_length=1000)
+
+
 class StudentApplicationHistory(Schema):
+    """Student-safe lifecycle entry. Staff-only review notes and staff roles are never included."""
+
     from_status: str | None
     to_status: str
-    actor_role: str
+    actor_role: Literal["student", "financial_aid_office"]
+    student_message: str | None
+    created_at: datetime
+
+
+class StudentStatusMessage(Schema):
+    """What the financial aid office told the student about the application's current status."""
+
+    status: str
+    message: str | None
     created_at: datetime
 
 
@@ -37,7 +54,8 @@ class StudentApplicationOut(Schema):
     program: str | None
     requested_amount: Decimal | None
     student_aid_index: int | None
-    risk_level: str | None
     is_editable: bool
+    is_withdrawable: bool
     outstanding_requirements: list[str]
+    status_message: StudentStatusMessage | None
     history: list[StudentApplicationHistory]

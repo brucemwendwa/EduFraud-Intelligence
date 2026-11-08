@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import secrets
 import uuid
 from typing import Annotated
@@ -15,8 +16,14 @@ from app.core.permissions import P
 from app.db.types import utcnow
 from app.detection.engine import DetectionEngine
 from app.models import ApplicationStatusHistory, FinancialAidApplication, Student
-from app.models.enums import ApplicationStatus, AuditCategory, ReviewStatus, VerificationStatus
-from app.schemas.student_applications import StudentApplicationDraft, StudentApplicationHistory, StudentApplicationOut
+from app.models.enums import ApplicationStatus, AuditCategory, AuditOutcome, ReviewStatus, VerificationStatus
+from app.schemas.student_applications import (
+    StudentApplicationDraft,
+    StudentApplicationHistory,
+    StudentApplicationOut,
+    StudentApplicationSubmit,
+    StudentStatusMessage,
+)
 from app.services import audit
 from app.services.application_lifecycle import (
     STUDENT_EDITABLE,
@@ -27,6 +34,14 @@ from app.services.application_lifecycle import (
 )
 
 router = APIRouter(prefix="/student-applications", tags=["student applications"])
+logger = logging.getLogger("edushield.applications")
+
+# Statuses where the financial aid office's explanation is shown prominently to the student.
+_EXPLAINED_STATUSES = {
+    ApplicationStatus.ADDITIONAL_INFORMATION_REQUIRED,
+    ApplicationStatus.APPROVED,
+    ApplicationStatus.REJECTED,
+}
 
 
 def _student(db: DB, principal: Principal) -> Student:
@@ -68,16 +83,39 @@ def _requirements(app: FinancialAidApplication) -> list[str]:
     return missing
 
 
-def _history(db: DB, app: FinancialAidApplication) -> list[StudentApplicationHistory]:
+def _history_rows(db: DB, app: FinancialAidApplication) -> list[ApplicationStatusHistory]:
+    """Status changes only: staff review notes recorded without a status change never reach the student."""
     rows = db.scalars(
         select(ApplicationStatusHistory)
         .where(ApplicationStatusHistory.application_id == app.id)
         .order_by(ApplicationStatusHistory.created_at)
     ).all()
-    return [StudentApplicationHistory.model_validate(row) for row in rows]
+    return [row for row in rows if row.from_status != row.to_status]
+
+
+def _history_out(row: ApplicationStatusHistory) -> StudentApplicationHistory:
+    return StudentApplicationHistory(
+        from_status=row.from_status,
+        to_status=row.to_status,
+        # The specific staff role (for example, fraud investigator) is internal.
+        actor_role="student" if row.actor_role == "student" else "financial_aid_office",
+        student_message=row.student_message,
+        created_at=row.created_at,
+    )
+
+
+def _status_message(app: FinancialAidApplication, rows: list[ApplicationStatusHistory]) -> StudentStatusMessage | None:
+    if ApplicationStatus(app.status) not in _EXPLAINED_STATUSES:
+        return None
+    latest = next((row for row in reversed(rows) if row.to_status == app.status), None)
+    if latest is None:
+        return None
+    return StudentStatusMessage(status=app.status, message=latest.student_message, created_at=latest.created_at)
 
 
 def _out(db: DB, app: FinancialAidApplication) -> StudentApplicationOut:
+    rows = _history_rows(db, app)
+    status = ApplicationStatus(app.status)
     return StudentApplicationOut(
         id=app.id,
         reference=app.reference,
@@ -89,10 +127,11 @@ def _out(db: DB, app: FinancialAidApplication) -> StudentApplicationOut:
         program=app.program,
         requested_amount=app.requested_amount,
         student_aid_index=app.student_aid_index,
-        risk_level=app.risk_level,
-        is_editable=ApplicationStatus(app.status) in STUDENT_EDITABLE,
+        is_editable=status in STUDENT_EDITABLE,
+        is_withdrawable=status in STUDENT_WITHDRAWABLE,
         outstanding_requirements=_requirements(app),
-        history=_history(db, app),
+        status_message=_status_message(app, rows),
+        history=[_history_out(row) for row in rows],
     )
 
 
@@ -195,12 +234,29 @@ def update_student_application(
     return _out(db, app)
 
 
+def _assess_after_submission(db: DB, app: FinancialAidApplication, principal: Principal, request: Request) -> None:
+    """Score the submitted application. A scoring failure must never cost a student their submission."""
+    try:
+        DetectionEngine(db).prepare().assess(app, triggered_by="student_submission", user=principal.user)
+        db.commit()
+    except Exception:  # noqa: BLE001 - reviewers see the application as "not yet assessed" and can re-run it
+        db.rollback()
+        logger.exception("risk_assessment_failed", extra={"application_id": str(app.id)})
+        audit.record(
+            db, category=AuditCategory.DETECTION, action="application.assessment_failed", outcome=AuditOutcome.FAILURE,
+            actor=principal.user, organization_id=app.organization_id, target_type="application", target_id=app.id,
+            target_ref=app.reference, request=request,
+        )
+        db.commit()
+
+
 @router.post("/{application_id}/submit", response_model=StudentApplicationOut, summary="Submit a completed application")
 def submit_student_application(
     application_id: uuid.UUID,
     request: Request,
     db: DB,
     principal: Annotated[Principal, Depends(require(P.STUDENT_PORTAL_UPDATE))],
+    body: StudentApplicationSubmit | None = None,
 ) -> StudentApplicationOut:
     app = _owned_application(db, application_id, principal)
     require_transition(app.status, STUDENT_SUBMITTABLE, ApplicationStatus.SUBMITTED)
@@ -209,6 +265,7 @@ def submit_student_application(
         raise ValidationFailedError(
             "Complete the required information before submitting.", details=[{"field": x} for x in missing]
         )
+    response_note = (body.response_note or "").strip() or None if body else None
     app.submitted_at = utcnow()
     change_status(
         db,
@@ -217,9 +274,11 @@ def submit_student_application(
         actor=principal.user,
         request=request,
         action="application.submit",
+        note=response_note,
+        student_message=response_note,
     )
-    DetectionEngine(db).prepare().assess(app, triggered_by="student_submission", user=principal.user)
     db.commit()
+    _assess_after_submission(db, app, principal, request)
     db.refresh(app)
     return _out(db, app)
 

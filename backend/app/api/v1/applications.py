@@ -6,12 +6,21 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import func, or_, select
 
-from app.api.deps import DB, Principal, get_scoped_or_404, require, scoped
-from app.core.errors import NotFoundError
+from app.api.deps import DB, Principal, require, scoped
+from app.core.errors import ValidationFailedError
 from app.core.permissions import P
 from app.core.tokenization import display_token
 from app.detection.engine import DetectionEngine
-from app.models import Alert, Disbursement, EnrollmentRecord, FinancialAidApplication, IdentityVerification, Student
+from app.models import (
+    Alert,
+    ApplicationStatusHistory,
+    Disbursement,
+    EnrollmentRecord,
+    FinancialAidApplication,
+    IdentityVerification,
+    Student,
+    User,
+)
 from app.models.enums import (
     ApplicationStatus,
     AuditCategory,
@@ -20,6 +29,7 @@ from app.models.enums import (
     VerificationStatus,
 )
 from app.schemas.aid import (
+    ApplicationHistoryItem,
     ApplicationRow,
     EnrollmentOut,
     ReviewUpdate,
@@ -29,7 +39,15 @@ from app.schemas.aid import (
 from app.schemas.common import Page, Pagination
 from app.schemas.risk import ApplicationDetail
 from app.services import audit, records, risk_views
-from app.services.application_lifecycle import change_status, require_staff_transition
+from app.services.application_lifecycle import (
+    AWAITING_REVIEW,
+    OPEN_FOR_REVIEW,
+    REQUIRES_STUDENT_MESSAGE,
+    change_status,
+    require_staff_transition,
+    staff_application_or_404,
+    staff_targets,
+)
 
 router = APIRouter(prefix="/applications", tags=["applications"])
 
@@ -51,6 +69,7 @@ def list_applications(
     q: Annotated[str | None, Query(max_length=60, description="Application or student reference")] = None,
     risk_level: Annotated[list[RiskLevel] | None, Query()] = None,
     status: ApplicationStatus | None = None,
+    queue: Annotated[Literal["awaiting_review", "open"] | None, Query(description="Named work queue")] = None,
     review_status: ReviewStatus | None = None,
     verification_status: VerificationStatus | None = None,
     scenario: Annotated[str | None, Query(max_length=40, description="Scenario key, 'any' or 'none'")] = None,
@@ -59,7 +78,7 @@ def list_applications(
     direction: Literal["asc", "desc"] = "desc",
 ) -> Page[ApplicationRow]:
     stmt = scoped(select(FinancialAidApplication), FinancialAidApplication, principal)
-    stmt = stmt.where(FinancialAidApplication.status != ApplicationStatus.DRAFT)
+    stmt = stmt.where(FinancialAidApplication.submitted_at.is_not(None))
     if q:
         like = f"%{q.strip().lower()}%"
         stmt = stmt.join(Student, Student.id == FinancialAidApplication.student_id).where(
@@ -69,6 +88,9 @@ def list_applications(
         stmt = stmt.where(FinancialAidApplication.risk_level.in_([r.value for r in risk_level]))
     if status:
         stmt = stmt.where(FinancialAidApplication.status == status.value)
+    if queue:
+        members = AWAITING_REVIEW if queue == "awaiting_review" else OPEN_FOR_REVIEW
+        stmt = stmt.where(FinancialAidApplication.status.in_([s.value for s in members]))
     if review_status:
         stmt = stmt.where(FinancialAidApplication.review_status == review_status.value)
     if verification_status:
@@ -95,10 +117,29 @@ def list_applications(
 
 @router.get("/{application_id}", response_model=ApplicationDetail, summary="Application detail with related records")
 def get_application(application_id: uuid.UUID, db: DB, principal: Reader) -> ApplicationDetail:
-    app = get_scoped_or_404(db, FinancialAidApplication, application_id, principal, "Application")
-    if app.status == ApplicationStatus.DRAFT:
-        raise NotFoundError("Application not found.")
-    return build_detail(db, app, principal)
+    return build_detail(db, staff_application_or_404(db, application_id, principal), principal)
+
+
+def _status_history(db: DB, app: FinancialAidApplication) -> list[ApplicationHistoryItem]:
+    rows = db.scalars(
+        select(ApplicationStatusHistory)
+        .where(ApplicationStatusHistory.application_id == app.id)
+        .order_by(ApplicationStatusHistory.created_at.desc())
+    ).all()
+    actors = {r.actor_user_id for r in rows if r.actor_user_id}
+    names = dict(db.execute(select(User.id, User.full_name).where(User.id.in_(actors))).all()) if actors else {}
+    return [
+        ApplicationHistoryItem(
+            from_status=r.from_status,
+            to_status=r.to_status,
+            actor_name=names.get(r.actor_user_id),
+            actor_role=r.actor_role,
+            note=r.note,
+            student_message=r.student_message,
+            created_at=r.created_at,
+        )
+        for r in rows
+    ]
 
 
 def build_detail(db: DB, app: FinancialAidApplication, principal: Principal) -> ApplicationDetail:
@@ -121,6 +162,8 @@ def build_detail(db: DB, app: FinancialAidApplication, principal: Principal) -> 
         assessment=risk_views.current_assessment(db, app.id),
         assessment_history=risk_views.assessment_history(db, app.id),
         alerts=risk_views.alert_rows(db, list(alerts)),
+        status_history=_status_history(db, app),
+        allowed_status_changes=[s.value for s in staff_targets(app.status)],
         dependency_status=app.dependency_status,
         enrollment_intensity=app.enrollment_intensity,
         program=app.program,
@@ -151,19 +194,40 @@ def review_application(
     db: DB,
     principal: Annotated[Principal, Depends(require(P.APPLICATIONS_REVIEW))],
 ) -> ApplicationRow:
-    app = get_scoped_or_404(db, FinancialAidApplication, application_id, principal, "Application")
+    app = staff_application_or_404(db, application_id, principal)
+    target = body.application_status
+    if target in REQUIRES_STUDENT_MESSAGE and not body.student_message:
+        raise ValidationFailedError(
+            "Tell the student what is needed or why this decision was made.",
+            details=[{"field": "student_message", "message": "Required for this decision."}],
+        )
+    if target:
+        require_staff_transition(app.status, target)
     before = {"review_status": app.review_status, "status": app.status}
     app.review_status = body.review_status
-    if body.application_status:
-        require_staff_transition(app.status, body.application_status)
+    if target and target.value != app.status:
         change_status(
             db,
             app,
-            to_status=body.application_status,
+            to_status=target,
             actor=principal.user,
             request=request,
             action="application.status_change",
             note=body.note,
+            student_message=body.student_message,
+        )
+    else:
+        # A review with no status change still belongs on the staff timeline; students only see status changes.
+        db.add(
+            ApplicationStatusHistory(
+                organization_id=app.organization_id,
+                application_id=app.id,
+                from_status=app.status,
+                to_status=app.status,
+                actor_user_id=principal.user.id,
+                actor_role=principal.user.role.key,
+                note=body.note,
+            )
         )
     audit.record(
         db,
@@ -174,7 +238,13 @@ def review_application(
         target_type="application",
         target_id=app.id,
         target_ref=app.reference,
-        details={"before": before, "review_status": app.review_status, "status": app.status, "note": body.note},
+        details={
+            "before": before,
+            "review_status": app.review_status,
+            "status": app.status,
+            "note": body.note,
+            "student_message": body.student_message,
+        },
         request=request,
     )
     db.commit()
@@ -188,7 +258,7 @@ def assess_application(
     db: DB,
     principal: Annotated[Principal, Depends(require(P.APPLICATIONS_ASSESS))],
 ) -> ApplicationDetail:
-    app = get_scoped_or_404(db, FinancialAidApplication, application_id, principal, "Application")
+    app = staff_application_or_404(db, application_id, principal)
     assessment, changed, alert_created = (
         DetectionEngine(db).prepare().assess(app, triggered_by="user", user=principal.user)
     )

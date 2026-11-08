@@ -20,7 +20,7 @@ from app.core.config import get_settings
 from app.models.enums import Severity, SignalCategory
 
 ACCOUNT_RULES_VERSION = "account-rules-2026.10.1"
-ACCOUNT_ENGINE_METHOD = "explainable rules over provider transaction and security events + relationship analysis"
+ACCOUNT_ENGINE_METHOD = "explainable rules over provider events + relationship analysis"
 
 logger = logging.getLogger("edushield.detection")
 

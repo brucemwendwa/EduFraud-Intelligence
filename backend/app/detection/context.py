@@ -66,7 +66,10 @@ class DetectionContext:
 
 
 def build_context(db: Session, now: datetime | None = None) -> DetectionContext:
-    ctx = DetectionContext(now=now or utcnow(), applications=list(db.scalars(select(FinancialAidApplication))))
+    # Unsubmitted drafts have no submission data and are not part of what the engine assesses.
+    submitted = select(FinancialAidApplication).where(FinancialAidApplication.submitted_at.is_not(None))
+    applications = list(db.scalars(submitted))
+    ctx = DetectionContext(now=now or utcnow(), applications=applications)
 
     for student_id, org_id, token_type, value in db.execute(
         select(

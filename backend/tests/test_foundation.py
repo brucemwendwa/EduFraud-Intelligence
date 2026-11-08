@@ -174,3 +174,8 @@ class TestHttpHardening:
 
 def test_now_is_timezone_aware() -> None:
     assert datetime.now(UTC).tzinfo is UTC
+
+
+def test_unsafe_request_ids_are_replaced(client) -> None:  # type: ignore[no-untyped-def]
+    assert client.get("/api/health", headers={"X-Request-ID": "trace-123"}).headers["X-Request-ID"] == "trace-123"
+    assert client.get("/api/health", headers={"X-Request-ID": "x" * 200}).headers["X-Request-ID"] != "x" * 200

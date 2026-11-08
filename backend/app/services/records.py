@@ -179,6 +179,7 @@ def related_groups(db: Session, app: FinancialAidApplication, principal: Princip
                 StudentIdentityToken.token_type == tok.token_type,
                 StudentIdentityToken.token_value == tok.token_value,
                 FinancialAidApplication.student_id != app.student_id,
+                FinancialAidApplication.submitted_at.is_not(None),
             )
         ).all()
         if others:

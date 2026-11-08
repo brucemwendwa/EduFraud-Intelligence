@@ -25,7 +25,7 @@ class InvestigationCase(UUIDPrimaryKey, Timestamps, TenantScoped, Base):
     )
     fraud_category: Mapped[str] = mapped_column(String(32))
     priority: Mapped[str] = mapped_column(String(10), default=CasePriority.MEDIUM)
-    status: Mapped[str] = mapped_column(String(16), default=CaseStatus.NEW, index=True)
+    status: Mapped[str] = mapped_column(String(24), default=CaseStatus.NEW, index=True)
     risk_score_at_open: Mapped[float | None]
     assigned_to_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True)
     created_by_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
@@ -91,8 +91,8 @@ class CaseDecision(UUIDPrimaryKey, TenantScoped, Base):
     decision: Mapped[str] = mapped_column(String(16))  # escalate | resolve | reopen | close
     outcome: Mapped[str | None] = mapped_column(String(32))  # resolution outcome when decision == resolve
     finding: Mapped[str] = mapped_column(String(24))  # finding level after this decision
-    from_status: Mapped[str] = mapped_column(String(16))
-    to_status: Mapped[str] = mapped_column(String(16))
+    from_status: Mapped[str] = mapped_column(String(24))
+    to_status: Mapped[str] = mapped_column(String(24))
     justification: Mapped[str] = mapped_column(Text)
     decided_by_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     decided_at: Mapped[datetime] = mapped_column(default=utcnow)

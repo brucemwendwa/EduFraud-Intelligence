@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import ApplicationStatusHistory, AuditEvent, FinancialAidApplication, User
+from app.models import ApplicationStatusHistory, AuditEvent, FinancialAidApplication, RiskAssessment, User
 from app.seed.base import DEMO_STUDENT_EMAIL
 from tests.conftest import LS_INVESTIGATOR, NB_OFFICER
 
@@ -38,7 +38,9 @@ def test_student_can_create_save_submit_and_track_application(as_user, db: Sessi
     assert saved.status_code == 200 and saved.json()["program"] == "Computer Science"
     submitted = student.post(f"/api/v1/student-applications/{draft['id']}/submit")
     assert submitted.status_code == 200 and submitted.json()["status"] == "submitted"
-    assert submitted.json()["risk_level"] is not None
+    assert "risk_level" not in submitted.json()
+    assessment = db.scalar(select(RiskAssessment).where(RiskAssessment.application_id == uuid.UUID(draft["id"])))
+    assert assessment is not None and assessment.triggered_by == "student_submission"
     assert [item["to_status"] for item in submitted.json()["history"]] == ["draft", "submitted"]
     assert student.patch(f"/api/v1/student-applications/{draft['id']}", json={"program": "Changed"}).status_code == 409
     assert student.post(f"/api/v1/student-applications/{draft['id']}/submit").status_code == 409
@@ -60,7 +62,8 @@ def test_student_ownership_staff_review_and_status_history(as_user, db: Session)
         json={
             "review_status": "in_review",
             "application_status": "additional_information_required",
-            "note": "Please confirm enrollment.",
+            "note": "Enrollment could not be matched to the term record.",
+            "student_message": "Please confirm your enrollment for this term.",
         },
     )
     assert reviewed.status_code == 200 and reviewed.json()["status"] == "additional_information_required"
