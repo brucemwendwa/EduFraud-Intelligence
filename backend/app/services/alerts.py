@@ -12,7 +12,13 @@ from app.models.enums import AlertStatus, RiskLevel, SignalCategory
 from app.services import notifications
 from app.services.references import next_reference
 
-LIVE_STATUSES = (AlertStatus.OPEN, AlertStatus.ACKNOWLEDGED, AlertStatus.IN_INVESTIGATION)
+LIVE_STATUSES = (
+    AlertStatus.OPEN,
+    AlertStatus.ACKNOWLEDGED,
+    AlertStatus.VERIFICATION_REQUESTED,
+    AlertStatus.ESCALATED,
+    AlertStatus.IN_INVESTIGATION,
+)
 _SEVERITY_RANK = {"medium": 1, "high": 2, "critical": 3}
 
 

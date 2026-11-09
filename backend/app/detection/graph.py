@@ -4,7 +4,9 @@ Only *risk-bearing* links join applications into clusters:
   - an SSN token shared by students with conflicting identity details,
   - a device or network address used for a burst of applications (>= 3 within 72 h),
   - a phone number shared by three or more students,
-  - a payment destination receiving funds for more than one student.
+  - a payment destination receiving funds for more than one student,
+  - one device signing in to three or more students' ID-linked accounts (last 30 days),
+  - an external destination that aid redirections or transfers from two or more students point to.
 Benign sharing (households, residence halls, a campus kiosk used over months) does not
 link records, which keeps legitimate students out of clusters.
 """
@@ -81,6 +83,15 @@ def link_graph(ctx: DetectionContext) -> nx.Graph:
         }
         apps = [a for s in students for a in apps_by_student.get(s, []) if a.id in app_ids]
         link(f"destination:{dest_id}", "destination", apps)
+
+    for token, students in ctx.account_device_students.items():
+        if len(students) >= 3:
+            link(f"acctdevice:{token}", "account_device", [a for s in students for a in apps_by_student.get(s, [])])
+    for dest_id, students in ctx.redirect_destination_students.items():
+        if len(students) >= 2:
+            link(
+                f"redirect:{dest_id}", "redirect_destination", [a for s in students for a in apps_by_student.get(s, [])]
+            )
     return g
 
 

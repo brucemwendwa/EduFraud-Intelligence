@@ -8,8 +8,8 @@ from typing import Any, Literal
 
 from pydantic import Field
 
-from app.schemas.aid import ApplicationRecord, StudentRef
-from app.schemas.common import OrgRef, Schema
+from app.schemas.aid import ApplicationHistoryItem, ApplicationRecord, StudentRef
+from app.schemas.common import OrgRef, Schema, UserRef
 
 
 class FraudSignalOut(Schema):
@@ -25,6 +25,16 @@ class FraudSignalOut(Schema):
     version: str
 
 
+class AssessmentProvenance(Schema):
+    engine: str
+    rules_version: str
+    model_version: str | None
+    graph_version: str
+    model_applied: bool
+    population_size: int
+    real_records_in_population: int
+
+
 class RiskAssessmentOut(Schema):
     id: uuid.UUID
     score: float
@@ -37,6 +47,10 @@ class RiskAssessmentOut(Schema):
     triggered_by: str
     created_at: datetime
     signals: list[FraudSignalOut]
+    provenance: AssessmentProvenance | None = None
+    input_fingerprint: str | None = None
+    score_reproducible: bool = Field(default=False, description="Stored signals recompute to the stored score")
+    limitations: list[str] = []
 
 
 class AssessmentHistoryItem(Schema):
@@ -59,10 +73,39 @@ class AlertRow(Schema):
     risk_score: float | None
     application_id: uuid.UUID | None
     application_ref: str | None
+    account_id: uuid.UUID | None = None
+    account_ref: str | None = None
+    student_ref: str | None = None
     case_id: uuid.UUID | None
     case_ref: str | None
+    assigned_to: UserRef | None = None
+    recommended_action: str | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class AlertNoteOut(Schema):
+    id: uuid.UUID
+    body: str
+    author: str | None
+    created_at: datetime
+
+
+class AlertTimelineItem(Schema):
+    action: str
+    actor: str | None
+    outcome: str
+    details: dict[str, Any]
+    occurred_at: datetime
+
+
+class RelatedRecord(Schema):
+    kind: str
+    id: uuid.UUID
+    reference: str
+    label: str
+    status: str | None = None
+    link: str | None = None
 
 
 class AlertDetail(AlertRow):
@@ -75,11 +118,26 @@ class AlertDetail(AlertRow):
     triage_note: str | None
     triaged_by: str | None
     triaged_at: datetime | None
+    related: list[RelatedRecord] = []
+    notes: list[AlertNoteOut] = []
+    timeline: list[AlertTimelineItem] = []
 
 
 class AlertTriage(Schema):
-    action: Literal["acknowledge", "dismiss", "reopen"]
+    action: Literal["acknowledge", "dismiss", "reopen", "escalate", "resolve", "false_positive"]
     note: str | None = Field(default=None, max_length=500)
+
+
+class AlertAssign(Schema):
+    assigned_to_id: uuid.UUID | None
+
+
+class AlertNoteCreate(Schema):
+    body: str = Field(min_length=3, max_length=2000)
+
+
+class AlertVerificationRequest(Schema):
+    reason: str = Field(min_length=5, max_length=500)
 
 
 class AlertSummary(Schema):
@@ -88,6 +146,10 @@ class AlertSummary(Schema):
     in_investigation: int
     critical_open: int
     by_category: dict[str, int]
+    verification_requested: int = 0
+    escalated: int = 0
+    by_status: dict[str, int] = {}
+    assigned_to_me: int = 0
 
 
 class DetectionRunOut(Schema):
@@ -158,3 +220,5 @@ class ApplicationDetail(ApplicationRecord):
     assessment: RiskAssessmentOut | None
     assessment_history: list[AssessmentHistoryItem]
     alerts: list[AlertRow]
+    status_history: list[ApplicationHistoryItem]
+    allowed_status_changes: list[str] = Field(description="Statuses a reviewer may move this application to next")

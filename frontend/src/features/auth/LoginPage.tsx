@@ -26,7 +26,7 @@ export function LoginPage() {
     staleTime: Infinity,
   });
 
-  if (user) return <Navigate to={from} replace />;
+  if (user) return <Navigate to={user.role.key === 'student' ? '/student' : from} replace />;
 
   const signIn = async (mail: string, pass: string) => {
     setError(null);
@@ -141,6 +141,9 @@ export function LoginPage() {
             <Button type="submit" size="lg" className="w-full" loading={pending === email.trim() && pending !== null}>
               Sign in <ArrowRight className="size-4" aria-hidden />
             </Button>
+            <Link to="/forgot-password" className="inline-block text-sm font-medium text-brand-blue hover:underline">
+              Forgot your password?
+            </Link>
           </form>
 
           {demo.data && demo.data.length > 0 && (

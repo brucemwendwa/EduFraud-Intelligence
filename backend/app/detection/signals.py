@@ -53,13 +53,17 @@ def level_for(score: float) -> RiskLevel:
     return RiskLevel.LOW
 
 
+def score_from_weights(weights: list[float]) -> float:
+    """Noisy-OR score. Deterministic, so any stored assessment can be recomputed from its signals."""
+    return round(100 * (1 - math.prod(1 - min(max(w, 0.0), 0.99) for w in weights)), 1)
+
+
 def combine(signals: list[Signal]) -> float:
     """Noisy-OR combination; assigns each signal its exact share of the score (in place)."""
     if not signals:
         return 0.0
     capped = [min(max(s.weight, 0.0), 0.99) for s in signals]
-    remainder = math.prod(1 - w for w in capped)
-    score = round(100 * (1 - remainder), 1)
+    score = score_from_weights(capped)
     log_odds = [-math.log(1 - w) for w in capped]
     total = sum(log_odds) or 1.0
     for s, lo in zip(signals, log_odds, strict=True):

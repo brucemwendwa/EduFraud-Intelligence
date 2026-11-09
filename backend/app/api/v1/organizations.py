@@ -36,7 +36,7 @@ def list_organizations(
     db: DB, principal: Annotated[Principal, Depends(require(P.DASHBOARD_READ))]
 ) -> list[OrganizationStats]:
     users = _counts(db, User)
-    apps = _counts(db, FinancialAidApplication)
+    apps = _counts(db, FinancialAidApplication, FinancialAidApplication.submitted_at.is_not(None))
     alerts = _counts(db, Alert, Alert.status.in_([AlertStatus.OPEN, AlertStatus.ACKNOWLEDGED]))
     return [
         OrganizationStats(

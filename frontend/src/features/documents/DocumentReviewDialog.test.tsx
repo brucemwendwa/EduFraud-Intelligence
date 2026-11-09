@@ -1,0 +1,14 @@
+import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { renderWithProviders } from '@/test/render';
+const useReviewDocument = vi.fn(); vi.mock('./api', () => ({ useReviewDocument: () => useReviewDocument() })); vi.mock('sonner', () => ({ toast: { success: vi.fn() } }));
+import { DocumentReviewDialog } from './DocumentReviewDialog';
+const mutation = (mutateAsync = vi.fn().mockResolvedValue({}), isPending = false) => ({ mutateAsync, isPending });
+const renderDialog = (onOpenChange = vi.fn()) => renderWithProviders(<DocumentReviewDialog open onOpenChange={onOpenChange} applicationId="a1" documentId="d1" filename="proof.pdf" />);
+describe('DocumentReviewDialog', () => { beforeEach(() => useReviewDocument.mockReturnValue(mutation()));
+  it('offers exactly the three backend decisions and validates reasons', async () => { renderDialog(); expect(screen.getAllByRole('option')).toHaveLength(3); await userEvent.type(screen.getByLabelText('Reason'), '   '); expect(screen.getByRole('button',{name:'Record review'})).toBeDisabled(); await userEvent.clear(screen.getByLabelText('Reason')); await userEvent.type(screen.getByLabelText('Reason'), 'valid reason'); expect(screen.getByRole('button',{name:'Record review'})).toBeEnabled(); });
+  it.each(['accepted','rejected','replacement_requested'] as const)('submits %s and closes on success', async (decision) => { const mutateAsync = vi.fn().mockResolvedValue({}); useReviewDocument.mockReturnValue(mutation(mutateAsync)); const close = vi.fn(); renderDialog(close); await userEvent.selectOptions(screen.getByLabelText('Decision'), decision); await userEvent.type(screen.getByLabelText('Reason'), 'Document review rationale'); await userEvent.click(screen.getByRole('button',{name:'Record review'})); expect(mutateAsync).toHaveBeenCalledWith({ applicationId:'a1', documentId:'d1', decision, reason:'Document review rationale' }); expect(close).toHaveBeenCalledWith(false); });
+  it('keeps open and reports failed/conflict submissions', async () => { const mutateAsync = vi.fn().mockRejectedValue(new Error('Conflict')); useReviewDocument.mockReturnValue(mutation(mutateAsync)); const close = vi.fn(); renderDialog(close); await userEvent.type(screen.getByLabelText('Reason'), 'Document review rationale'); await userEvent.click(screen.getByRole('button',{name:'Record review'})); expect(await screen.findByRole('alert')).toHaveTextContent('Conflict'); expect(close).not.toHaveBeenCalled(); });
+  it('prevents submission while pending', () => { useReviewDocument.mockReturnValue(mutation(vi.fn(), true)); renderDialog(); expect(screen.getByRole('button',{name:/Record review/})).toBeDisabled(); });
+});

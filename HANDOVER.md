@@ -1,5 +1,7 @@
 # EduShield AI Handover
 
+> Historical snapshot, superseded by README.md, docs/DEPLOYMENT.md and docs/PRODUCTION_READINESS.md.
+
 Status snapshot: 2026-10-30. This document reflects the repository after the Phase 9 investigation-workspace commit
 (branch `phase9-cases`, based on `59b36db`).
 

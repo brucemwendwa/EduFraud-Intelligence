@@ -1,6 +1,6 @@
 import * as RDialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 import { Button } from './Button';
 import { Field, Textarea } from './Field';
@@ -17,12 +17,30 @@ interface ModalProps {
 
 const widths = { sm: 'max-w-md', md: 'max-w-lg', lg: 'max-w-2xl' };
 
+/** These dialogs open from state rather than a Radix trigger, so focus must be handed back explicitly. */
+function useReturnFocus() {
+  const opener = useRef<HTMLElement | null>(null);
+  return {
+    onOpenAutoFocus: () => {
+      opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    },
+    onCloseAutoFocus: (event: Event) => {
+      if (opener.current?.isConnected) {
+        event.preventDefault();
+        opener.current.focus();
+      }
+    },
+  };
+}
+
 export function Modal({ open, onOpenChange, title, description, children, footer, size = 'md' }: ModalProps) {
+  const returnFocus = useReturnFocus();
   return (
     <RDialog.Root open={open} onOpenChange={onOpenChange}>
       <RDialog.Portal>
         <RDialog.Overlay className="fixed inset-0 z-50 bg-navy-950/40 backdrop-blur-[2px]" />
         <RDialog.Content
+          {...returnFocus}
           className={cn(
             'fixed top-1/2 left-1/2 z-50 w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2',
             'rounded-xl border border-slate-200 bg-white shadow-raised focus:outline-none',
@@ -138,11 +156,13 @@ interface DrawerProps {
 }
 
 export function Drawer({ open, onOpenChange, title, description, children, footer, side = 'right', className }: DrawerProps) {
+  const returnFocus = useReturnFocus();
   return (
     <RDialog.Root open={open} onOpenChange={onOpenChange}>
       <RDialog.Portal>
         <RDialog.Overlay className="fixed inset-0 z-50 bg-navy-950/30" />
         <RDialog.Content
+          {...returnFocus}
           className={cn(
             'fixed inset-y-0 z-50 flex w-full max-w-lg flex-col bg-white shadow-raised focus:outline-none',
             side === 'right' ? 'right-0 border-l' : 'left-0 border-r',

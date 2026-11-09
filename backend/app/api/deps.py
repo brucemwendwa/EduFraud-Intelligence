@@ -17,7 +17,7 @@ from app.core.errors import ForbiddenError, NotFoundError, UnauthorizedError
 from app.core.permissions import P
 from app.core.security import decode_access_token
 from app.db.session import SessionLocal
-from app.models import Organization, User
+from app.models import Organization, RevokedSession, User
 from app.models.enums import AuditCategory, AuditOutcome
 from app.services import audit
 
@@ -49,6 +49,8 @@ def get_current_user(request: Request, db: DB) -> User:
         user_id = uuid.UUID(claims["sub"])
     except (jwt.PyJWTError, ValueError) as exc:
         raise UnauthorizedError("Your session is invalid or has expired. Please sign in again.") from exc
+    if db.get(RevokedSession, claims["jti"]) is not None:
+        raise UnauthorizedError("Your session has ended. Please sign in again.")
     user = db.get(User, user_id)
     if user is None or not user.is_active:
         raise UnauthorizedError("Your session is no longer valid. Please sign in again.")

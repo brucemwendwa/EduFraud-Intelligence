@@ -27,14 +27,14 @@ class FinancialAidApplication(UUIDPrimaryKey, Timestamps, TenantScoped, Syntheti
 
     student_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("students.id", ondelete="RESTRICT"), index=True)
     reference: Mapped[str] = mapped_column(String(24), unique=True)
-    award_year: Mapped[str] = mapped_column(String(9))
-    submitted_at: Mapped[datetime]
-    status: Mapped[str] = mapped_column(String(20), default=ApplicationStatus.RECEIVED)
-    dependency_status: Mapped[str] = mapped_column(String(16))
-    enrollment_intensity: Mapped[str] = mapped_column(String(24))
-    program: Mapped[str] = mapped_column(String(120))
-    requested_amount: Mapped[Decimal]
-    student_aid_index: Mapped[int]
+    award_year: Mapped[str | None] = mapped_column(String(9))
+    submitted_at: Mapped[datetime | None]
+    status: Mapped[str] = mapped_column(String(40), default=ApplicationStatus.RECEIVED)
+    dependency_status: Mapped[str | None] = mapped_column(String(16))
+    enrollment_intensity: Mapped[str | None] = mapped_column(String(24))
+    program: Mapped[str | None] = mapped_column(String(120))
+    requested_amount: Mapped[Decimal | None]
+    student_aid_index: Mapped[int | None]
     submission_channel: Mapped[str] = mapped_column(String(16))
     device_token: Mapped[str | None] = mapped_column(String(64), index=True)
     ip_token: Mapped[str | None] = mapped_column(String(64), index=True)
@@ -47,6 +47,24 @@ class FinancialAidApplication(UUIDPrimaryKey, Timestamps, TenantScoped, Syntheti
     scenario_key: Mapped[str | None] = mapped_column(String(40), index=True)
 
     student: Mapped[Student] = relationship(lazy="joined")
+
+
+class ApplicationStatusHistory(UUIDPrimaryKey, Timestamps, TenantScoped, Synthetic, Base):
+    """Append-only application lifecycle history; staff notes remain staff-only."""
+
+    __tablename__ = "application_status_history"
+    __table_args__ = (Index("ix_application_status_history_application", "application_id", "created_at"),)
+
+    application_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("financial_aid_applications.id", ondelete="RESTRICT")
+    )
+    from_status: Mapped[str | None] = mapped_column(String(40))
+    to_status: Mapped[str] = mapped_column(String(40))
+    actor_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    actor_role: Mapped[str] = mapped_column(String(40))
+    note: Mapped[str | None] = mapped_column(String(1000))
+    # Written for the student and shown in the portal; `note` stays staff-only.
+    student_message: Mapped[str | None] = mapped_column(String(1000))
 
 
 class EnrollmentRecord(UUIDPrimaryKey, Timestamps, TenantScoped, Synthetic, Base):
@@ -84,6 +102,8 @@ class PaymentDestinationToken(UUIDPrimaryKey, Base):
 
 
 class Disbursement(UUIDPrimaryKey, Timestamps, TenantScoped, Synthetic, Base):
+    """A financial aid allocation (shown as "Financial Aid Allocations" in the product)."""
+
     __tablename__ = "disbursements"
     __table_args__ = (
         CheckConstraint("amount > 0", name="amount_positive"),
@@ -96,6 +116,11 @@ class Disbursement(UUIDPrimaryKey, Timestamps, TenantScoped, Synthetic, Base):
     )
     destination_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("payment_destination_tokens.id", ondelete="RESTRICT"), index=True
+    )
+    # The student ID-linked account this allocation was credited to. When the destination is
+    # anything other than that account's own destination, the aid was redirected elsewhere.
+    account_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("student_financial_accounts.id", ondelete="SET NULL"), index=True
     )
     reference: Mapped[str] = mapped_column(String(24), unique=True)
     fund_type: Mapped[str] = mapped_column(String(32))

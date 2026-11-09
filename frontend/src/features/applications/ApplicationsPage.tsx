@@ -24,6 +24,7 @@ import { useApplications } from './api';
 const DEFAULTS = {
   q: '',
   risk_level: '',
+  queue: '',
   status: '',
   review_status: '',
   verification_status: '',
@@ -65,8 +66,10 @@ export default function ApplicationsPage() {
           </div>
           <FilterSelect label="Risk level" value={filters.risk_level} onChange={(v) => setFilters({ risk_level: v })}
             options={['critical', 'high', 'medium', 'low']} />
+          <FilterSelect label="Queue" value={filters.queue} onChange={(v) => setFilters({ queue: v })}
+            options={['awaiting_review', 'open']} />
           <FilterSelect label="Status" value={filters.status} onChange={(v) => setFilters({ status: v })}
-            options={['received', 'in_review', 'approved', 'on_hold', 'withdrawn']} />
+            options={['submitted', 'received', 'in_review', 'additional_information_required', 'on_hold', 'approved', 'rejected', 'withdrawn']} />
           <FilterSelect label="Review" value={filters.review_status} onChange={(v) => setFilters({ review_status: v })}
             options={['unreviewed', 'in_review', 'cleared', 'escalated']} />
           <FilterSelect label="Verification" value={filters.verification_status}

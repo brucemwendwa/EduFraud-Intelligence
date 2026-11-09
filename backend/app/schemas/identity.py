@@ -53,6 +53,106 @@ class ChangePasswordRequest(Schema):
     new_password: str = Field(min_length=12, max_length=256)
 
 
+class PasswordResetRequest(Schema):
+    email: EmailStr
+
+
+class PasswordResetAccepted(Schema):
+    status: Literal["accepted"] = "accepted"
+    message: str = "If that address has an account, a reset link is on its way."
+
+
+class PasswordResetConfirm(Schema):
+    token: str = Field(min_length=32, max_length=512)
+    password: str = Field(min_length=12, max_length=256)
+
+
+class StaffInvitationCreate(Schema):
+    email: EmailStr
+    full_name: str = Field(min_length=2, max_length=120)
+    title: str | None = Field(default=None, max_length=120)
+    role_key: str = Field(max_length=40)
+
+    @field_validator("email")
+    @classmethod
+    def _lower(cls, v: str) -> str:
+        return v.lower()
+
+
+class StaffInvitationOut(Schema):
+    id: uuid.UUID
+    email: str
+    full_name: str
+    title: str | None
+    role_key: str
+    role_name: str
+    expires_at: datetime
+    used_at: datetime | None
+    revoked_at: datetime | None
+    created_at: datetime
+    # Returned only outside production, for local and demo use.
+    activation_url: str | None = None
+
+
+class StaffActivationRequest(Schema):
+    token: str = Field(min_length=32, max_length=512)
+    password: str = Field(min_length=12, max_length=256)
+
+
+class StaffActivationOut(Schema):
+    email: str
+    full_name: str
+    activated: bool = True
+
+
+class StudentInvitationCreate(Schema):
+    email: EmailStr
+
+    @field_validator("email")
+    @classmethod
+    def _lower(cls, v: str) -> str:
+        return v.lower()
+
+
+class StudentInvitationOut(Schema):
+    id: uuid.UUID
+    student_id: uuid.UUID
+    email: str
+    expires_at: datetime
+    used_at: datetime | None
+    revoked_at: datetime | None
+    created_at: datetime
+    # Returned only outside production to support local synthetic-data testing.
+    activation_url: str | None = None
+
+
+class StudentActivationRequest(Schema):
+    token: str = Field(min_length=32, max_length=512)
+    password: str = Field(min_length=12, max_length=256)
+
+
+class StudentActivationOut(Schema):
+    email: str
+    full_name: str
+    activated: bool = True
+
+
+class StudentProfileOut(Schema):
+    email: str
+    full_name: str
+    student_ref: str
+    organization: OrgRef
+    state_of_residence: str
+    biometric_consent: bool
+    biometric_consent_at: datetime | None
+    account_status: Literal["active", "inactive"]
+
+
+class StudentProfileUpdate(Schema):
+    state_of_residence: str | None = Field(default=None, min_length=2, max_length=2, pattern=r"^[A-Z]{2}$")
+    biometric_consent: bool | None = None
+
+
 class PermissionOut(Schema):
     key: str
     description: str

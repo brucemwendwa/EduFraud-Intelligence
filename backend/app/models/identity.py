@@ -82,3 +82,42 @@ class User(UUIDPrimaryKey, Timestamps, Base):
     @property
     def is_platform_admin(self) -> bool:
         return self.role.is_platform_role
+
+
+class RevokedSession(Base):
+    """A signed-out session. Access tokens are stateless, so sign-out is enforced by this list until they expire."""
+
+    __tablename__ = "revoked_sessions"
+
+    jti: Mapped[str] = mapped_column(String(32), primary_key=True)
+    expires_at: Mapped[datetime] = mapped_column(index=True)
+
+
+class PasswordResetToken(UUIDPrimaryKey, Timestamps, Base):
+    """Single-use reset link. Only the hash is stored."""
+
+    __tablename__ = "password_reset_tokens"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    expires_at: Mapped[datetime]
+    used_at: Mapped[datetime | None]
+
+
+class StaffInvitation(UUIDPrimaryKey, Timestamps, Base):
+    """Single-use invitation to join one institution with one role. The administrator never handles a password."""
+
+    __tablename__ = "staff_invitations"
+
+    organization_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("organizations.id", ondelete="RESTRICT"), index=True)
+    role_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("roles.id", ondelete="RESTRICT"))
+    email: Mapped[str] = mapped_column(String(254), index=True)
+    full_name: Mapped[str] = mapped_column(String(120))
+    title: Mapped[str | None] = mapped_column(String(120))
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    expires_at: Mapped[datetime]
+    used_at: Mapped[datetime | None]
+    revoked_at: Mapped[datetime | None]
+    invited_by_user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+
+    role: Mapped[Role] = relationship(lazy="joined")

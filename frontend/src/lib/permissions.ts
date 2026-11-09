@@ -1,5 +1,7 @@
 /** Permission keys — must stay in sync with backend `app/core/permissions.py`. */
 export const P = {
+  studentPortalRead: 'student_portal:read',
+  studentPortalUpdate: 'student_portal:update',
   dashboardRead: 'dashboard:read',
   applicationsRead: 'applications:read',
   applicationsReview: 'applications:review',
@@ -22,6 +24,16 @@ export const P = {
   usersManage: 'users:manage',
   orgsManage: 'organizations:manage',
   detectionRun: 'detection:run',
+  accountsRead: 'accounts:read',
+  accountsRestrict: 'accounts:restrict',
+  cardsManage: 'cards:manage',
+  transactionsRead: 'transactions:read',
+  transactionsReview: 'transactions:review',
+  securityRead: 'security:read',
+  locationRead: 'location:read',
+  verificationsDecide: 'verifications:decide',
+  simulationsRun: 'simulations:run',
+  operationsRead: 'operations:read',
 } as const;
 
 export type Permission = (typeof P)[keyof typeof P];

@@ -108,3 +108,47 @@ class TestTenantIsolation:
     def test_unknown_scope_header_is_rejected(self, as_user) -> None:  # type: ignore[no-untyped-def]
         res = as_user(ADMIN, org="00000000-0000-0000-0000-000000000000").get("/api/v1/users")
         assert res.status_code == 404
+
+
+def test_every_route_needs_a_session_unless_deliberately_public() -> None:
+    """A new endpoint fails here until it is either authenticated or added to this reviewed list."""
+    import importlib
+    import pkgutil
+
+    from fastapi import APIRouter
+    from fastapi.routing import APIRoute
+
+    import app.api.v1 as v1
+    from app.api.deps import get_current_user, get_principal
+
+    public = {
+        "/auth/login",
+        "/auth/logout",
+        "/auth/token",
+        "/auth/password-reset/request",  # same response for every address, rate limited
+        "/auth/password-reset/confirm",  # one-time hashed token, rate limited
+        "/auth/demo-login",  # refused unless DEMO_MODE is on
+        "/auth/demo-accounts",  # empty unless DEMO_MODE is on
+        "/student-activation",  # one-time hashed token, rate limited
+        "/staff-activation",  # one-time hashed token, rate limited
+        "/provider-events/transactions",  # HMAC signature
+        "/provider-events/security",  # HMAC signature
+    }
+
+    def dependencies(dependant, seen: set) -> set:  # type: ignore[no-untyped-def]
+        for item in dependant.dependencies:
+            seen.add(item.call)
+            dependencies(item, seen)
+        return seen
+
+    unprotected = set()
+    for info in pkgutil.iter_modules(v1.__path__):
+        if info.name == "router":
+            continue
+        module = importlib.import_module(f"app.api.v1.{info.name}")
+        for router in (value for value in vars(module).values() if isinstance(value, APIRouter)):
+            for route in (r for r in router.routes if isinstance(r, APIRoute)):
+                calls = dependencies(route.dependant, set())
+                if not calls & {get_current_user, get_principal}:
+                    unprotected.add(route.path)
+    assert unprotected == public

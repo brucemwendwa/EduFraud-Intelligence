@@ -32,6 +32,7 @@ student as fraudulent on its own.
 - [API](#api)
 - [Running the tests](#running-the-tests)
 - [Security and privacy](#security-and-privacy)
+- [Deploying](#deploying)
 - [Known limitations](#known-limitations)
 - [Roadmap](#roadmap)
 
@@ -79,10 +80,17 @@ The full reasoning is in [docs/HUMAN_IMPACT_AND_TRUST.md](docs/HUMAN_IMPACT_AND_
 | Identity verification workflow | **Operational workflow, simulated biometrics** | Consent enforced; officer-led alternatives; outcomes re-score the application |
 | Document, face, liveness and presentation-attack checks | **Simulated** | Deterministic simulated provider; no camera, images or real biometrics |
 | Authentication, 5 roles, tenant isolation, PII masking | **Operational** | Enforced by the API and covered by automated tests |
-| Tamper-evident audit trail (hash chain + DB triggers) | **Operational (API)** | Integrity check at `GET /api/v1/audit/verify`; audit center UI planned |
+| Tamper-evident audit trail (hash chain + DB triggers) | **Operational** | Audit logs page and integrity check at `GET /api/v1/audit/verify` |
+| Student portal | **Operational** | Invitation-only activation, dashboard from the student's own records, drafts, submission, withdrawal, status history, responses to information requests. Fraud risk levels are never shown to students. |
+| Staff application review | **Operational** | Work queues, lifecycle-valid decisions (request information, approve, reject, hold) with required reasons, internal notes kept apart from student messages, full history |
+| Evidence management | **Operational, needs storage and scanner** | Upload, replace, staff review and short-lived downloads. Files stay quarantined until a real scanner clears them. Requires S3-compatible storage and ClamAV. |
+| Application pipeline dashboard | **Operational** | Database-backed queue, decision and risk counts for the institution |
+| Operations monitoring | **Operational** | Service health, processing counts, scan states, failed jobs and recent audit actions, for administrators and auditors; counts and codes only |
 | Student, application and payment data | **Synthetic** | Generated; no real students, FSA or FAFSA data |
 | Investigation cases | **Operational** | Open from an alert or application with its supporting records attached; assign, add evidence and notes, and record justified decisions (escalate, resolve, reopen, close) that keep suspicion, suspected fraud and confirmed findings distinct. Timeline built from the audit trail. |
-| Dashboard analytics, audit center, institution and user admin screens, settings | **Planned** | Shown as "Planned" in the app; not built |
+| Institution and user administration | **Operational** | Institution-scoped users, roles and staff invitations; every change is audited |
+| Account recovery and session control | **Operational, email needs a provider** | Single-use reset links, server-side sign-out, limits shared through Redis |
+| Notification email | **Built, not proven live** | Durable outbox for lifecycle messages. No real message has been delivered yet. |
 | Commercial identity-verification vendor, SIS / aid-system integrations, trained ML models | **Planned** | See [Roadmap](#roadmap) |
 
 ## Architecture and technology
@@ -188,7 +196,7 @@ cp .env.example backend/.env
 | Variable | Default | Purpose |
 |---|---|---|
 | `ENV` | `development` | `development`, `test` or `production`. Production refuses to start with development secrets or SQLite. |
-| `DEMO_MODE` | `true` | Enables demo-account quick login on the sign-in page. Set to `false` outside demonstrations. |
+| `DEMO_MODE` | `false` | Enables demo-account quick login only when explicitly set to `true` for an isolated synthetic-data demonstration. Production refuses to start if it is enabled. |
 | `DATABASE_URL` | `sqlite:///./var/edushield.db` | SQLAlchemy URL. PostgreSQL example: `postgresql+psycopg://user:pass@localhost:5432/edushield` |
 | `CELERY_BROKER_URL` | empty | Leave empty to run detection jobs inline; set a Redis URL to use Celery. |
 | `JWT_SECRET` | development placeholder | Signs session tokens. **Must** be changed in production. |
@@ -196,6 +204,11 @@ cp .env.example backend/.env
 | `DATA_ENCRYPTION_KEY` | empty (derived development key) | Fernet key for revealable PII. **Required** in production. |
 | `CORS_ORIGINS` | `http://localhost:5173` | Comma-separated allowed origins. |
 | `ACCESS_TOKEN_TTL_MINUTES` | `60` | Session length (5–1440). |
+| `STUDENT_INVITATION_TTL_HOURS` | `72` | Lifetime of one-time student account activation links. |
+| `STUDENT_ACTIVATION_BASE_URL` | local `/activate` page | Public frontend URL used in activation links. |
+| `EMAIL_PROVIDER` | `development` | `development` never sends mail and returns the URL only to the authorized inviter; production requires SMTP. |
+| `DOCUMENT_SCANNER_PROVIDER` | `unconfigured` | `clamav` streams each upload to `CLAMAV_HOST`:`CLAMAV_PORT`. Without a scanner, evidence stays quarantined. |
+| `FRONTEND_DIST` | empty | Directory of the built web client, to serve it from the API's own origin. |
 
 Generate real secrets with:
 
@@ -203,6 +216,29 @@ Generate real secrets with:
 python -c "import secrets; print(secrets.token_urlsafe(48))"                                  # JWT_SECRET, TOKENIZATION_KEY
 python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"     # DATA_ENCRYPTION_KEY
 ```
+
+### Student account activation
+
+Students do not self-register or choose an institution. An institution administrator invites an existing student
+record through the protected API, which creates a hashed, one-time link tied to that record and institution. In
+development, the authorized invitation response includes the link for local testing; it is never returned in
+production. Production requires `EMAIL_PROVIDER=smtp` and `SMTP_HOST`, `SMTP_USERNAME`, `SMTP_PASSWORD`, and
+`EMAIL_FROM` to deliver activation emails. The activation link proves access to the invited email address; no
+activation token is stored or logged in plaintext.
+
+### Supporting-document storage
+
+Student evidence uses a private S3-compatible bucket. Configure `S3_BUCKET_NAME`, `S3_ACCESS_KEY_ID`,
+`S3_SECRET_ACCESS_KEY`, `S3_REGION`, and, for MinIO or another compatible provider, `S3_ENDPOINT_URL`.
+EduShield stores only metadata and an opaque server-generated key in the database; downloads are authorized
+per request and use short-lived attachment-only URLs. A malware scanner is not bundled: with the default
+`DOCUMENT_SCANNER_PROVIDER=unconfigured`, uploads remain quarantined and cannot be downloaded or reviewed.
+Set `DOCUMENT_SCANNER_PROVIDER=clamav` and `CLAMAV_HOST` to use a ClamAV daemon. Only clamd's exact clean reply
+releases a document, and every other reply or outage leaves it quarantined. Keep clamd on a private network:
+its TCP port is unauthenticated. With `CELERY_BROKER_URL`,
+production must run both a Celery worker and Celery Beat: Beat dispatches `document.reconcile` every minute to
+recover expired worker leases and enqueue durable retries. The inline development runner is not durable and is
+not suitable for production evidence processing.
 
 ### 3. Create the database and load demo data
 
@@ -248,6 +284,7 @@ accounts for a demonstration; never reuse the password anywhere real.
 | `auditor@northbridge.demo` | Samuel Okafor | Read-only Auditor | Northbridge State University |
 | `investigator@lakeshore.demo` | Hannah Kim | Fraud Investigator | Lakeshore Community College |
 | `officer@pinecrest.demo` | Luis Ortega | Financial Aid Officer | Pinecrest Technical Institute |
+| `student@northbridge.demo` | Synthetic Student | Student (portal only) | Northbridge State University |
 
 What each role can do:
 
@@ -257,7 +294,8 @@ What each role can do:
 | Institution Administrator | Everything within one institution, including users and the audit trail |
 | Fraud Investigator | Read records in scope (not the audit trail); review applications, re-run assessments, reveal names (with a reason), hold disbursements, run verifications, triage alerts, start detection runs |
 | Financial Aid Officer | Read records in scope; review applications, reveal names (with a reason), hold disbursements, run verifications, triage alerts; cannot re-run assessments or start detection runs |
-| Read-only Auditor | Read records and the audit trail; cannot change data or reveal names |
+| Read-only Auditor | Read records, the audit trail and operations monitoring; cannot change data or reveal names |
+| Student | Own applications, documents and profile only |
 
 API clients can also authenticate with a bearer token from `POST /api/v1/auth/token` (OAuth2 password flow,
 used by the Swagger UI "Authorize" button). Five failed sign-ins lock an account for 15 minutes.
@@ -367,7 +405,10 @@ defence); the web client does this automatically.
 | System | `GET /api/health`, `GET /api/ready` |
 | Auth | `POST /auth/login`, `POST /auth/token`, `POST /auth/logout`, `GET /auth/me`, `GET /auth/demo-accounts` (demo mode), `POST /auth/change-password` |
 | Institutions and users | `GET/POST /organizations`, `PATCH /organizations/{id}`, `GET /roles`, `GET/POST /users`, `PATCH /users/{id}` |
-| Applications | `GET /applications` (search, filter, sort, paginate), `GET /applications/{id}`, `PATCH /applications/{id}/review`, `POST /applications/{id}/assess` |
+| Student portal | `GET /student-portal/dashboard`, `GET/POST /student-applications`, `GET/PATCH /student-applications/{id}`, `POST /student-applications/{id}/submit`, `POST /student-applications/{id}/withdraw`, `POST /student-activation` |
+| Evidence | `GET/POST /student-applications/{id}/documents`, `POST /student-documents/{id}/replace`, `POST /student-documents/{id}/download`, `GET /applications/{id}/documents`, `POST /documents/{id}/download`, `PATCH /documents/{id}/review` |
+| Applications | `GET /applications` (search, filter, queue, sort, paginate), `GET /applications/{id}`, `PATCH /applications/{id}/review`, `POST /applications/{id}/assess` |
+| Monitoring | `GET /dashboard/applications`, `GET /operations/overview` |
 | Students | `POST /students/{id}/reveal` (justification required, audited) |
 | Disbursements | `GET /disbursements`, `GET /disbursements/summary`, `GET /disbursements/{id}`, `POST /disbursements/{id}/hold`, `POST /disbursements/{id}/release` |
 | Verifications | `GET /verifications/provider`, `GET /verifications`, `GET /verifications/stats`, `GET /verifications/{id}`, `POST /verifications`, `POST /verifications/alternative` |
@@ -394,8 +435,11 @@ make frontend-test    # Vitest component tests
 make lint             # ruff + ESLint
 cd frontend && npm run typecheck   # TypeScript
 make build            # production build of the web client (frontend/dist)
-make e2e              # Playwright: investigation workflow in Chrome (needs `make seed` and `make dev` running)
+make e2e              # Playwright in Chrome, including acceptance and accessibility suites (needs a freshly seeded database, DEMO_MODE=true and `make dev` running)
 ```
+
+The evidence journey also needs storage and a scanner, so it runs only with `E2E_DOCUMENTS=1`. Set `EICAR_STRING` to
+the standard EICAR test string to include the infected-file step.
 
 Backend tests run against real Alembic migrations on throwaway SQLite files, so they need no running services.
 
@@ -420,23 +464,34 @@ Backend tests run against real Alembic migrations on throwaway SQLite files, so 
 - **Production guards.** With `ENV=production` the API refuses to start with development secrets, without a data
   encryption key, or on SQLite.
 
+## Deploying
+
+One image serves the API and web client from the same origin, which the `SameSite=Strict` session cookie requires.
+It runs as a web service, a Celery worker and exactly one Celery Beat scheduler, against shared PostgreSQL, Redis,
+S3-compatible storage and ClamAV. `.railway/railway.ts` defines a staging project.
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the full guide, and [docs/DEMO.md](docs/DEMO.md) for the demonstration.
+Use `/api/ready` as the health check. `ENV=production` refuses to start without `JWT_SECRET`, `TOKENIZATION_KEY`,
+`PROVIDER_WEBHOOK_SECRET`, `DATA_ENCRYPTION_KEY`, PostgreSQL, SMTP (`SMTP_HOST`, `SMTP_USERNAME`, `SMTP_PASSWORD`)
+and S3 settings (`S3_BUCKET_NAME`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`). Also set `EMAIL_FROM`, `CORS_ORIGINS`,
+`STUDENT_ACTIVATION_BASE_URL`, `CELERY_BROKER_URL`, `DOCUMENT_SCANNER_PROVIDER=clamav` and `CLAMAV_HOST`. The
+**Operations** page reports whether each dependency is live. Enable versioning and block public access on the bucket.
+
 ## Known limitations
 
 - **Simulated biometrics.** No real document, face, liveness or presentation-attack processing exists. The
   provider interface is ready for a vendor; none is integrated.
 - **Synthetic data only.** The anomaly model and rule weights are tuned on synthetic data. **No accuracy, precision or
   recall is claimed**; the scenario coverage check proves only that planted scenarios fire their expected signals.
-- **PostgreSQL not verified.** The code and migrations are written for PostgreSQL, but every test and demo so far
-  has run on SQLite.
-- **No container setup.** There are no Dockerfiles or compose files yet.
-- **Screens not built yet:** dashboard analytics (the dashboard currently links to the working modules),
-  the audit center, institution and user
-  administration, settings, global search and notifications. Their sidebar entries are marked "Planned". The
-  institution, user and audit **APIs** exist.
-- **Test coverage gaps.** The only browser end-to-end test (`make e2e`) covers the investigation-case workflow; other
-  journeys are tested at the API and component level only, and the verification wizard has no component test.
-- **Single-process rate limiting.** The login limiter is in-process; a multi-instance deployment would need a shared
-  store such as Redis.
+- **Database coverage.** The browser journeys and all migrations run on PostgreSQL, but the backend unit suite runs
+  on SQLite, which does not enforce column lengths.
+- **No hosted environment.** The `Dockerfile` steps were run by hand from a clean copy; Docker was not available to
+  build the image itself, and nothing has been deployed. See [docs/PRODUCTION_READINESS.md](docs/PRODUCTION_READINESS.md).
+- **External services unproven.** AWS S3 has only been exercised against an emulator, and no real email has been sent.
+- **Screens not built yet:** global search and in-app notifications.
+- **Risk inputs.** Scores use records held in EduShield. No external fraud database or government identity system is
+  connected, and device and network signals are not captured for student portal submissions.
+- **Test coverage gaps.** The verification wizard has no component test.
 - **Development secrets.** `.env.example` and the defaults contain development placeholders, and the demo password is
   published. Both are refused or must be changed for production.
 

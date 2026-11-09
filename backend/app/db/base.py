@@ -26,6 +26,7 @@ class Base(DeclarativeBase):
         datetime: UTCDateTime(),
         Decimal: Numeric(12, 2),
         dict[str, Any]: JSONType,
+        dict[str, Any] | None: JSONType,
         list[Any]: JSONType,
     }
 

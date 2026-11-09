@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import func, or_, select
@@ -18,6 +18,9 @@ from app.services import audit
 
 router = APIRouter(tags=["users"])
 
+# Student accounts come only from an invitation tied to a student record; the presenter role is for seeded demos.
+_NOT_ASSIGNABLE = {"student", "demo_presenter"}
+
 
 @router.get("/roles", response_model=list[RoleOut], summary="Roles and their permissions")
 def list_roles(db: DB, _: Annotated[Principal, Depends(require(P.USERS_READ))]) -> list[Role]:
@@ -30,8 +33,11 @@ def list_users(
     principal: Annotated[Principal, Depends(require(P.USERS_READ))],
     paging: Annotated[Pagination, Depends()],
     q: Annotated[str | None, Query(max_length=100)] = None,
+    kind: Annotated[Literal["staff", "student"] | None, Query()] = None,
 ) -> Page[UserOut]:
     stmt = scoped(select(User), User, principal)
+    if kind:
+        stmt = stmt.where(User.student_id.is_(None) if kind == "staff" else User.student_id.is_not(None))
     if q:
         like = f"%{q.lower()}%"
         stmt = stmt.where(or_(func.lower(User.email).like(like), func.lower(User.full_name).like(like)))
@@ -42,13 +48,36 @@ def list_users(
     )
 
 
-def _assignable_role(db: DB, principal: Principal, role_key: str) -> Role:
+def assignable_role(db: DB, principal: Principal, role_key: str) -> Role:
     role = db.scalar(select(Role).where(Role.key == role_key))
     if role is None:
         raise ValidationFailedError("Unknown role.", details=[{"field": "role_key", "message": "Unknown role"}])
+    if role.key in _NOT_ASSIGNABLE:
+        raise ForbiddenError("This role cannot be assigned to a staff account.")
     if role.is_platform_role and not principal.is_platform_admin:
         raise ForbiddenError("Only platform administrators can grant platform-level roles.")
+    if not {permission.key for permission in role.permissions} <= principal.permissions:
+        raise ForbiddenError("You cannot grant permissions you do not hold.")
     return role
+
+
+def _require_another_active_admin(db: DB, user: User) -> None:
+    """An institution must never be left with nobody able to administer it."""
+    if user.role.key != "institution_admin" or not user.is_active:
+        return
+    others = db.scalar(
+        select(func.count())
+        .select_from(User)
+        .join(Role, Role.id == User.role_id)
+        .where(
+            User.organization_id == user.organization_id,
+            Role.key == "institution_admin",
+            User.is_active,
+            User.id != user.id,
+        )
+    )
+    if not others:
+        raise ConflictError("This is the institution's last active administrator.")
 
 
 @router.post("/users", response_model=UserOut, status_code=201, summary="Create a user")
@@ -58,7 +87,7 @@ def create_user(
     db: DB,
     principal: Annotated[Principal, Depends(require(P.USERS_MANAGE))],
 ) -> User:
-    role = _assignable_role(db, principal, body.role_key)
+    role = assignable_role(db, principal, body.role_key)
     if principal.is_platform_admin:
         org_id = None if role.is_platform_role else (body.organization_id or principal.org_id)
         if not role.is_platform_role and (org_id is None or db.get(Organization, org_id) is None):
@@ -122,9 +151,15 @@ def update_user(
     if is_self and ("role_key" in changes or changes.get("is_active") is False):
         raise ForbiddenError("You cannot change your own role or deactivate your own account.")
 
+    if user.student_id is not None and "role_key" in changes:
+        raise ForbiddenError("Student accounts cannot be given a staff role.")
+    if user.is_demo and ("role_key" in changes or "is_active" in changes):
+        raise ForbiddenError("Demonstration accounts are managed by the seed data.")
+
     if "role_key" in changes and changes["role_key"] != user.role.key:
         old = user.role.key
-        new_role = _assignable_role(db, principal, changes["role_key"])
+        new_role = assignable_role(db, principal, changes["role_key"])
+        _require_another_active_admin(db, user)
         user.role_id = new_role.id
         audit.record(
             db,
@@ -139,6 +174,8 @@ def update_user(
             request=request,
         )
     if "is_active" in changes and changes["is_active"] != user.is_active:
+        if changes["is_active"] is False:
+            _require_another_active_admin(db, user)
         user.is_active = bool(changes["is_active"])
         audit.record(
             db,

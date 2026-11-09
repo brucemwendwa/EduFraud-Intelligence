@@ -1,34 +1,54 @@
 from __future__ import annotations
 
-from datetime import timedelta
+import hashlib
+import logging
+import secrets
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, Response
+import jwt
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func, select
 
-from app.api.deps import DB, CurrentPrincipal, get_current_user
+from app.api.deps import DB, CurrentPrincipal, _extract_token, get_current_user
+from app.core.client import client_address
 from app.core.config import get_settings
 from app.core.errors import AppError, LockedError, UnauthorizedError, ValidationFailedError
-from app.core.ratelimit import login_limiter
+from app.core.ratelimit import login_limiter, password_reset_limiter
 from app.core.security import (
     create_access_token,
+    decode_access_token,
     hash_password,
     needs_rehash,
     password_problems,
     verify_password,
 )
 from app.db.types import utcnow
-from app.models import Organization, User
+from app.models import Organization, PasswordResetToken, RevokedSession, User
 from app.models.enums import AuditCategory, AuditOutcome
 from app.schemas.common import OrgRef
-from app.schemas.identity import ChangePasswordRequest, DemoAccount, LoginRequest, Me, RoleRef, TokenResponse
+from app.schemas.identity import (
+    ChangePasswordRequest,
+    DemoAccount,
+    LoginRequest,
+    Me,
+    PasswordResetAccepted,
+    PasswordResetConfirm,
+    PasswordResetRequest,
+    RoleRef,
+    TokenResponse,
+)
 from app.seed.base import DEMO_PRESENTER_EMAIL
-from app.services import audit
+from app.services import audit, email_templates
+from app.services.mailer import get_mailer
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 _INVALID = "Invalid email or password."
+_INVALID_RESET = "This password reset link is invalid or has expired."
+_RESET_REQUEST_COOLDOWN = timedelta(minutes=1)
+logger = logging.getLogger("edushield.auth")
 
 
 class TooManyRequestsError(AppError):
@@ -57,7 +77,7 @@ def build_me(db: DB, user: User) -> Me:
 
 def _authenticate(db: DB, request: Request, email: str, password: str) -> User:
     settings = get_settings()
-    client = request.client.host if request.client else "unknown"
+    client = client_address(request)
     if not login_limiter.allow(client):
         raise TooManyRequestsError("Too many sign-in attempts. Please wait a minute and try again.")
 
@@ -116,6 +136,19 @@ def _authenticate(db: DB, request: Request, email: str, password: str) -> User:
     return user
 
 
+def _revoke_presented_session(db: DB, request: Request) -> None:
+    """Ends this session on the server, so a copied token stops working before it would expire."""
+    token = _extract_token(request)
+    if not token:
+        return
+    try:
+        claims = decode_access_token(token)
+    except jwt.PyJWTError:
+        return
+    if db.get(RevokedSession, claims["jti"]) is None:
+        db.add(RevokedSession(jti=claims["jti"], expires_at=datetime.fromtimestamp(claims["exp"], UTC)))
+
+
 @router.post("/login", response_model=Me, summary="Sign in (sets an httpOnly session cookie)")
 def login(body: LoginRequest, request: Request, response: Response, db: DB) -> Me:
     settings = get_settings()
@@ -127,7 +160,7 @@ def login(body: LoginRequest, request: Request, response: Response, db: DB) -> M
         max_age=settings.access_token_ttl_minutes * 60,
         expires=expires,
         httponly=True,
-        secure=settings.is_production,
+        secure=settings.is_hardened,
         samesite="strict",
         path="/api",
     )
@@ -136,7 +169,7 @@ def login(body: LoginRequest, request: Request, response: Response, db: DB) -> M
 
 @router.post("/demo-login", response_model=Me, summary="Start the restricted synthetic demo session")
 def demo_login(request: Request, response: Response, db: DB) -> Me:
-    """Explicit demo-only session; production rejects DEMO_MODE at startup."""
+    """Explicit development-only synthetic demo session."""
     settings = get_settings()
     if not settings.demo_mode:
         raise UnauthorizedError(_INVALID)
@@ -149,7 +182,7 @@ def demo_login(request: Request, response: Response, db: DB) -> Me:
     token, expires = create_access_token(user.id)
     response.set_cookie(
         settings.session_cookie_name, token, max_age=settings.access_token_ttl_minutes * 60,
-        expires=expires, httponly=True, secure=settings.is_production, samesite="strict", path="/api",
+        expires=expires, httponly=True, secure=settings.is_hardened, samesite="strict", path="/api",
     )
     return build_me(db, user)
 
@@ -167,6 +200,7 @@ def logout(request: Request, response: Response, db: DB) -> Response:
     try:
         user = get_current_user(request, db)
         audit.record(db, category=AuditCategory.AUTHENTICATION, action="auth.logout", actor=user, request=request)
+        _revoke_presented_session(db, request)
         db.commit()
     except UnauthorizedError:
         pass
@@ -204,6 +238,106 @@ def demo_accounts(db: DB) -> list[DemoAccount]:
         )
         for u in users
     ]
+
+
+def _reset_token_hash(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def _client_key(request: Request) -> str:
+    return client_address(request)
+
+
+def _send_password_reset(recipient: str, token: str) -> None:
+    """Runs after the response, so response time does not reveal whether the account exists."""
+    settings = get_settings()
+    try:
+        get_mailer(settings).send(
+            recipient=recipient,
+            content=email_templates.password_reset(
+                reset_url=f"{settings.public_app_url}/reset-password?token={token}",
+                ttl_minutes=settings.password_reset_ttl_minutes,
+            ),
+        )
+    except Exception:  # noqa: BLE001 - the requester always gets the same response
+        logger.warning("password_reset_delivery_failed")
+
+
+@router.post(
+    "/password-reset/request",
+    response_model=PasswordResetAccepted,
+    status_code=202,
+    summary="Request a password reset link (the response never reveals whether the account exists)",
+)
+def request_password_reset(
+    body: PasswordResetRequest, request: Request, background: BackgroundTasks, db: DB
+) -> PasswordResetAccepted:
+    if not password_reset_limiter.allow(_client_key(request)):
+        raise TooManyRequestsError("Too many requests. Please wait a minute and try again.")
+    now = utcnow()
+    user = db.scalar(select(User).where(func.lower(User.email) == body.email.strip().lower()))
+    eligible = user is not None and user.is_active and not user.is_demo
+    token: str | None = None
+    if eligible:
+        latest = db.scalar(
+            select(func.max(PasswordResetToken.created_at)).where(PasswordResetToken.user_id == user.id)
+        )
+        if latest is None or latest <= now - _RESET_REQUEST_COOLDOWN:
+            for existing in db.scalars(
+                select(PasswordResetToken).where(
+                    PasswordResetToken.user_id == user.id, PasswordResetToken.used_at.is_(None)
+                )
+            ):
+                existing.used_at = now
+            token = secrets.token_urlsafe(32)
+            db.add(
+                PasswordResetToken(
+                    user_id=user.id,
+                    token_hash=_reset_token_hash(token),
+                    expires_at=now + timedelta(minutes=get_settings().password_reset_ttl_minutes),
+                )
+            )
+    audit.record(
+        db,
+        category=AuditCategory.AUTHENTICATION,
+        action="auth.password_reset_requested",
+        actor=user if eligible else None,
+        details={"link_issued": token is not None},
+        request=request,
+    )
+    db.commit()
+    if token and user is not None:
+        background.add_task(_send_password_reset, user.email, token)
+    return PasswordResetAccepted()
+
+
+@router.post("/password-reset/confirm", status_code=204, summary="Set a new password with a single-use reset link")
+def confirm_password_reset(body: PasswordResetConfirm, request: Request, response: Response, db: DB) -> Response:
+    if not password_reset_limiter.allow(_client_key(request)):
+        raise TooManyRequestsError("Too many requests. Please wait a minute and try again.")
+    problems = password_problems(body.password)
+    if problems:
+        raise ValidationFailedError(
+            "Password does not meet the policy.", details=[{"field": "password", "message": p} for p in problems]
+        )
+    now = utcnow()
+    record = db.scalar(select(PasswordResetToken).where(PasswordResetToken.token_hash == _reset_token_hash(body.token)))
+    if record is None or record.used_at is not None or record.expires_at <= now:
+        raise UnauthorizedError(_INVALID_RESET)
+    user = db.get(User, record.user_id)
+    if user is None or not user.is_active or user.is_demo:
+        raise UnauthorizedError(_INVALID_RESET)
+    record.used_at = now
+    user.password_hash = hash_password(body.password)
+    user.password_changed_at = now  # ends every existing session
+    user.failed_login_attempts = 0
+    user.locked_until = None
+    audit.record(
+        db, category=AuditCategory.AUTHENTICATION, action="auth.password_reset_completed", actor=user, request=request
+    )
+    db.commit()
+    response.status_code = 204
+    return response
 
 
 @router.post("/change-password", status_code=204, summary="Change your password (revokes existing sessions)")

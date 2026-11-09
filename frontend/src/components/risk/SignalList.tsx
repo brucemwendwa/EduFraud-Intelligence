@@ -10,6 +10,7 @@ const methods: Record<string, { label: string; Icon: LucideIcon }> = {
   graph: { label: 'Graph analysis', Icon: Network },
   anomaly_model: { label: 'Anomaly model', Icon: BrainCircuit },
   biometric: { label: 'Biometric check', Icon: Fingerprint },
+  relationship: { label: 'Relationship analysis', Icon: Network },
 };
 
 const severityTone: Record<string, Tone> = {

@@ -20,9 +20,12 @@ class RiskAssessment(UUIDPrimaryKey, TenantScoped, Base):
         Index("ix_risk_assessments_app_current", "application_id", "is_current"),
     )
 
-    subject_type: Mapped[str] = mapped_column(String(16))  # "application" | "disbursement"
+    subject_type: Mapped[str] = mapped_column(String(16))  # "application" | "disbursement" | "account"
     application_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("financial_aid_applications.id", ondelete="CASCADE")
+    )
+    account_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("student_financial_accounts.id", ondelete="CASCADE"), index=True
     )
     disbursement_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("disbursements.id", ondelete="CASCADE"), index=True
@@ -39,6 +42,9 @@ class RiskAssessment(UUIDPrimaryKey, TenantScoped, Base):
     triggered_by_user_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     is_current: Mapped[bool] = mapped_column(default=True)
     created_at: Mapped[datetime] = mapped_column(default=utcnow)
+    # What produced this result: versions, training population, and a hash of its inputs.
+    provenance: Mapped[dict[str, Any] | None]
+    input_fingerprint: Mapped[str | None] = mapped_column(String(64))
 
     signals: Mapped[list[FraudSignal]] = relationship(
         back_populates="assessment",
@@ -72,11 +78,11 @@ class Alert(UUIDPrimaryKey, Timestamps, TenantScoped, Base):
     __table_args__ = (Index("ix_alerts_org_status", "organization_id", "status"),)
 
     reference: Mapped[str] = mapped_column(String(24), unique=True)
-    category: Mapped[str] = mapped_column(String(16))
+    category: Mapped[str] = mapped_column(String(32))
     severity: Mapped[str] = mapped_column(String(10))
     title: Mapped[str] = mapped_column(String(200))
     summary: Mapped[str] = mapped_column(Text)
-    status: Mapped[str] = mapped_column(String(20))
+    status: Mapped[str] = mapped_column(String(24))
     # Prevents duplicate open alerts for the same subject across detection runs.
     dedupe_key: Mapped[str] = mapped_column(String(120), index=True)
     application_id: Mapped[uuid.UUID | None] = mapped_column(
@@ -88,10 +94,31 @@ class Alert(UUIDPrimaryKey, Timestamps, TenantScoped, Base):
     )
     assessment_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("risk_assessments.id", ondelete="SET NULL"))
     case_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("investigation_cases.id", ondelete="SET NULL"))
+    # Account-protection alerts reference the student's account and the triggering event instead.
+    student_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("students.id", ondelete="SET NULL"), index=True)
+    account_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("student_financial_accounts.id", ondelete="SET NULL"), index=True
+    )
+    card_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("student_id_cards.id", ondelete="SET NULL"))
+    transaction_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("transactions.id", ondelete="SET NULL"))
+    security_event_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("security_events.id", ondelete="SET NULL"))
+    recommended_action: Mapped[str | None] = mapped_column(String(300))
+    assigned_to_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True)
     risk_score: Mapped[float | None]
     triage_note: Mapped[str | None] = mapped_column(String(500))
     triaged_by_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
     triaged_at: Mapped[datetime | None]
+
+
+class AlertNote(UUIDPrimaryKey, TenantScoped, Base):
+    """Append-only investigation notes on an alert (no update or delete API)."""
+
+    __tablename__ = "alert_notes"
+
+    alert_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("alerts.id", ondelete="CASCADE"), index=True)
+    author_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    body: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(default=utcnow)
 
 
 class DetectionRun(UUIDPrimaryKey, Base):

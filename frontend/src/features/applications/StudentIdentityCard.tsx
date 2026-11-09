@@ -1,4 +1,4 @@
-import { Eye, EyeOff, Fingerprint, KeyRound, ShieldCheck } from 'lucide-react';
+import { Eye, EyeOff, Fingerprint, KeyRound, MailPlus, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import type { StudentDetail } from '@/api/types';
@@ -10,11 +10,13 @@ import { errorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { P } from '@/lib/permissions';
 import { useRevealStudent } from './api';
+import { InviteStudentDialog } from './InviteStudentDialog';
 
 /** Masked by default. Revealing requires `pii:reveal` and a justification, recorded as a data-access audit event. */
 export function StudentIdentityCard({ student }: { student: StudentDetail }) {
   const { can } = useAuth();
   const [confirm, setConfirm] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [revealed, setRevealed] = useState<string | null>(null);
   const reveal = useRevealStudent();
 
@@ -80,7 +82,13 @@ export function StudentIdentityCard({ student }: { student: StudentDetail }) {
             </dd>
           </div>
         </dl>
+        {can(P.usersManage) && (
+          <Button variant="secondary" size="sm" icon={<MailPlus className="size-3.5" />} onClick={() => setInviteOpen(true)}>
+            Invite to student portal
+          </Button>
+        )}
       </CardBody>
+      <InviteStudentDialog studentId={student.id} open={inviteOpen} onOpenChange={setInviteOpen} />
       <ConfirmDialog
         open={confirm}
         onOpenChange={setConfirm}

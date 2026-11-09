@@ -102,7 +102,30 @@ export function RiskPanel({ app }: { app: ApplicationDetail }) {
             <dt className="text-slate-500">Model version</dt>
             <dd className="mt-0.5 font-mono text-slate-800">{a.model_version ?? 'not applied'}</dd>
           </div>
+          {a.provenance && (
+            <>
+              <div>
+                <dt className="text-slate-500">Graph version</dt>
+                <dd className="mt-0.5 font-mono text-slate-800">{a.provenance.graph_version}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Records in model population</dt>
+                <dd className="tabular mt-0.5 text-slate-800">{a.provenance.population_size.toLocaleString()}</dd>
+              </div>
+            </>
+          )}
+          <div>
+            <dt className="text-slate-500">Score check</dt>
+            <dd className="mt-0.5 text-slate-800">{a.score_reproducible ? 'Recomputes from these signals' : 'Could not be recomputed'}</dd>
+          </div>
         </dl>
+
+        <div>
+          <h3 className="mb-2 text-xs font-semibold tracking-wider text-slate-500 uppercase">Limitations of this result</h3>
+          <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed text-slate-600">
+            {a.limitations.map((item) => <li key={item}>{item}</li>)}
+          </ul>
+        </div>
 
         {app.assessment_history.length > 1 && (
           <div>

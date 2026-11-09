@@ -76,7 +76,7 @@ def decode_access_token(token: str) -> dict[str, Any]:
         settings.jwt_secret.get_secret_value(),
         algorithms=[settings.jwt_algorithm],
         issuer="edushield-ai",
-        options={"require": ["sub", "exp", "iat", "typ"]},
+        options={"require": ["sub", "exp", "iat", "typ", "jti"]},
     )
     if claims.get("typ") != "access":
         raise jwt.InvalidTokenError("Not an access token")
